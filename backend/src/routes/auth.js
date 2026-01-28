@@ -2,6 +2,8 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { getAuthorizationUrl, exchangeCodeForTokens, parseUserFromToken } from '../services/microsoft.js';
 import { authConfig } from '../config/auth.js';
+import { findOrCreateUser } from '../services/userService.js';
+import { generateToken } from '../services/jwtService.js';
 
 const router = Router();
 
@@ -68,16 +70,22 @@ router.get('/callback', async (req, res, next) => {
     // Parse user info from token
     const microsoftUser = parseUserFromToken(tokenResponse);
 
-    // Store user data temporarily for the next step (user creation/update)
-    req.microsoftUser = microsoftUser;
-    req.returnUrl = stateData.returnUrl;
+    // Create or update user in database
+    const user = await findOrCreateUser({
+      microsoftOid: microsoftUser.microsoftOid,
+      email: microsoftUser.email,
+      name: microsoftUser.name,
+    });
 
-    // For now, redirect with user info encoded (will be replaced with proper user/JWT handling)
+    // Generate JWT token
+    const jwtToken = generateToken(user);
+
+    // Redirect to frontend with token
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const returnUrl = stateData.returnUrl || '/';
 
-    // Temporary: Send user info as query params (will be replaced with JWT)
-    res.redirect(`${frontendUrl}${returnUrl}?auth_pending=true&email=${encodeURIComponent(microsoftUser.email)}`);
+    // Send token via URL fragment (hash) for security - not sent to server
+    res.redirect(`${frontendUrl}${returnUrl}#token=${jwtToken}`);
   } catch (error) {
     console.error('Callback error:', error);
     next(error);
