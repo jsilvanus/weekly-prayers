@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { config } from 'dotenv';
 import healthRouter from './routes/health.js';
+import authRouter from './routes/auth.js';
 
 config();
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api', healthRouter);
+app.use('/api/auth', authRouter);
 
 // Basic route
 app.get('/', (req, res) => {
