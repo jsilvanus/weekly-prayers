@@ -3,7 +3,8 @@ import crypto from 'crypto';
 import { getAuthorizationUrl, exchangeCodeForTokens, parseUserFromToken } from '../services/microsoft.js';
 import { authConfig } from '../config/auth.js';
 import { findOrCreateUser } from '../services/userService.js';
-import { generateToken } from '../services/jwtService.js';
+import { generateToken, revokeToken } from '../services/jwtService.js';
+import { requireAuth } from '../middleware/authenticate.js';
 
 const router = Router();
 
@@ -90,6 +91,17 @@ router.get('/callback', async (req, res, next) => {
     console.error('Callback error:', error);
     next(error);
   }
+});
+
+// POST /api/auth/logout - Revoke current token
+router.post('/logout', requireAuth, (req, res) => {
+  // Revoke the current token
+  revokeToken(req.token);
+
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
+  });
 });
 
 export { stateStore };
