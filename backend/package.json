@@ -1,0 +1,31 @@
+{
+  "name": "weekly-prayers-backend",
+  "version": "1.0.0",
+  "description": "Backend for Weekly Prayers application",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "migrate": "node src/db/migrations/migrate.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-validator": "^7.0.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "prayers",
+    "church",
+    "express",
+    "api"
+  ],
+  "license": "MIT"
+}
