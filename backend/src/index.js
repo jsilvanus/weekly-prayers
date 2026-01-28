@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from 'dotenv';
+import healthRouter from './routes/health.js';
 
 config();
 
@@ -13,6 +14,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api', healthRouter);
 
 // Basic route
 app.get('/', (req, res) => {
