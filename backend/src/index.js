@@ -8,6 +8,7 @@ import usersRouter from './routes/users.js';
 import prayersRouter from './routes/prayers.js';
 import countsRouter from './routes/counts.js';
 import exportRouter from './routes/export.js';
+import embedRouter from './routes/embed.js';
 
 config();
 
@@ -27,6 +28,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/prayers', prayersRouter);
 app.use('/api/counts', countsRouter);
 app.use('/api/export', exportRouter);
+app.use('/api/embed', embedRouter);
 
 // Basic route
 app.get('/', (req, res) => {
