@@ -5,6 +5,7 @@ import { config } from 'dotenv';
 import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
 import usersRouter from './routes/users.js';
+import prayersRouter from './routes/prayers.js';
 
 config();
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/prayers', prayersRouter);
 
 // Basic route
 app.get('/', (req, res) => {
