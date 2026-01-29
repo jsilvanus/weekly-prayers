@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: weekly-prayers-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-prayers}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-prayers_secret}
+      POSTGRES_DB: ${DB_NAME:-weekly_prayers}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-prayers} -d ${DB_NAME:-weekly_prayers}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: weekly-prayers-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-prayers}
+      DB_PASSWORD: ${DB_PASSWORD:-prayers_secret}
+      DB_NAME: ${DB_NAME:-weekly_prayers}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: weekly-prayers-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
