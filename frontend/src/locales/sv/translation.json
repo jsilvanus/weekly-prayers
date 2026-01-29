@@ -1,0 +1,86 @@
+{
+  "app": {
+    "title": "Böneämnen",
+    "subtitle": "Böneämnen för vecka {{week}}/{{year}}"
+  },
+  "nav": {
+    "home": "Hem",
+    "admin": "Admin",
+    "login": "Logga in",
+    "logout": "Logga ut"
+  },
+  "prayers": {
+    "pastor": {
+      "title": "Kyrkoherderns ämne",
+      "empty": "Inget ämne från kyrkoherden denna vecka"
+    },
+    "staff": {
+      "title": "Personalens böneämnen",
+      "empty": "Inga böneämnen från personalen denna vecka"
+    },
+    "public": {
+      "title": "Församlingens böneämnen",
+      "empty": "Inga offentliga böneämnen denna vecka"
+    },
+    "submit": {
+      "title": "Lämna en bönebegäran",
+      "placeholder": "Skriv din bönebegäran här...",
+      "button": "Skicka",
+      "success": "Bönebegäran skickad! Den granskas innan publicering.",
+      "error": "Kunde inte skicka bönebegäran"
+    }
+  },
+  "counter": {
+    "title": "Böneräknare",
+    "button": "Jag har bett",
+    "count": "{{count}} böner denna vecka",
+    "thanks": "Tack för din bön!"
+  },
+  "admin": {
+    "title": "Adminpanel",
+    "prayers": {
+      "title": "Hantering av bönebegäran",
+      "pending": "Väntar på godkännande",
+      "approved": "Godkänd",
+      "rejected": "Avvisad",
+      "approve": "Godkänn",
+      "reject": "Avvisa",
+      "edit": "Redigera",
+      "delete": "Radera",
+      "confirmDelete": "Är du säker på att du vill radera denna bönebegäran?"
+    },
+    "users": {
+      "title": "Användarhantering",
+      "role": "Roll",
+      "changeRole": "Ändra roll",
+      "roles": {
+        "admin": "Administratör",
+        "worker": "Personal",
+        "user": "Användare"
+      }
+    },
+    "pastor": {
+      "title": "Kyrkoherderns ämne",
+      "add": "Lägg till ämne",
+      "edit": "Redigera ämne"
+    },
+    "staff": {
+      "title": "Lägg till personalens bönebegäran",
+      "add": "Lägg till begäran"
+    }
+  },
+  "common": {
+    "loading": "Laddar...",
+    "error": "Ett fel uppstod",
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "close": "Stäng",
+    "confirm": "Bekräfta",
+    "week": "Vecka",
+    "startDate": "Startdatum",
+    "endDate": "Slutdatum"
+  },
+  "footer": {
+    "copyright": "© {{year}} Församling"
+  }
+}
