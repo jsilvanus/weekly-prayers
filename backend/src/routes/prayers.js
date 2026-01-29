@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { getPrayersForWeek, createPrayer } from '../services/prayerService.js';
 import { getCurrentWeekInfo, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
-import { optionalAuth } from '../middleware/authenticate.js';
-import { isWorkerOrAbove } from '../middleware/authorize.js';
+import { optionalAuth, requireAuth } from '../middleware/authenticate.js';
+import { isWorkerOrAbove, requireWorker, requireAdmin } from '../middleware/authorize.js';
 import { sanitizePrayerContent } from '../services/aiSanitizer.js';
 
 const router = Router();
@@ -131,6 +131,128 @@ router.post('/', optionalAuth, async (req, res, next) => {
         isApproved: prayer.is_approved,
         createdAt: prayer.created_at,
         flagged: aiResult.flagged
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/prayers/staff - Submit a staff prayer request (worker+)
+router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
+  try {
+    const { content, startDate, endDate } = req.body;
+
+    // Validate content
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({
+        error: { message: 'Content is required' }
+      });
+    }
+
+    if (content.length > 2000) {
+      return res.status(400).json({
+        error: { message: 'Content must be 2000 characters or less' }
+      });
+    }
+
+    // Determine dates - default to current week
+    let prayerStartDate, prayerEndDate;
+
+    if (startDate && endDate) {
+      prayerStartDate = startDate;
+      prayerEndDate = endDate;
+    } else {
+      const { week, year } = getCurrentWeekInfo();
+      const dates = getWeekDates(week, year);
+      prayerStartDate = formatDate(dates.startDate);
+      prayerEndDate = formatDate(dates.endDate);
+    }
+
+    // Staff prayers don't need AI sanitization or approval
+    const prayer = await createPrayer({
+      userId: req.user.id,
+      type: 'staff',
+      originalContent: content.trim(),
+      sanitizedContent: content.trim(),
+      aiFlagged: false,
+      aiFlagReason: null,
+      startDate: prayerStartDate,
+      endDate: prayerEndDate,
+      isApproved: true // Staff prayers are auto-approved
+    });
+
+    res.status(201).json({
+      message: 'Staff prayer request created successfully.',
+      prayer: {
+        id: prayer.id,
+        type: prayer.type,
+        content: prayer.original_content,
+        startDate: prayer.start_date,
+        endDate: prayer.end_date,
+        isApproved: prayer.is_approved,
+        createdAt: prayer.created_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/prayers/pastor - Submit the pastor's prayer topic (admin only)
+router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { content, startDate, endDate } = req.body;
+
+    // Validate content
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({
+        error: { message: 'Content is required' }
+      });
+    }
+
+    if (content.length > 3000) {
+      return res.status(400).json({
+        error: { message: 'Content must be 3000 characters or less' }
+      });
+    }
+
+    // Determine dates - default to current week
+    let prayerStartDate, prayerEndDate;
+
+    if (startDate && endDate) {
+      prayerStartDate = startDate;
+      prayerEndDate = endDate;
+    } else {
+      const { week, year } = getCurrentWeekInfo();
+      const dates = getWeekDates(week, year);
+      prayerStartDate = formatDate(dates.startDate);
+      prayerEndDate = formatDate(dates.endDate);
+    }
+
+    // Pastor prayers are auto-approved
+    const prayer = await createPrayer({
+      userId: req.user.id,
+      type: 'pastor',
+      originalContent: content.trim(),
+      sanitizedContent: content.trim(),
+      aiFlagged: false,
+      aiFlagReason: null,
+      startDate: prayerStartDate,
+      endDate: prayerEndDate,
+      isApproved: true
+    });
+
+    res.status(201).json({
+      message: 'Pastor prayer topic created successfully.',
+      prayer: {
+        id: prayer.id,
+        type: prayer.type,
+        content: prayer.original_content,
+        startDate: prayer.start_date,
+        endDate: prayer.end_date,
+        isApproved: prayer.is_approved,
+        createdAt: prayer.created_at
       }
     });
   } catch (error) {
