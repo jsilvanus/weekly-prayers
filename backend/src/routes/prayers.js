@@ -3,6 +3,7 @@ import { getPrayersForWeek, createPrayer } from '../services/prayerService.js';
 import { getCurrentWeekInfo, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
 import { optionalAuth } from '../middleware/authenticate.js';
 import { isWorkerOrAbove } from '../middleware/authorize.js';
+import { sanitizePrayerContent } from '../services/aiSanitizer.js';
 
 const router = Router();
 
@@ -97,29 +98,39 @@ router.post('/', optionalAuth, async (req, res, next) => {
       prayerEndDate = formatDate(dates.endDate);
     }
 
-    // Create the prayer (will be processed by AI later)
+    // Run AI sanitization
+    const aiResult = await sanitizePrayerContent(content.trim());
+
+    // Create the prayer with AI results
     const prayer = await createPrayer({
       userId: req.user?.id || null,
       type: 'public',
       originalContent: content.trim(),
-      sanitizedContent: null, // Will be set by AI sanitizer
-      aiFlagged: false,
-      aiFlagReason: null,
+      sanitizedContent: aiResult.sanitizedContent,
+      aiFlagged: aiResult.flagged,
+      aiFlagReason: aiResult.flagReason,
       startDate: prayerStartDate,
       endDate: prayerEndDate,
       isApproved: false // Public prayers need approval
     });
 
+    // Prepare response message
+    let message = 'Prayer request submitted successfully. It will be reviewed before publication.';
+    if (aiResult.flagged) {
+      message = 'Prayer request submitted. It has been flagged for additional review.';
+    }
+
     res.status(201).json({
-      message: 'Prayer request submitted successfully. It will be reviewed before publication.',
+      message,
       prayer: {
         id: prayer.id,
         type: prayer.type,
-        content: prayer.original_content,
+        content: aiResult.sanitizedContent || prayer.original_content,
         startDate: prayer.start_date,
         endDate: prayer.end_date,
         isApproved: prayer.is_approved,
-        createdAt: prayer.created_at
+        createdAt: prayer.created_at,
+        flagged: aiResult.flagged
       }
     });
   } catch (error) {
