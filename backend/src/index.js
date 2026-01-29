@@ -7,6 +7,7 @@ import authRouter from './routes/auth.js';
 import usersRouter from './routes/users.js';
 import prayersRouter from './routes/prayers.js';
 import countsRouter from './routes/counts.js';
+import exportRouter from './routes/export.js';
 
 config();
 
@@ -25,6 +26,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/prayers', prayersRouter);
 app.use('/api/counts', countsRouter);
+app.use('/api/export', exportRouter);
 
 // Basic route
 app.get('/', (req, res) => {
