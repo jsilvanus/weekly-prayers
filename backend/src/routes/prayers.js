@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getPrayersForWeek } from '../services/prayerService.js';
-import { getCurrentWeekInfo, getWeekNumber, getWeekYear } from '../utils/weekHelper.js';
+import { getPrayersForWeek, createPrayer } from '../services/prayerService.js';
+import { getCurrentWeekInfo, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
 import { optionalAuth } from '../middleware/authenticate.js';
 import { isWorkerOrAbove } from '../middleware/authorize.js';
 
@@ -60,6 +60,67 @@ router.get('/week/:week', optionalAuth, async (req, res, next) => {
       week,
       year,
       prayers
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/prayers - Submit a new public prayer request
+router.post('/', optionalAuth, async (req, res, next) => {
+  try {
+    const { content, startDate, endDate } = req.body;
+
+    // Validate content
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({
+        error: { message: 'Content is required' }
+      });
+    }
+
+    if (content.length > 1000) {
+      return res.status(400).json({
+        error: { message: 'Content must be 1000 characters or less' }
+      });
+    }
+
+    // Determine dates - default to current week
+    let prayerStartDate, prayerEndDate;
+
+    if (startDate && endDate) {
+      prayerStartDate = startDate;
+      prayerEndDate = endDate;
+    } else {
+      const { week, year } = getCurrentWeekInfo();
+      const dates = getWeekDates(week, year);
+      prayerStartDate = formatDate(dates.startDate);
+      prayerEndDate = formatDate(dates.endDate);
+    }
+
+    // Create the prayer (will be processed by AI later)
+    const prayer = await createPrayer({
+      userId: req.user?.id || null,
+      type: 'public',
+      originalContent: content.trim(),
+      sanitizedContent: null, // Will be set by AI sanitizer
+      aiFlagged: false,
+      aiFlagReason: null,
+      startDate: prayerStartDate,
+      endDate: prayerEndDate,
+      isApproved: false // Public prayers need approval
+    });
+
+    res.status(201).json({
+      message: 'Prayer request submitted successfully. It will be reviewed before publication.',
+      prayer: {
+        id: prayer.id,
+        type: prayer.type,
+        content: prayer.original_content,
+        startDate: prayer.start_date,
+        endDate: prayer.end_date,
+        isApproved: prayer.is_approved,
+        createdAt: prayer.created_at
+      }
     });
   } catch (error) {
     next(error);
