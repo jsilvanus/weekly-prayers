@@ -1,0 +1,86 @@
+{
+  "app": {
+    "title": "Prayer Topics",
+    "subtitle": "Prayer topics for week {{week}}/{{year}}"
+  },
+  "nav": {
+    "home": "Home",
+    "admin": "Admin",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "prayers": {
+    "pastor": {
+      "title": "Pastor's Topic",
+      "empty": "No pastor's topic for this week"
+    },
+    "staff": {
+      "title": "Staff Prayer Requests",
+      "empty": "No staff prayer requests for this week"
+    },
+    "public": {
+      "title": "Congregation Prayer Requests",
+      "empty": "No public prayer requests for this week"
+    },
+    "submit": {
+      "title": "Submit a Prayer Request",
+      "placeholder": "Write your prayer request here...",
+      "button": "Submit",
+      "success": "Prayer request submitted! It will be reviewed before publication.",
+      "error": "Failed to submit prayer request"
+    }
+  },
+  "counter": {
+    "title": "Prayer Counter",
+    "button": "I have prayed",
+    "count": "{{count}} prayers this week",
+    "thanks": "Thank you for your prayer!"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "prayers": {
+      "title": "Prayer Request Management",
+      "pending": "Pending approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "approve": "Approve",
+      "reject": "Reject",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Are you sure you want to delete this prayer request?"
+    },
+    "users": {
+      "title": "User Management",
+      "role": "Role",
+      "changeRole": "Change role",
+      "roles": {
+        "admin": "Administrator",
+        "worker": "Staff",
+        "user": "User"
+      }
+    },
+    "pastor": {
+      "title": "Pastor's Topic",
+      "add": "Add topic",
+      "edit": "Edit topic"
+    },
+    "staff": {
+      "title": "Add Staff Prayer Request",
+      "add": "Add request"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "week": "Week",
+    "startDate": "Start date",
+    "endDate": "End date"
+  },
+  "footer": {
+    "copyright": "© {{year}} Parish"
+  }
+}

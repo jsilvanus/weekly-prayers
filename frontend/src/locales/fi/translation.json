@@ -1,0 +1,86 @@
+{
+  "app": {
+    "title": "Rukousaiheet",
+    "subtitle": "Viikon {{week}}/{{year}} rukousaiheet"
+  },
+  "nav": {
+    "home": "Etusivu",
+    "admin": "Hallinta",
+    "login": "Kirjaudu",
+    "logout": "Kirjaudu ulos"
+  },
+  "prayers": {
+    "pastor": {
+      "title": "Kirkkoherran aihe",
+      "empty": "Ei kirkkoherran aihetta tälle viikolle"
+    },
+    "staff": {
+      "title": "Työntekijöiden rukousaiheet",
+      "empty": "Ei työntekijöiden rukousaiheita tälle viikolle"
+    },
+    "public": {
+      "title": "Seurakunnan rukousaiheet",
+      "empty": "Ei julkisia rukousaiheita tälle viikolle"
+    },
+    "submit": {
+      "title": "Jätä rukouspyyntö",
+      "placeholder": "Kirjoita rukouspyyntösi tähän...",
+      "button": "Lähetä",
+      "success": "Rukouspyyntö lähetetty! Se tarkistetaan ennen julkaisua.",
+      "error": "Rukouspyynnön lähetys epäonnistui"
+    }
+  },
+  "counter": {
+    "title": "Rukouslaskuri",
+    "button": "Olen rukoillut",
+    "count": "{{count}} rukousta tällä viikolla",
+    "thanks": "Kiitos rukouksestasi!"
+  },
+  "admin": {
+    "title": "Hallintapaneeli",
+    "prayers": {
+      "title": "Rukouspyyntöjen hallinta",
+      "pending": "Odottaa hyväksyntää",
+      "approved": "Hyväksytty",
+      "rejected": "Hylätty",
+      "approve": "Hyväksy",
+      "reject": "Hylkää",
+      "edit": "Muokkaa",
+      "delete": "Poista",
+      "confirmDelete": "Haluatko varmasti poistaa tämän rukouspyynnön?"
+    },
+    "users": {
+      "title": "Käyttäjähallinta",
+      "role": "Rooli",
+      "changeRole": "Vaihda rooli",
+      "roles": {
+        "admin": "Ylläpitäjä",
+        "worker": "Työntekijä",
+        "user": "Käyttäjä"
+      }
+    },
+    "pastor": {
+      "title": "Kirkkoherran aihe",
+      "add": "Lisää aihe",
+      "edit": "Muokkaa aihetta"
+    },
+    "staff": {
+      "title": "Lisää työntekijän rukouspyyntö",
+      "add": "Lisää pyyntö"
+    }
+  },
+  "common": {
+    "loading": "Ladataan...",
+    "error": "Virhe tapahtui",
+    "save": "Tallenna",
+    "cancel": "Peruuta",
+    "close": "Sulje",
+    "confirm": "Vahvista",
+    "week": "Viikko",
+    "startDate": "Alkupäivä",
+    "endDate": "Loppupäivä"
+  },
+  "footer": {
+    "copyright": "© {{year}} Seurakunta"
+  }
+}

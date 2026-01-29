@@ -4,6 +4,11 @@ import helmet from 'helmet';
 import { config } from 'dotenv';
 import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
+import usersRouter from './routes/users.js';
+import prayersRouter from './routes/prayers.js';
+import countsRouter from './routes/counts.js';
+import exportRouter from './routes/export.js';
+import embedRouter from './routes/embed.js';
 
 config();
 
@@ -19,6 +24,11 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/prayers', prayersRouter);
+app.use('/api/counts', countsRouter);
+app.use('/api/export', exportRouter);
+app.use('/api/embed', embedRouter);
 
 // Basic route
 app.get('/', (req, res) => {
