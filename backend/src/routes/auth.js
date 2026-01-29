@@ -104,5 +104,21 @@ router.post('/logout', requireAuth, (req, res) => {
   });
 });
 
+// GET /api/auth/me - Get current user info
+router.get('/me', requireAuth, (req, res) => {
+  const { id, email, name, role, created_at, last_login } = req.user;
+
+  res.json({
+    user: {
+      id,
+      email,
+      name,
+      role,
+      createdAt: created_at,
+      lastLogin: last_login
+    }
+  });
+});
+
 export { stateStore };
 export default router;
