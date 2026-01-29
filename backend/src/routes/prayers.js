@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPrayersForWeek, createPrayer } from '../services/prayerService.js';
+import { getPrayersForWeek, createPrayer, getPrayerById, updatePrayer, deletePrayer, approvePrayer } from '../services/prayerService.js';
 import { getCurrentWeekInfo, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
 import { optionalAuth, requireAuth } from '../middleware/authenticate.js';
 import { isWorkerOrAbove, requireWorker, requireAdmin } from '../middleware/authorize.js';
@@ -253,6 +253,141 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
         endDate: prayer.end_date,
         isApproved: prayer.is_approved,
         createdAt: prayer.created_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /api/prayers/:id - Update a prayer request
+router.put('/:id', requireAuth, requireWorker, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { content, startDate, endDate } = req.body;
+
+    // Get existing prayer
+    const existingPrayer = await getPrayerById(id);
+
+    if (!existingPrayer) {
+      return res.status(404).json({
+        error: { message: 'Prayer request not found' }
+      });
+    }
+
+    // Check permissions: admin can edit all, worker can edit staff/public, pastor only by admin
+    const isAdmin = req.user.role === 'admin';
+    if (existingPrayer.type === 'pastor' && !isAdmin) {
+      return res.status(403).json({
+        error: { message: 'Only admin can edit pastor prayer topics' }
+      });
+    }
+
+    // Build update object
+    const updates = {};
+
+    if (content !== undefined) {
+      if (typeof content !== 'string' || content.trim().length === 0) {
+        return res.status(400).json({
+          error: { message: 'Content cannot be empty' }
+        });
+      }
+      updates.originalContent = content.trim();
+      updates.sanitizedContent = content.trim();
+    }
+
+    if (startDate !== undefined) updates.startDate = startDate;
+    if (endDate !== undefined) updates.endDate = endDate;
+
+    const updatedPrayer = await updatePrayer(id, updates);
+
+    res.json({
+      message: 'Prayer request updated successfully.',
+      prayer: {
+        id: updatedPrayer.id,
+        type: updatedPrayer.type,
+        content: updatedPrayer.original_content,
+        startDate: updatedPrayer.start_date,
+        endDate: updatedPrayer.end_date,
+        isApproved: updatedPrayer.is_approved,
+        updatedAt: updatedPrayer.updated_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/prayers/:id - Delete a prayer request
+router.delete('/:id', requireAuth, requireWorker, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Get existing prayer
+    const existingPrayer = await getPrayerById(id);
+
+    if (!existingPrayer) {
+      return res.status(404).json({
+        error: { message: 'Prayer request not found' }
+      });
+    }
+
+    // Check permissions: admin can delete all, worker can delete staff/public, pastor only by admin
+    const isAdmin = req.user.role === 'admin';
+    if (existingPrayer.type === 'pastor' && !isAdmin) {
+      return res.status(403).json({
+        error: { message: 'Only admin can delete pastor prayer topics' }
+      });
+    }
+
+    await deletePrayer(id);
+
+    res.json({
+      message: 'Prayer request deleted successfully.'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/prayers/:id/approve - Approve or reject a public prayer request
+router.post('/:id/approve', requireAuth, requireWorker, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { approved } = req.body;
+
+    if (typeof approved !== 'boolean') {
+      return res.status(400).json({
+        error: { message: 'approved field must be a boolean' }
+      });
+    }
+
+    // Get existing prayer
+    const existingPrayer = await getPrayerById(id);
+
+    if (!existingPrayer) {
+      return res.status(404).json({
+        error: { message: 'Prayer request not found' }
+      });
+    }
+
+    // Only public prayers need approval
+    if (existingPrayer.type !== 'public') {
+      return res.status(400).json({
+        error: { message: 'Only public prayer requests can be approved/rejected' }
+      });
+    }
+
+    const updatedPrayer = await approvePrayer(id, approved);
+
+    res.json({
+      message: approved ? 'Prayer request approved.' : 'Prayer request rejected.',
+      prayer: {
+        id: updatedPrayer.id,
+        type: updatedPrayer.type,
+        content: updatedPrayer.sanitized_content || updatedPrayer.original_content,
+        isApproved: updatedPrayer.is_approved,
+        updatedAt: updatedPrayer.updated_at
       }
     });
   } catch (error) {
