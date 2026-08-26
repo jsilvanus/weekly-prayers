@@ -1,7 +1,7 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { config } from 'dotenv';
 import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
 import usersRouter from './routes/users.js';
@@ -9,8 +9,6 @@ import prayersRouter from './routes/prayers.js';
 import countsRouter from './routes/counts.js';
 import exportRouter from './routes/export.js';
 import embedRouter from './routes/embed.js';
-
-config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
