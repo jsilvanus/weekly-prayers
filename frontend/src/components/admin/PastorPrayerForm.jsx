@@ -1,12 +1,15 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
+import { useTenant } from '../../context/TenantContext';
 import { PastorSealLogo } from '../../assets/churchIcons';
 
 function PastorPrayerForm() {
   const { t } = useTranslation();
+  const { currentTenant, yhtyma, isPartOfYhtyma } = useTenant();
   const [content, setContent] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
+  const [isYhtymaWide, setIsYhtymaWide] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const fileInputRef = useRef(null);
@@ -40,11 +43,14 @@ function PastorPrayerForm() {
         content.trim(),
         undefined,
         undefined,
-        logoUrl || undefined
+        logoUrl || undefined,
+        isYhtymaWide,
+        currentTenant?.id
       );
       setMessage({ type: 'success', text: 'Kirkkoherran aihe lisätty onnistuneesti.' });
       setContent('');
       setLogoUrl('');
+      setIsYhtymaWide(false);
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
     } finally {
@@ -66,6 +72,30 @@ function PastorPrayerForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="card">
+        {/* Yhtymä-wide toggle */}
+        {isPartOfYhtyma && (
+          <div className="mb-4 p-3.5 bg-gradient-to-r from-blue-50/80 to-indigo-50/60 border border-blue-200/80 rounded-xl" data-testid="pastor-yhtyma-wide-toggle">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isYhtymaWide}
+                onChange={(e) => setIsYhtymaWide(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                disabled={loading}
+              />
+              <div>
+                <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                  <span className="text-base">🏛️</span>
+                  <span>{t('admin.pastor.yhtymaWide') || 'Yhtymän laajuinen kirkkoherran aihe'}</span>
+                </span>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  {`Aihe näkyy kaikissa ${yhtyma?.name || 'seurakuntayhtymän'} seurakunnissa.`}
+                </p>
+              </div>
+            </label>
+          </div>
+        )}
+
         <textarea
           className="textarea h-44 mb-4"
           placeholder="Kirjoita kirkkoherran rukousaihe tähän..."

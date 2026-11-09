@@ -107,9 +107,16 @@ function MinistryPrayers({ prayers = [] }) {
                     className="relative bg-amber-50/50 rounded-xl border border-amber-300 p-4 shadow-sm transition-all hover:shadow"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-800">
-                        ⭐ {t('prayers.highlighted')}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-800">
+                          ⭐ {t('prayers.highlighted')}
+                        </span>
+                        {prayer.isYhtymaWide && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-100 text-indigo-900 border border-indigo-200" title="Yhtymän laajuinen rukousaihe">
+                            🏛️ Yhtymän yhteinen
+                          </span>
+                        )}
+                      </div>
                       {prayer.ministryTag && (
                         <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
                           {prayer.ministryTag}
@@ -140,13 +147,18 @@ function MinistryPrayers({ prayers = [] }) {
                   className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:border-gray-200 transition-colors"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    {prayer.ministryTag ? (
-                      <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700">
-                        {prayer.ministryTag}
-                      </span>
-                    ) : (
-                      <span />
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {prayer.isYhtymaWide && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-100 text-indigo-900 border border-indigo-200" title="Yhtymän laajuinen rukousaihe">
+                          🏛️ Yhtymän yhteinen
+                        </span>
+                      )}
+                      {prayer.ministryTag && (
+                        <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700">
+                          {prayer.ministryTag}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-gray-400">
                       {new Date(prayer.createdAt || prayer.startDate).toLocaleDateString()}
                     </span>

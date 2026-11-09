@@ -40,23 +40,23 @@ export const api = {
   logout: () => request('/auth/logout', { method: 'POST' }),
 
   // Prayers
-  getPrayers: () => request('/prayers'),
-  getPrayersByWeek: (week, year) =>
-    request(`/prayers/week/${week}?year=${year}`),
-  submitPrayer: (content, startDate, endDate) =>
+  getPrayers: (tenant) => request(`/prayers${tenant ? `?tenant=${tenant}` : ''}`),
+  getPrayersByWeek: (week, year, tenant) =>
+    request(`/prayers/week/${week}?year=${year}${tenant ? `&tenant=${tenant}` : ''}`),
+  submitPrayer: (content, startDate, endDate, tenantId) =>
     request('/prayers', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate }),
+      body: JSON.stringify({ content, startDate, endDate, tenantId }),
     }),
-  submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag) =>
+  submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide = false, tenantId = null) =>
     request('/prayers/staff', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, ministryGroup, ministryTag }),
+      body: JSON.stringify({ content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId }),
     }),
-  submitPastorPrayer: (content, startDate, endDate, logoUrl) =>
+  submitPastorPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide = false, tenantId = null) =>
     request('/prayers/pastor', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, logoUrl }),
+      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId }),
     }),
   submitBishopPrayer: (content, startDate, endDate, logoUrl) =>
     request('/prayers/bishop', {
@@ -125,6 +125,11 @@ export const api = {
     request(`/bible/overrides/${id}`, { method: 'DELETE' }),
   testAnnoApiStatus: (url) =>
     request(`/bible/anno-status${url ? `?url=${encodeURIComponent(url)}` : ''}`),
+
+  // Tenants & Yhtymä Multi-tenancy
+  getTenants: () => request('/tenants'),
+  getTenantCurrent: (slug) => request(`/tenants/current${slug ? `?slug=${slug}` : ''}`),
+  getTenant: (identifier) => request(`/tenants/${identifier}`),
 };
 
 export { ApiError };

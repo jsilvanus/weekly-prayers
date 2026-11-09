@@ -113,7 +113,8 @@
     "pastor": {
       "title": "Kirkkoherran aihe",
       "add": "Lisää aihe",
-      "edit": "Muokkaa aihetta"
+      "edit": "Muokkaa aihetta",
+      "yhtymaWide": "Yhtymän laajuinen kirkkoherran aihe"
     },
     "bishop": {
       "title": "Piispan aihe",
@@ -125,7 +126,9 @@
       "title": "Lisää työalan rukouspyyntö",
       "add": "Lisää työalan pyyntö",
       "group": "Rukousryhmä",
-      "tag": "Työalatunniste"
+      "tag": "Työalatunniste",
+      "yhtymaWide": "Yhtymän laajuinen rukousaihe",
+      "yhtymaWideDesc": "Aihe näkyy kaikissa {{yhtymaName}}n seurakunnissa."
     },
     "export": {
       "title": "Tulosta esirukous",

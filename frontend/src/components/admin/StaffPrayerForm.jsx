@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
+import { useTenant } from '../../context/TenantContext';
 import DateRangeCalendar from '../common/DateRangeCalendar';
 
 const MINISTRY_GROUPS = [
@@ -22,10 +23,12 @@ const PRESET_TAGS = [
 
 function StaffPrayerForm() {
   const { t } = useTranslation();
+  const { currentTenant, yhtyma, isPartOfYhtyma } = useTenant();
   const [content, setContent] = useState('');
   const [ministryGroup, setMinistryGroup] = useState('local');
   const [ministryTag, setMinistryTag] = useState('Diakonia');
   const [customTag, setCustomTag] = useState('');
+  const [isYhtymaWide, setIsYhtymaWide] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
@@ -53,10 +56,19 @@ function StaffPrayerForm() {
     const effectiveTag = customTag.trim() || ministryTag;
 
     try {
-      await api.submitStaffPrayer(content.trim(), startDate, endDate, ministryGroup, effectiveTag);
+      await api.submitStaffPrayer(
+        content.trim(),
+        startDate,
+        endDate,
+        ministryGroup,
+        effectiveTag,
+        isYhtymaWide,
+        currentTenant?.id
+      );
       setMessage({ type: 'success', text: 'Työalan rukouspyyntö lisätty onnistuneesti!' });
       setContent('');
       setCustomTag('');
+      setIsYhtymaWide(false);
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
     } finally {
@@ -122,6 +134,31 @@ function StaffPrayerForm() {
             </div>
           </div>
         </div>
+
+        {/* Yhtymä-wide toggle */}
+        {isPartOfYhtyma && (
+          <div className="mb-4 p-3.5 bg-gradient-to-r from-blue-50/80 to-indigo-50/60 border border-blue-200/80 rounded-xl" data-testid="yhtyma-wide-toggle">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isYhtymaWide}
+                onChange={(e) => setIsYhtymaWide(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                disabled={loading}
+              />
+              <div>
+                <span className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                  <span className="text-base">🏛️</span>
+                  <span>{t('admin.staff.yhtymaWide') || 'Yhtymän laajuinen rukousaihe'}</span>
+                </span>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  {t('admin.staff.yhtymaWideDesc', { yhtymaName: yhtyma?.name || 'seurakuntayhtymän' }) ||
+                    `Aihe merkitään näkymään kaikissa ${yhtyma?.name || 'seurakuntayhtymän'} seurakunnissa.`}
+                </p>
+              </div>
+            </label>
+          </div>
+        )}
 
         {/* Prayer content */}
         <textarea

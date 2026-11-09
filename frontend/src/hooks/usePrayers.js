@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 
-export function usePrayers(week = null, year = null) {
+export function usePrayers(week = null, year = null, tenant = null) {
   const [prayers, setPrayers] = useState({ bishop: [], pastor: [], staff: [], public: [] });
   const [weekInfo, setWeekInfo] = useState({ week: null, year: null });
   const [loading, setLoading] = useState(true);
@@ -13,8 +13,8 @@ export function usePrayers(week = null, year = null) {
 
     try {
       const data = week && year
-        ? await api.getPrayersByWeek(week, year)
-        : await api.getPrayers();
+        ? await api.getPrayersByWeek(week, year, tenant)
+        : await api.getPrayers(tenant);
 
       setPrayers(data.prayers);
       setWeekInfo({ week: data.week, year: data.year });
@@ -23,7 +23,7 @@ export function usePrayers(week = null, year = null) {
     } finally {
       setLoading(false);
     }
-  }, [week, year]);
+  }, [week, year, tenant]);
 
   useEffect(() => {
     fetchPrayers();

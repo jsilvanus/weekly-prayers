@@ -11,6 +11,7 @@ import exportRouter from './routes/export.js';
 import embedRouter from './routes/embed.js';
 import settingsRouter from './routes/settings.js';
 import bibleRouter from './routes/bible.js';
+import tenantRouter from './routes/tenants.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +34,7 @@ app.use('/api/export', exportRouter);
 app.use('/api/embed', embedRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/bible', bibleRouter);
+app.use('/api/tenants', tenantRouter);
 
 // Basic route
 app.get('/', (req, res) => {

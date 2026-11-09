@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePrayers } from '../../hooks/usePrayers';
 import { useSettings } from '../../context/SettingsContext';
+import { useTenant } from '../../context/TenantContext';
 import OpeningInvocation from './OpeningInvocation';
 import FrontPageBibleWidget from './FrontPageBibleWidget';
 import BishopPrayer from './BishopPrayer';
@@ -14,7 +15,8 @@ import LoadingSpinner from '../common/LoadingSpinner';
 
 function HomePage() {
   const { t } = useTranslation();
-  const { prayers, week, year, loading, error, refetch } = usePrayers();
+  const { currentTenant, yhtyma, isPartOfYhtyma, allParishesInYhtyma, switchParish } = useTenant();
+  const { prayers, week, year, loading, error, refetch } = usePrayers(null, null, currentTenant?.slug);
   const { settings } = useSettings();
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
 
@@ -30,12 +32,43 @@ function HomePage() {
     );
   }
 
-  const parishName = settings.parish_name || 'Tuomiokirkkoseurakunta';
+  const parishName = currentTenant?.name || settings.parish_name || 'Tuomiokirkkoseurakunta';
 
   return (
     <div className="max-w-4xl mx-auto">
       {/* Top Header Section */}
       <div className="text-center mb-6">
+        {/* Yhtymä Member Parishes Dropdown */}
+        {isPartOfYhtyma && (
+          <div className="flex items-center justify-center mb-3" data-testid="yhtyma-parish-dropdown">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-slate-100/90 to-blue-50/90 border border-slate-300/80 rounded-full px-3.5 py-1 shadow-2xs text-xs sm:text-sm text-slate-700">
+              <span className="flex items-center gap-1.5 font-medium text-slate-600">
+                <span className="text-sm">🏛️</span>
+                <span className="hidden sm:inline">{yhtyma?.name || 'Seurakuntayhtymä'}:</span>
+              </span>
+              <div className="relative inline-flex items-center">
+                <select
+                  value={currentTenant?.slug}
+                  onChange={(e) => switchParish(e.target.value)}
+                  className="appearance-none font-bold text-primary-900 bg-white border border-primary-300 hover:border-primary-500 rounded-full pl-3 pr-7 py-0.5 cursor-pointer shadow-2xs focus:outline-none focus:ring-2 focus:ring-primary-500/20 text-xs sm:text-sm transition-all"
+                  aria-label="Valitse seurakunta seurakuntayhtymässä"
+                >
+                  {allParishesInYhtyma.map((parish) => (
+                    <option key={parish.slug} value={parish.slug}>
+                      {parish.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2.5 text-primary-700">
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <h1 className="text-3xl md:text-4xl font-bold text-primary-900 mb-1 font-martti tracking-tight">
           {parishName} — {t('app.title')}
         </h1>

@@ -27,14 +27,21 @@ function PastorPrayer({ prayers = [] }) {
                 key={prayer.id}
                 className="bg-gradient-to-r from-amber-50/60 via-white to-primary-50/30 rounded-xl p-5 sm:p-6 border-l-4 border-amber-500 shadow-sm"
               >
-                {/* Optional Pastor / Parish Logo */}
-                {logoUrl && (
-                  <div className="flex justify-end mb-2">
-                    <img
-                      src={logoUrl}
-                      alt="Kirkkoherran sinetti"
-                      className="h-10 w-12 object-contain"
-                    />
+                {/* Optional Pastor / Parish Logo & Yhtymä-wide badge */}
+                {(logoUrl || prayer.isYhtymaWide) && (
+                  <div className="flex items-center justify-between mb-3">
+                    {prayer.isYhtymaWide ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-900 border border-indigo-200">
+                        🏛️ Yhtymän yhteinen
+                      </span>
+                    ) : <span />}
+                    {logoUrl && (
+                      <img
+                        src={logoUrl}
+                        alt="Kirkkoherran sinetti"
+                        className="h-10 w-12 object-contain"
+                      />
+                    )}
                   </div>
                 )}
 

@@ -88,7 +88,8 @@ const mockData = {
         startDate: '2026-11-01',
         endDate: '2026-11-20',
         createdAt: '2026-11-03T11:45:00Z',
-        isApproved: true
+        isApproved: true,
+        isYhtymaWide: true
       },
       {
         id: 'staff-3',
@@ -844,6 +845,99 @@ function createMockServer() {
       return;
     }
 
+    if (url.pathname === '/api/prayers/staff' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        const parsed = JSON.parse(body || '{}');
+        const newPrayer = {
+          id: 'staff-' + Date.now(),
+          content: parsed.content,
+          authorName: currentMockUser.name,
+          ministryGroup: parsed.ministryGroup || 'local',
+          ministryTag: parsed.ministryTag || 'Diakonia',
+          isYhtymaWide: !!parsed.isYhtymaWide,
+          highlightPriority: 0,
+          startDate: parsed.startDate || '2026-11-01',
+          endDate: parsed.endDate || '2026-11-20',
+          createdAt: new Date().toISOString(),
+          isApproved: true
+        };
+        mockData.prayers.staff.push(newPrayer);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          message: 'Ministry prayer request created successfully.',
+          prayer: newPrayer
+        }));
+      });
+      return;
+    }
+
+    if (url.pathname === '/api/tenants/current' || url.pathname.startsWith('/api/tenants/')) {
+      const slug = url.searchParams.get('slug') || url.pathname.replace('/api/tenants/', '') || 'tuomiokirkko';
+      const isHarju = slug === 'harju';
+      const isMessukyla = slug === 'messukyla';
+      const currentParish = isHarju ? {
+        id: 'e2000000-0000-0000-0000-000000000002',
+        name: 'Harjun seurakunta',
+        slug: 'harju',
+        type: 'seurakunta',
+        parent_id: 'e1000000-0000-0000-0000-000000000001',
+        diocese: 'Tampereen hiippakunta'
+      } : isMessukyla ? {
+        id: 'e2000000-0000-0000-0000-000000000003',
+        name: 'Messukylän seurakunta',
+        slug: 'messukyla',
+        type: 'seurakunta',
+        parent_id: 'e1000000-0000-0000-0000-000000000001',
+        diocese: 'Tampereen hiippakunta'
+      } : {
+        id: 'e2000000-0000-0000-0000-000000000001',
+        name: 'Tuomiokirkkoseurakunta',
+        slug: 'tuomiokirkko',
+        type: 'seurakunta',
+        parent_id: 'e1000000-0000-0000-0000-000000000001',
+        diocese: 'Tampereen hiippakunta'
+      };
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        tenant: currentParish,
+        yhtyma: {
+          id: 'e1000000-0000-0000-0000-000000000001',
+          name: 'Tampereen seurakuntayhtymä',
+          slug: 'tampereen-seurakuntayhtyma',
+          type: 'seurakuntayhtyma'
+        },
+        isPartOfYhtyma: true,
+        sisterParishes: [
+          { id: 'e2000000-0000-0000-0000-000000000001', name: 'Tuomiokirkkoseurakunta', slug: 'tuomiokirkko', type: 'seurakunta' },
+          { id: 'e2000000-0000-0000-0000-000000000002', name: 'Harjun seurakunta', slug: 'harju', type: 'seurakunta' },
+          { id: 'e2000000-0000-0000-0000-000000000003', name: 'Messukylän seurakunta', slug: 'messukyla', type: 'seurakunta' }
+        ].filter(p => p.id !== currentParish.id),
+        allParishesInYhtyma: [
+          { id: 'e2000000-0000-0000-0000-000000000001', name: 'Tuomiokirkkoseurakunta', slug: 'tuomiokirkko', type: 'seurakunta' },
+          { id: 'e2000000-0000-0000-0000-000000000002', name: 'Harjun seurakunta', slug: 'harju', type: 'seurakunta' },
+          { id: 'e2000000-0000-0000-0000-000000000003', name: 'Messukylän seurakunta', slug: 'messukyla', type: 'seurakunta' }
+        ]
+      }));
+      return;
+    }
+
+    if (url.pathname === '/api/tenants') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        tenants: [
+          { id: 'e1000000-0000-0000-0000-000000000001', name: 'Tampereen seurakuntayhtymä', slug: 'tampereen-seurakuntayhtyma', type: 'seurakuntayhtyma' },
+          { id: 'e2000000-0000-0000-0000-000000000001', name: 'Tuomiokirkkoseurakunta', slug: 'tuomiokirkko', type: 'seurakunta', parent_id: 'e1000000-0000-0000-0000-000000000001' },
+          { id: 'e2000000-0000-0000-0000-000000000002', name: 'Harjun seurakunta', slug: 'harju', type: 'seurakunta', parent_id: 'e1000000-0000-0000-0000-000000000001' },
+          { id: 'e2000000-0000-0000-0000-000000000003', name: 'Messukylän seurakunta', slug: 'messukyla', type: 'seurakunta', parent_id: 'e1000000-0000-0000-0000-000000000001' },
+          { id: 'e2000000-0000-0000-0000-000000000004', name: 'Kangasalan seurakunta', slug: 'kangasala', type: 'seurakunta', parent_id: null }
+        ]
+      }));
+      return;
+    }
+
     if (url.pathname === '/api/prayers/bishop' && req.method === 'POST') {
       res.writeHead(201, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -1320,6 +1414,65 @@ async function run() {
     });
     await wait(600);
     await saveScreenshot(page, '16_admin_bible_and_anno_api_manager.png');
+
+    // 17. Yhtymä Parish Dropdown Switched (Switching to Harjun seurakunta in Tampereen seurakuntayhtymä)
+    console.log('17. Capturing Yhtymä parish dropdown switched to Harjun seurakunta...');
+    await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle0' });
+    await wait(800);
+
+    await page.evaluate(() => {
+      const select = document.querySelector('[data-testid="yhtyma-parish-dropdown"] select');
+      if (select) {
+        select.value = 'harju';
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    await wait(800);
+    await saveScreenshot(page, '17_yhtyma_parish_dropdown_switched.png');
+
+    // Switch back to Tuomiokirkkoseurakunta
+    await page.evaluate(() => {
+      const select = document.querySelector('[data-testid="yhtyma-parish-dropdown"] select');
+      if (select) {
+        select.value = 'tuomiokirkko';
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    await wait(600);
+
+    // 18. Staff Prayer Form with Yhtymä-wide toggle enabled
+    console.log('18. Capturing Staff Prayer Form with Yhtymä-wide toggle...');
+    currentMockUser = mockData.users[2]; // Anna Virtanen (Diakoni / worker)
+    await page.evaluate(() => {
+      sessionStorage.setItem('token', 'mock-worker-jwt');
+    });
+    await page.goto('http://127.0.0.1:5173/admin', { waitUntil: 'networkidle0' });
+    await wait(800);
+
+    const workerNavTabs = await page.$$('nav button');
+    for (const tab of workerNavTabs) {
+      const text = await (await tab.getProperty('textContent')).jsonValue();
+      if (text.includes('työalan') || text.includes('Staff') || text.includes('Ministry')) {
+        await tab.click();
+        await wait(600);
+        break;
+      }
+    }
+
+    // Toggle the Yhtymä-wide checkbox and add sample content
+    await page.evaluate(() => {
+      const checkbox = document.querySelector('[data-testid="yhtyma-wide-toggle"] input[type="checkbox"]');
+      if (checkbox && !checkbox.checked) {
+        checkbox.click();
+      }
+      const ta = document.querySelector('textarea');
+      if (ta) {
+        ta.value = 'Rukoilemme Tampereen seurakuntayhtymän yhteisen ruoka-apu- ja diakoniatoiminnan puolesta sekä taloudellisessa ahdingossa kamppailevien perheiden tukemiseksi koko yhtymän alueella.';
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+    await wait(400);
+    await saveScreenshot(page, '18_staff_prayer_form_yhtyma_wide.png');
 
     console.log('All screenshots completed successfully!');
   } finally {

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
+import { useTenant } from '../../context/TenantContext';
 import LanguageSelector from './LanguageSelector';
 import { ChurchCircleLogo, LocalParishLogo } from '../../assets/churchIcons';
 
@@ -9,8 +10,9 @@ function Header() {
   const { t } = useTranslation();
   const { user, isAuthenticated, login, logout, isWorkerOrAbove, isBishop, canAccessPrayerList } = useAuth();
   const { settings } = useSettings();
+  const { currentTenant } = useTenant();
 
-  const parishName = settings.parish_name || 'Tuomiokirkkoseurakunta';
+  const parishName = currentTenant?.name || settings.parish_name || 'Tuomiokirkkoseurakunta';
   const showChurchLogo = settings.show_church_logo !== 'false';
   const showParishLogo = settings.show_parish_logo !== 'false';
 

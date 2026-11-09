@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import { useTenant } from '../../context/TenantContext';
 import { api } from '../../services/api';
 import DateRangeCalendar from '../common/DateRangeCalendar';
 
 function PrayerForm({ onSuccess, isModal = false }) {
   const { t } = useTranslation();
   const { user, isAuthenticated } = useAuth();
+  const { currentTenant } = useTenant();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -40,7 +42,7 @@ function PrayerForm({ onSuccess, isModal = false }) {
     setMessage(null);
 
     try {
-      await api.submitPrayer(content.trim(), startDate, endDate);
+      await api.submitPrayer(content.trim(), startDate, endDate, currentTenant?.id);
       setMessage({ type: 'success', text: t('prayers.submit.success') });
       setContent('');
       onSuccess?.();

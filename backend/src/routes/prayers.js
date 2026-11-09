@@ -11,12 +11,16 @@ const router = Router();
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const { week, year } = getCurrentWeekInfo();
+    const tenantSlug = req.query.tenant || null;
+    const tenantId = req.query.tenantId || req.headers['x-tenant-id'] || null;
 
     const isStaff = isWorkerOrAbove(req.user);
 
     const prayers = await getPrayersForWeek(week, year, {
       includeUnapproved: isStaff,
-      includeOriginal: isStaff
+      includeOriginal: isStaff,
+      tenantId,
+      tenantSlug
     });
 
     res.json({
@@ -33,10 +37,11 @@ router.get('/', optionalAuth, async (req, res, next) => {
 router.get('/week/:week', optionalAuth, async (req, res, next) => {
   try {
     let { week } = req.params;
-    let { year } = req.query;
+    let { year, tenant, tenantId } = req.query;
 
     week = parseInt(week, 10);
     year = year ? parseInt(year, 10) : getWeekYear(new Date());
+    const targetTenantId = tenantId || req.headers['x-tenant-id'] || null;
 
     if (isNaN(week) || week < 1 || week > 53) {
       return res.status(400).json({
@@ -54,7 +59,9 @@ router.get('/week/:week', optionalAuth, async (req, res, next) => {
 
     const prayers = await getPrayersForWeek(week, year, {
       includeUnapproved: isStaff,
-      includeOriginal: isStaff
+      includeOriginal: isStaff,
+      tenantId: targetTenantId,
+      tenantSlug: tenant
     });
 
     res.json({
@@ -141,7 +148,7 @@ router.post('/', optionalAuth, async (req, res, next) => {
 // POST /api/prayers/staff - Submit a staff prayer request (worker+)
 router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
   try {
-    const { content, startDate, endDate, ministryGroup, ministryTag } = req.body;
+    const { content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId } = req.body;
 
     // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -181,7 +188,9 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
       endDate: prayerEndDate,
       isApproved: true, // Staff prayers are auto-approved
       ministryGroup: ministryGroup || 'local',
-      ministryTag: ministryTag || null
+      ministryTag: ministryTag || null,
+      isYhtymaWide: !!isYhtymaWide,
+      tenantId: tenantId || req.user.tenant_id || null
     });
 
     res.status(201).json({
@@ -195,6 +204,8 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
         isApproved: prayer.is_approved,
         ministryGroup: prayer.ministry_group,
         ministryTag: prayer.ministry_tag,
+        isYhtymaWide: prayer.is_yhtyma_wide,
+        tenantId: prayer.tenant_id,
         createdAt: prayer.created_at
       }
     });
@@ -206,7 +217,7 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
 // POST /api/prayers/pastor - Submit the pastor's prayer topic (admin only)
 router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    const { content, startDate, endDate, logoUrl } = req.body;
+    const { content, startDate, endDate, logoUrl, isYhtymaWide, tenantId } = req.body;
 
     // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -245,7 +256,9 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
       startDate: prayerStartDate,
       endDate: prayerEndDate,
       isApproved: true,
-      logoUrl: logoUrl || null
+      logoUrl: logoUrl || null,
+      isYhtymaWide: !!isYhtymaWide,
+      tenantId: tenantId || req.user.tenant_id || null
     });
 
     res.status(201).json({

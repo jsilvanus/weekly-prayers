@@ -5,8 +5,24 @@ import { getWeekDates, formatDate } from '../utils/weekHelper.js';
  * Get prayers for a specific week
  */
 export async function getPrayersForWeek(week, year, options = {}) {
-  const { includeUnapproved = false, includeOriginal = false } = options;
+  const { includeUnapproved = false, includeOriginal = false, tenantId = null, tenantSlug = null } = options;
   const { startDate, endDate } = getWeekDates(week, year);
+
+  let targetTenantId = tenantId;
+  let targetTenantParentId = null;
+
+  if (!targetTenantId && tenantSlug) {
+    const tRes = await query('SELECT id, parent_id FROM tenants WHERE slug = $1 LIMIT 1', [tenantSlug]);
+    if (tRes.rows[0]) {
+      targetTenantId = tRes.rows[0].id;
+      targetTenantParentId = tRes.rows[0].parent_id;
+    }
+  } else if (targetTenantId) {
+    const tRes = await query('SELECT id, parent_id FROM tenants WHERE id = $1 LIMIT 1', [targetTenantId]);
+    if (tRes.rows[0]) {
+      targetTenantParentId = tRes.rows[0].parent_id;
+    }
+  }
 
   let sql = `
     SELECT
@@ -23,15 +39,34 @@ export async function getPrayersForWeek(week, year, options = {}) {
       pr.ministry_group,
       pr.ministry_tag,
       pr.logo_url,
+      pr.is_yhtyma_wide,
+      pr.tenant_id,
       pr.created_at,
       pr.updated_at,
-      u.name as author_name
+      u.name as author_name,
+      t.name as tenant_name
     FROM prayer_requests pr
     LEFT JOIN users u ON pr.user_id = u.id
+    LEFT JOIN tenants t ON pr.tenant_id = t.id
     WHERE pr.start_date <= $1 AND pr.end_date >= $2
   `;
 
   const params = [formatDate(endDate), formatDate(startDate)];
+  let paramIdx = 3;
+
+  if (targetTenantId) {
+    if (targetTenantParentId) {
+      // Parish is part of an yhtymä: include parish's own prayers AND any yhtymä-wide prayers from the union or sister parishes
+      sql += ` AND (pr.tenant_id = $${paramIdx} OR (pr.is_yhtyma_wide = true AND (pr.tenant_id = $${paramIdx + 1} OR pr.tenant_id IN (SELECT id FROM tenants WHERE parent_id = $${paramIdx + 1}))))`;
+      params.push(targetTenantId, targetTenantParentId);
+      paramIdx += 2;
+    } else {
+      // Standalone parish or direct tenant match
+      sql += ` AND (pr.tenant_id = $${paramIdx} OR pr.tenant_id IS NULL)`;
+      params.push(targetTenantId);
+      paramIdx++;
+    }
+  }
 
   if (!includeUnapproved) {
     sql += ` AND (pr.is_approved = true OR pr.type != 'public')`;
@@ -61,6 +96,9 @@ export async function getPrayersForWeek(week, year, options = {}) {
       ministryGroup: row.ministry_group || 'local',
       ministryTag: row.ministry_tag || null,
       logoUrl: row.logo_url || null,
+      isYhtymaWide: !!row.is_yhtyma_wide,
+      tenantId: row.tenant_id || null,
+      tenantName: row.tenant_name || null,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       authorName: row.author_name
@@ -72,7 +110,9 @@ export async function getPrayersForWeek(week, year, options = {}) {
       prayer.aiFlagReason = row.ai_flag_reason;
     }
 
-    grouped[row.type].push(prayer);
+    if (grouped[row.type]) {
+      grouped[row.type].push(prayer);
+    }
   }
 
   return grouped;
@@ -83,9 +123,10 @@ export async function getPrayersForWeek(week, year, options = {}) {
  */
 export async function getPrayerById(id) {
   const result = await query(
-    `SELECT pr.*, u.name as author_name
+    `SELECT pr.*, u.name as author_name, t.name as tenant_name
      FROM prayer_requests pr
      LEFT JOIN users u ON pr.user_id = u.id
+     LEFT JOIN tenants t ON pr.tenant_id = t.id
      WHERE pr.id = $1`,
     [id]
   );
@@ -108,14 +149,16 @@ export async function createPrayer({
   highlightPriority = 0,
   ministryGroup = 'local',
   ministryTag = null,
-  logoUrl = null
+  logoUrl = null,
+  isYhtymaWide = false,
+  tenantId = null
 }) {
   const result = await query(
     `INSERT INTO prayer_requests
-     (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+     (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url, is_yhtyma_wide, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      RETURNING *`,
-    [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl]
+    [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl, isYhtymaWide, tenantId]
   );
   return result.rows[0];
 }
@@ -134,7 +177,9 @@ export async function updatePrayer(id, {
   highlightPriority,
   ministryGroup,
   ministryTag,
-  logoUrl
+  logoUrl,
+  isYhtymaWide,
+  tenantId
 }) {
   const updates = [];
   const values = [];
@@ -183,6 +228,14 @@ export async function updatePrayer(id, {
   if (logoUrl !== undefined) {
     updates.push(`logo_url = $${paramIndex++}`);
     values.push(logoUrl);
+  }
+  if (isYhtymaWide !== undefined) {
+    updates.push(`is_yhtyma_wide = $${paramIndex++}`);
+    values.push(isYhtymaWide);
+  }
+  if (tenantId !== undefined) {
+    updates.push(`tenant_id = $${paramIndex++}`);
+    values.push(tenantId);
   }
 
   if (updates.length === 0) {

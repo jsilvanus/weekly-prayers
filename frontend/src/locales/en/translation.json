@@ -113,7 +113,8 @@
     "pastor": {
       "title": "Pastor's Topic",
       "add": "Add topic",
-      "edit": "Edit topic"
+      "edit": "Edit topic",
+      "yhtymaWide": "Parish-union-wide pastor's topic"
     },
     "bishop": {
       "title": "Bishop's Topic",
@@ -125,7 +126,9 @@
       "title": "Add Ministry Prayer Request",
       "add": "Add ministry request",
       "group": "Prayer Group",
-      "tag": "Ministry Tag"
+      "tag": "Ministry Tag",
+      "yhtymaWide": "Union-wide prayer topic",
+      "yhtymaWideDesc": "This topic will be visible across all parishes in {{yhtymaName}}."
     },
     "export": {
       "title": "Print Intercessions",

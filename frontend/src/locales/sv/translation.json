@@ -113,7 +113,8 @@
     "pastor": {
       "title": "Kyrkoherdens ämne",
       "add": "Lägg till ämne",
-      "edit": "Redigera ämne"
+      "edit": "Redigera ämne",
+      "yhtymaWide": "Kyrkoherdens ämne för hela kyrkliga samfälligheten"
     },
     "bishop": {
       "title": "Biskopens ämne",
@@ -125,7 +126,9 @@
       "title": "Lägg till arbetsområdes bönebegäran",
       "add": "Lägg till begäran",
       "group": "Bönegrupp",
-      "tag": "Arbetsområde"
+      "tag": "Arbetsområde",
+      "yhtymaWide": "Gemensamt ämne för kyrkliga samfälligheten",
+      "yhtymaWideDesc": "Ämnet visas i alla församlingar inom {{yhtymaName}}."
     },
     "export": {
       "title": "Skriv ut förbön",
