@@ -3,6 +3,7 @@ import { query } from '../db/index.js';
 const DEFAULT_SETTINGS = {
   parish_name: 'Tuomiokirkkoseurakunta',
   parish_subtitle: 'Viikon rukousaiheet',
+  yhtyma_name: 'Tampereen seurakuntayhtymä',
   color_palette: 'cathedral_blue', // cathedral_blue, liturgical_green, episcopal_purple, liturgical_red, liturgical_gold, custom
   custom_color: '#1e3a5f',
   show_church_logo: 'true',
@@ -47,6 +48,24 @@ export async function updateSettings(newSettings = {}) {
        SET value = EXCLUDED.value, updated_at = NOW()`,
       [key, value]
     );
+  }
+
+  // Synchronize tenant names if parish_name or yhtyma_name are updated
+  try {
+    if (newSettings.parish_name) {
+      await query(
+        `UPDATE tenants SET name = $1, updated_at = NOW() WHERE slug = 'tuomiokirkko'`,
+        [newSettings.parish_name.trim()]
+      );
+    }
+    if (newSettings.yhtyma_name) {
+      await query(
+        `UPDATE tenants SET name = $1, updated_at = NOW() WHERE type = 'seurakuntayhtyma'`,
+        [newSettings.yhtyma_name.trim()]
+      );
+    }
+  } catch (e) {
+    // Tenants table might not exist in old migrations
   }
 
   return getAllSettings();

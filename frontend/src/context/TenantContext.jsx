@@ -1,9 +1,13 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { useSettings } from './SettingsContext';
 
 const TenantContext = createContext(null);
 
 export function TenantProvider({ children }) {
+  const settingsContext = useSettings();
+  const settings = settingsContext?.settings || {};
+
   const [selectedSlug, setSelectedSlug] = useState(() => {
     return localStorage.getItem('selected_tenant_slug') || 'tuomiokirkko';
   });
@@ -11,7 +15,7 @@ export function TenantProvider({ children }) {
   const [tenantHierarchy, setTenantHierarchy] = useState({
     tenant: {
       id: 'e2000000-0000-0000-0000-000000000001',
-      name: 'Tuomiokirkkoseurakunta',
+      name: settings.parish_name || 'Tuomiokirkkoseurakunta',
       slug: 'tuomiokirkko',
       type: 'seurakunta',
       parent_id: 'e1000000-0000-0000-0000-000000000001',
@@ -19,7 +23,7 @@ export function TenantProvider({ children }) {
     },
     yhtyma: {
       id: 'e1000000-0000-0000-0000-000000000001',
-      name: 'Tampereen seurakuntayhtymä',
+      name: settings.yhtyma_name || 'Tampereen seurakuntayhtymä',
       slug: 'tampereen-seurakuntayhtyma',
       type: 'seurakuntayhtyma'
     },
@@ -29,7 +33,7 @@ export function TenantProvider({ children }) {
       { id: 'e2000000-0000-0000-0000-000000000003', name: 'Messukylän seurakunta', slug: 'messukyla', type: 'seurakunta' }
     ],
     allParishesInYhtyma: [
-      { id: 'e2000000-0000-0000-0000-000000000001', name: 'Tuomiokirkkoseurakunta', slug: 'tuomiokirkko', type: 'seurakunta' },
+      { id: 'e2000000-0000-0000-0000-000000000001', name: settings.parish_name || 'Tuomiokirkkoseurakunta', slug: 'tuomiokirkko', type: 'seurakunta' },
       { id: 'e2000000-0000-0000-0000-000000000002', name: 'Harjun seurakunta', slug: 'harju', type: 'seurakunta' },
       { id: 'e2000000-0000-0000-0000-000000000003', name: 'Messukylän seurakunta', slug: 'messukyla', type: 'seurakunta' }
     ]
@@ -61,12 +65,34 @@ export function TenantProvider({ children }) {
     setSelectedSlug(slug);
   };
 
+  // Overlay configurable names from settings
+  const effectiveTenant = {
+    ...tenantHierarchy.tenant,
+    name: (tenantHierarchy.tenant?.slug === 'tuomiokirkko' && settings?.parish_name)
+      ? settings.parish_name
+      : tenantHierarchy.tenant?.name
+  };
+
+  const effectiveYhtyma = tenantHierarchy.yhtyma ? {
+    ...tenantHierarchy.yhtyma,
+    name: settings?.yhtyma_name || tenantHierarchy.yhtyma?.name
+  } : null;
+
+  const effectiveAllParishes = (tenantHierarchy.allParishesInYhtyma || []).map(p => {
+    if (p.slug === 'tuomiokirkko' && settings?.parish_name) {
+      return { ...p, name: settings.parish_name };
+    }
+    return p;
+  });
+
+  const effectiveSisterParishes = effectiveAllParishes.filter(p => p.id !== effectiveTenant.id);
+
   const value = {
-    currentTenant: tenantHierarchy.tenant,
-    yhtyma: tenantHierarchy.yhtyma,
+    currentTenant: effectiveTenant,
+    yhtyma: effectiveYhtyma,
     isPartOfYhtyma: tenantHierarchy.isPartOfYhtyma,
-    sisterParishes: tenantHierarchy.sisterParishes || [],
-    allParishesInYhtyma: tenantHierarchy.allParishesInYhtyma || [],
+    sisterParishes: effectiveSisterParishes,
+    allParishesInYhtyma: effectiveAllParishes,
     selectedSlug,
     switchParish,
     refetchTenant: () => fetchHierarchy(selectedSlug),

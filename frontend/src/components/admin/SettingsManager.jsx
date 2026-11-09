@@ -53,12 +53,12 @@ function SettingsManager() {
         {/* 1. Parish Details */}
         <div className="card">
           <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
-            <span>🏛️</span> Seurakunnan perustiedot
+            <span>🏛️</span> Seurakunnan ja yhtymän perustiedot
           </h3>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="label">Seurakunnan nimi</label>
+              <label className="label">Seurakunnan nimi (Parish)</label>
               <input
                 type="text"
                 value={formData.parish_name || ''}
@@ -66,6 +66,22 @@ function SettingsManager() {
                 className="input text-sm"
                 placeholder="esim. Tuomiokirkkoseurakunta"
               />
+              <p className="text-[11px] text-gray-500 mt-1">
+                Näkyy sivuston otsikossa, yläpalkissa ja esirukouslistassa.
+              </p>
+            </div>
+            <div>
+              <label className="label">Seurakuntayhtymän nimi (Union / Yhtymä)</label>
+              <input
+                type="text"
+                value={formData.yhtyma_name || ''}
+                onChange={(e) => setFormData({ ...formData, yhtyma_name: e.target.value })}
+                className="input text-sm"
+                placeholder="esim. Tampereen seurakuntayhtymä"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">
+                Näkyy rukoussivun seurakuntavalitsimessa ja yhtymän yhteisissä aiheissa.
+              </p>
             </div>
             <div>
               <label className="label">Alaotsikko / Teema</label>

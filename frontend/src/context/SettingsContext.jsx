@@ -125,6 +125,7 @@ export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState({
     parish_name: 'Tuomiokirkkoseurakunta',
     parish_subtitle: 'Viikon rukousaiheet',
+    yhtyma_name: 'Tampereen seurakuntayhtymä',
     color_palette: 'cathedral_blue',
     custom_color: '#1e3a5f',
     show_church_logo: 'true',

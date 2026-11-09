@@ -24,6 +24,7 @@ const mockData = {
   settings: {
     parish_name: 'Tuomiokirkkoseurakunta',
     parish_subtitle: 'Viikon 45/2026 rukousaiheet',
+    yhtyma_name: 'Tampereen seurakuntayhtymä',
     color_palette: 'cathedral_blue',
     custom_color: '#1e3a5f',
     show_church_logo: 'true',

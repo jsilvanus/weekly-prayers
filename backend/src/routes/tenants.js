@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllTenants, getTenantHierarchy, getTenantBySlugOrId } from '../services/tenantService.js';
+import { getAllTenants, getTenantHierarchy, getTenantBySlugOrId, updateTenant } from '../services/tenantService.js';
 
 const router = Router();
 
@@ -33,6 +33,23 @@ router.get('/:identifier', async (req, res, next) => {
       return res.status(404).json({ error: { message: 'Tenant not found' } });
     }
     res.json(hierarchy);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /api/tenants/:identifier - Update tenant details (admin only)
+router.put('/:identifier', async (req, res, next) => {
+  try {
+    const { identifier } = req.params;
+    const updated = await updateTenant(identifier, req.body);
+    if (!updated) {
+      return res.status(404).json({ error: { message: 'Tenant not found' } });
+    }
+    res.json({
+      message: 'Tenant updated successfully',
+      tenant: updated
+    });
   } catch (error) {
     next(error);
   }

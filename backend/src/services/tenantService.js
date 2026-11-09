@@ -94,3 +94,41 @@ export async function getTenantHierarchy(identifier = 'tuomiokirkko') {
     allParishesInYhtyma
   };
 }
+
+/**
+ * Update tenant details (e.g. name, diocese, colors)
+ */
+export async function updateTenant(identifier, updates = {}) {
+  const tenant = await getTenantBySlugOrId(identifier);
+  if (!tenant) return null;
+
+  const fields = [];
+  const values = [];
+  let idx = 1;
+
+  if (updates.name !== undefined) {
+    fields.push(`name = $${idx++}`);
+    values.push(updates.name.trim());
+  }
+  if (updates.diocese !== undefined) {
+    fields.push(`diocese = $${idx++}`);
+    values.push(updates.diocese.trim());
+  }
+  if (updates.color_palette !== undefined) {
+    fields.push(`color_palette = $${idx++}`);
+    values.push(updates.color_palette);
+  }
+  if (updates.custom_color !== undefined) {
+    fields.push(`custom_color = $${idx++}`);
+    values.push(updates.custom_color);
+  }
+
+  if (fields.length === 0) return tenant;
+
+  fields.push(`updated_at = NOW()`);
+  values.push(tenant.id);
+
+  const sql = `UPDATE tenants SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`;
+  const result = await query(sql, values);
+  return result.rows[0];
+}
