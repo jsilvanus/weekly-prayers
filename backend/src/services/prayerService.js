@@ -19,6 +19,10 @@ export async function getPrayersForWeek(week, year, options = {}) {
       pr.start_date,
       pr.end_date,
       pr.is_approved,
+      pr.highlight_priority,
+      pr.ministry_group,
+      pr.ministry_tag,
+      pr.logo_url,
       pr.created_at,
       pr.updated_at,
       u.name as author_name
@@ -33,12 +37,13 @@ export async function getPrayersForWeek(week, year, options = {}) {
     sql += ` AND (pr.is_approved = true OR pr.type != 'public')`;
   }
 
-  sql += ` ORDER BY pr.type, pr.created_at DESC`;
+  sql += ` ORDER BY pr.type, pr.highlight_priority DESC, pr.created_at DESC`;
 
   const result = await query(sql, params);
 
   // Group by type
   const grouped = {
+    bishop: [],
     pastor: [],
     staff: [],
     public: []
@@ -52,6 +57,10 @@ export async function getPrayersForWeek(week, year, options = {}) {
       startDate: row.start_date,
       endDate: row.end_date,
       isApproved: row.is_approved,
+      highlightPriority: row.highlight_priority || 0,
+      ministryGroup: row.ministry_group || 'local',
+      ministryTag: row.ministry_tag || null,
+      logoUrl: row.logo_url || null,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       authorName: row.author_name
@@ -95,14 +104,18 @@ export async function createPrayer({
   aiFlagReason,
   startDate,
   endDate,
-  isApproved = false
+  isApproved = false,
+  highlightPriority = 0,
+  ministryGroup = 'local',
+  ministryTag = null,
+  logoUrl = null
 }) {
   const result = await query(
     `INSERT INTO prayer_requests
-     (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING *`,
-    [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved]
+    [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl]
   );
   return result.rows[0];
 }
@@ -117,7 +130,11 @@ export async function updatePrayer(id, {
   aiFlagReason,
   startDate,
   endDate,
-  isApproved
+  isApproved,
+  highlightPriority,
+  ministryGroup,
+  ministryTag,
+  logoUrl
 }) {
   const updates = [];
   const values = [];
@@ -150,6 +167,22 @@ export async function updatePrayer(id, {
   if (isApproved !== undefined) {
     updates.push(`is_approved = $${paramIndex++}`);
     values.push(isApproved);
+  }
+  if (highlightPriority !== undefined) {
+    updates.push(`highlight_priority = $${paramIndex++}`);
+    values.push(highlightPriority);
+  }
+  if (ministryGroup !== undefined) {
+    updates.push(`ministry_group = $${paramIndex++}`);
+    values.push(ministryGroup);
+  }
+  if (ministryTag !== undefined) {
+    updates.push(`ministry_tag = $${paramIndex++}`);
+    values.push(ministryTag);
+  }
+  if (logoUrl !== undefined) {
+    updates.push(`logo_url = $${paramIndex++}`);
+    values.push(logoUrl);
   }
 
   if (updates.length === 0) {
@@ -185,4 +218,11 @@ export async function deletePrayer(id) {
  */
 export async function approvePrayer(id, approved) {
   return updatePrayer(id, { isApproved: approved });
+}
+
+/**
+ * Update prayer highlight priority (z-value)
+ */
+export async function updatePrayerHighlight(id, highlightPriority) {
+  return updatePrayer(id, { highlightPriority: parseInt(highlightPriority, 10) || 0 });
 }

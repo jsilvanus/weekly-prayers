@@ -6,28 +6,66 @@
   "nav": {
     "home": "Home",
     "admin": "Admin",
+    "intercessionList": "Prayer List",
     "login": "Login",
     "logout": "Logout"
   },
   "prayers": {
+    "invocation": "In the name of the Father, and of the Son, and of the Holy Spirit. Amen.",
+    "bishop": {
+      "title": "Bishop's Topic",
+      "pill": "Bishop",
+      "empty": "No bishop's topic for this week"
+    },
     "pastor": {
       "title": "Pastor's Topic",
       "empty": "No pastor's topic for this week"
     },
     "staff": {
-      "title": "Staff Prayer Requests",
-      "empty": "No staff prayer requests for this week"
+      "title": "Ministry Prayer Requests",
+      "empty": "No ministry prayer requests for this week"
     },
     "public": {
-      "title": "Congregation Prayer Requests",
-      "empty": "No public prayer requests for this week"
+      "title": "Parishioners' Prayer Requests",
+      "empty": "No parishioners' prayer requests for this week"
+    },
+    "lordsPrayer": {
+      "title": "The Lord's Prayer",
+      "text": "Our Father, who art in heaven,\nhallowed be thy name;\nthy kingdom come;\nthy will be done;\non earth as it is in heaven.\nGive us this day our daily bread.\nAnd forgive us our trespasses,\nas we forgive those who trespass against us.\nAnd lead us not into temptation;\nbut deliver us from evil.\nFor thine is the kingdom, the power, and the glory,\nfor ever and ever. Amen."
     },
     "submit": {
       "title": "Submit a Prayer Request",
+      "openButton": "✨ Submit a Prayer Request",
+      "loggedInAs": "Logged in as",
+      "timelineTitle": "Select visibility timeline from calendar",
+      "timelineDesc": "Define when the prayer becomes visible and when it expires",
       "placeholder": "Write your prayer request here...",
-      "button": "Submit",
+      "button": "Submit Prayer Request",
       "success": "Prayer request submitted! It will be reviewed before publication.",
-      "error": "Failed to submit prayer request"
+      "error": "Failed to submit prayer request",
+      "close": "Close"
+    },
+    "seeAll": "See all ({{count}})",
+    "showLess": "Collapse",
+    "highlighted": "Highlighted",
+    "filterByMinistry": "Filter by Ministry:"
+  },
+  "ministries": {
+    "all": "All",
+    "groups": {
+      "local": "Local Prayers",
+      "international": "International Prayers",
+      "children_youth": "Children, Youth & Families",
+      "diaconal_care": "Diaconal Work & Care"
+    },
+    "tags": {
+      "diaconia": "Diaconia",
+      "youth": "Youth Work",
+      "mission": "Mission",
+      "music": "Music Ministry",
+      "early_childhood": "Early Childhood",
+      "worship": "Worship & Liturgy",
+      "community": "Community Care"
     }
   },
   "counter": {
@@ -49,13 +87,25 @@
       "delete": "Delete",
       "confirmDelete": "Are you sure you want to delete this prayer request?"
     },
+    "highlights": {
+      "title": "Prayer Highlights",
+      "desc": "Select 1–4 highlighted prayers from ministry and parishioner requests. Prayers with highest Z-values appear first. When a highlighted prayer expires, the next highest in line automatically takes its place.",
+      "zValue": "Highlight Z-value (priority)",
+      "highlight": "Highlight",
+      "remove": "Remove highlight",
+      "activeHighlights": "Active Highlights (Top 1–4 shown)",
+      "availablePrayers": "All Approved Prayers"
+    },
     "users": {
       "title": "User Management",
       "role": "Role",
       "changeRole": "Change role",
       "roles": {
         "admin": "Administrator",
+        "bishop": "Bishop",
+        "coordinator": "Coordinator",
         "worker": "Staff",
+        "prayer_group": "Prayer Group",
         "user": "User"
       }
     },
@@ -64,9 +114,22 @@
       "add": "Add topic",
       "edit": "Edit topic"
     },
+    "bishop": {
+      "title": "Bishop's Topic",
+      "add": "Add bishop's topic",
+      "placeholder": "Enter bishop's prayer topic here...",
+      "success": "Bishop's prayer topic added successfully."
+    },
     "staff": {
-      "title": "Add Staff Prayer Request",
-      "add": "Add request"
+      "title": "Add Ministry Prayer Request",
+      "add": "Add ministry request",
+      "group": "Prayer Group",
+      "tag": "Ministry Tag"
+    },
+    "export": {
+      "title": "Print Intercessions",
+      "all": "Print All",
+      "highlightsOnly": "Print Highlights Only"
     }
   },
   "common": {

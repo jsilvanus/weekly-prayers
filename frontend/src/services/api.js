@@ -48,15 +48,20 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ content, startDate, endDate }),
     }),
-  submitStaffPrayer: (content, startDate, endDate) =>
+  submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag) =>
     request('/prayers/staff', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate }),
+      body: JSON.stringify({ content, startDate, endDate, ministryGroup, ministryTag }),
     }),
-  submitPastorPrayer: (content, startDate, endDate) =>
+  submitPastorPrayer: (content, startDate, endDate, logoUrl) =>
     request('/prayers/pastor', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate }),
+      body: JSON.stringify({ content, startDate, endDate, logoUrl }),
+    }),
+  submitBishopPrayer: (content, startDate, endDate, logoUrl) =>
+    request('/prayers/bishop', {
+      method: 'POST',
+      body: JSON.stringify({ content, startDate, endDate, logoUrl }),
     }),
   updatePrayer: (id, data) =>
     request(`/prayers/${id}`, {
@@ -69,6 +74,24 @@ export const api = {
     request(`/prayers/${id}/approve`, {
       method: 'POST',
       body: JSON.stringify({ approved }),
+    }),
+  updatePrayerHighlight: (id, highlightPriority) =>
+    request(`/prayers/${id}/highlight`, {
+      method: 'PUT',
+      body: JSON.stringify({ highlightPriority }),
+    }),
+
+  // Settings & Appearance
+  getSettings: () => request('/settings'),
+  updateSettings: (settings) =>
+    request('/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ settings }),
+    }),
+  uploadImage: (image, name) =>
+    request('/settings/upload', {
+      method: 'POST',
+      body: JSON.stringify({ image, name }),
     }),
 
   // Counts

@@ -65,7 +65,12 @@ export function AuthProvider({ children }) {
 
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
-  const isWorkerOrAbove = user?.role === 'admin' || user?.role === 'worker';
+  const isBishop = user?.role === 'bishop';
+  const isPrayerGroup = user?.role === 'prayer_group';
+  const isCoordinator = user?.role === 'coordinator';
+  const isCoordinatorOrAbove = user?.role === 'admin' || user?.role === 'coordinator';
+  const isWorkerOrAbove = user?.role === 'admin' || user?.role === 'coordinator' || user?.role === 'worker';
+  const canAccessPrayerList = isWorkerOrAbove || isBishop || isPrayerGroup;
 
   return (
     <AuthContext.Provider
@@ -74,7 +79,12 @@ export function AuthProvider({ children }) {
         loading,
         isAuthenticated,
         isAdmin,
+        isBishop,
+        isPrayerGroup,
+        isCoordinator,
+        isCoordinatorOrAbove,
         isWorkerOrAbove,
+        canAccessPrayerList,
         login,
         logout,
       }}

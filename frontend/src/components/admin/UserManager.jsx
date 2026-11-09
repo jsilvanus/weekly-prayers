@@ -86,7 +86,10 @@ function UserManager() {
                       className="input py-1 px-2 text-sm w-32"
                     >
                       <option value="user">{t('admin.users.roles.user')}</option>
+                      <option value="prayer_group">{t('admin.users.roles.prayer_group') || 'Rukousryhmä'}</option>
                       <option value="worker">{t('admin.users.roles.worker')}</option>
+                      <option value="coordinator">{t('admin.users.roles.coordinator')}</option>
+                      <option value="bishop">{t('admin.users.roles.bishop')}</option>
                       <option value="admin">{t('admin.users.roles.admin')}</option>
                     </select>
                   ) : (
@@ -107,12 +110,15 @@ function RoleBadge({ role }) {
 
   const colors = {
     admin: 'bg-purple-100 text-purple-800',
+    bishop: 'bg-indigo-100 text-indigo-900 border border-indigo-200',
+    coordinator: 'bg-amber-100 text-amber-800',
     worker: 'bg-blue-100 text-blue-800',
+    prayer_group: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
     user: 'bg-gray-100 text-gray-800',
   };
 
   return (
-    <span className={`px-2 py-1 rounded text-xs font-medium ${colors[role]}`}>
+    <span className={`px-2 py-1 rounded text-xs font-medium ${colors[role] || 'bg-gray-100 text-gray-800'}`}>
       {t(`admin.users.roles.${role}`)}
     </span>
   );

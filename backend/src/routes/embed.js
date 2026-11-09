@@ -76,7 +76,7 @@ router.get('/widget.js', (req, res) => {
 
       if (data.prayers.staff.length > 0) {
         html += '<div class="wp-section wp-staff">';
-        html += '<h4>Työntekijöiden aiheet</h4>';
+        html += '<h4>Työalojen aiheet</h4>';
         data.prayers.staff.forEach(function(p) {
           html += '<p>' + escapeHtml(p.content) + '</p>';
         });
@@ -85,7 +85,7 @@ router.get('/widget.js', (req, res) => {
 
       if (data.prayers.public.length > 0) {
         html += '<div class="wp-section wp-public">';
-        html += '<h4>Seurakunnan aiheet</h4>';
+        html += '<h4>Seurakuntalaisten aiheet</h4>';
         data.prayers.public.forEach(function(p) {
           html += '<p>' + escapeHtml(p.content) + '</p>';
         });
@@ -159,12 +159,12 @@ router.get('/iframe', async (req, res, next) => {
   ` : ''}
 
   ${prayers.staff.length > 0 ? `
-    <h3>Työntekijöiden aiheet</h3>
+    <h3>Työalojen aiheet</h3>
     ${prayers.staff.map(p => `<div class="prayer">${escapeHtml(p.content)}</div>`).join('')}
   ` : ''}
 
   ${prayers.public.filter(p => p.isApproved).length > 0 ? `
-    <h3>Seurakunnan aiheet</h3>
+    <h3>Seurakuntalaisten aiheet</h3>
     ${prayers.public.filter(p => p.isApproved).map(p => `<div class="prayer">${escapeHtml(p.content)}</div>`).join('')}
   ` : ''}
 

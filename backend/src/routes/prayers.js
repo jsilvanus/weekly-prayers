@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { getPrayersForWeek, createPrayer, getPrayerById, updatePrayer, deletePrayer, approvePrayer } from '../services/prayerService.js';
+import { getPrayersForWeek, createPrayer, getPrayerById, updatePrayer, deletePrayer, approvePrayer, updatePrayerHighlight } from '../services/prayerService.js';
 import { getCurrentWeekInfo, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
 import { optionalAuth, requireAuth } from '../middleware/authenticate.js';
-import { isWorkerOrAbove, requireWorker, requireAdmin } from '../middleware/authorize.js';
+import { isWorkerOrAbove, requireWorker, requireAdmin, requireCoordinator, requireBishopOrAdmin } from '../middleware/authorize.js';
 import { sanitizePrayerContent } from '../services/aiSanitizer.js';
 
 const router = Router();
@@ -141,7 +141,7 @@ router.post('/', optionalAuth, async (req, res, next) => {
 // POST /api/prayers/staff - Submit a staff prayer request (worker+)
 router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
   try {
-    const { content, startDate, endDate } = req.body;
+    const { content, startDate, endDate, ministryGroup, ministryTag } = req.body;
 
     // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -169,7 +169,7 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
       prayerEndDate = formatDate(dates.endDate);
     }
 
-    // Staff prayers don't need AI sanitization or approval
+    // Ministry/Staff prayers don't need AI sanitization or approval
     const prayer = await createPrayer({
       userId: req.user.id,
       type: 'staff',
@@ -179,11 +179,13 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
       aiFlagReason: null,
       startDate: prayerStartDate,
       endDate: prayerEndDate,
-      isApproved: true // Staff prayers are auto-approved
+      isApproved: true, // Staff prayers are auto-approved
+      ministryGroup: ministryGroup || 'local',
+      ministryTag: ministryTag || null
     });
 
     res.status(201).json({
-      message: 'Staff prayer request created successfully.',
+      message: 'Ministry prayer request created successfully.',
       prayer: {
         id: prayer.id,
         type: prayer.type,
@@ -191,6 +193,8 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
         startDate: prayer.start_date,
         endDate: prayer.end_date,
         isApproved: prayer.is_approved,
+        ministryGroup: prayer.ministry_group,
+        ministryTag: prayer.ministry_tag,
         createdAt: prayer.created_at
       }
     });
@@ -202,7 +206,7 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
 // POST /api/prayers/pastor - Submit the pastor's prayer topic (admin only)
 router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    const { content, startDate, endDate } = req.body;
+    const { content, startDate, endDate, logoUrl } = req.body;
 
     // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -240,7 +244,8 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
       aiFlagReason: null,
       startDate: prayerStartDate,
       endDate: prayerEndDate,
-      isApproved: true
+      isApproved: true,
+      logoUrl: logoUrl || null
     });
 
     res.status(201).json({
@@ -252,6 +257,68 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
         startDate: prayer.start_date,
         endDate: prayer.end_date,
         isApproved: prayer.is_approved,
+        logoUrl: prayer.logo_url,
+        createdAt: prayer.created_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/prayers/bishop - Submit the optional bishop's prayer topic (bishop or admin)
+router.post('/bishop', requireAuth, requireBishopOrAdmin, async (req, res, next) => {
+  try {
+    const { content, startDate, endDate, logoUrl } = req.body;
+
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({
+        error: { message: 'Content is required' }
+      });
+    }
+
+    if (content.length > 3000) {
+      return res.status(400).json({
+        error: { message: 'Content must be 3000 characters or less' }
+      });
+    }
+
+    let prayerStartDate, prayerEndDate;
+
+    if (startDate && endDate) {
+      prayerStartDate = startDate;
+      prayerEndDate = endDate;
+    } else {
+      const { week, year } = getCurrentWeekInfo();
+      const dates = getWeekDates(week, year);
+      prayerStartDate = formatDate(dates.startDate);
+      prayerEndDate = formatDate(dates.endDate);
+    }
+
+    // Bishop prayers are auto-approved
+    const prayer = await createPrayer({
+      userId: req.user.id,
+      type: 'bishop',
+      originalContent: content.trim(),
+      sanitizedContent: content.trim(),
+      aiFlagged: false,
+      aiFlagReason: null,
+      startDate: prayerStartDate,
+      endDate: prayerEndDate,
+      isApproved: true,
+      logoUrl: logoUrl || null
+    });
+
+    res.status(201).json({
+      message: 'Bishop prayer topic created successfully.',
+      prayer: {
+        id: prayer.id,
+        type: prayer.type,
+        content: prayer.original_content,
+        startDate: prayer.start_date,
+        endDate: prayer.end_date,
+        isApproved: prayer.is_approved,
+        logoUrl: prayer.logo_url,
         createdAt: prayer.created_at
       }
     });
@@ -275,8 +342,14 @@ router.put('/:id', requireAuth, requireWorker, async (req, res, next) => {
       });
     }
 
-    // Check permissions: admin can edit all, worker can edit staff/public, pastor only by admin
+    // Check permissions: admin can edit all, worker can edit staff/public, bishop by admin or bishop, pastor only by admin
     const isAdmin = req.user.role === 'admin';
+    const isBishop = req.user.role === 'bishop';
+    if (existingPrayer.type === 'bishop' && !isAdmin && !isBishop) {
+      return res.status(403).json({
+        error: { message: 'Only admin or bishop can edit bishop prayer topics' }
+      });
+    }
     if (existingPrayer.type === 'pastor' && !isAdmin) {
       return res.status(403).json({
         error: { message: 'Only admin can edit pastor prayer topics' }
@@ -332,8 +405,14 @@ router.delete('/:id', requireAuth, requireWorker, async (req, res, next) => {
       });
     }
 
-    // Check permissions: admin can delete all, worker can delete staff/public, pastor only by admin
+    // Check permissions: admin can delete all, worker can delete staff/public, bishop by admin or bishop, pastor only by admin
     const isAdmin = req.user.role === 'admin';
+    const isBishop = req.user.role === 'bishop';
+    if (existingPrayer.type === 'bishop' && !isAdmin && !isBishop) {
+      return res.status(403).json({
+        error: { message: 'Only admin or bishop can delete bishop prayer topics' }
+      });
+    }
     if (existingPrayer.type === 'pastor' && !isAdmin) {
       return res.status(403).json({
         error: { message: 'Only admin can delete pastor prayer topics' }
@@ -387,6 +466,44 @@ router.post('/:id/approve', requireAuth, requireWorker, async (req, res, next) =
         type: updatedPrayer.type,
         content: updatedPrayer.sanitized_content || updatedPrayer.original_content,
         isApproved: updatedPrayer.is_approved,
+        highlightPriority: updatedPrayer.highlight_priority,
+        updatedAt: updatedPrayer.updated_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /api/prayers/:id/highlight - Set prayer highlight priority / z-value (coordinator+)
+router.put('/:id/highlight', requireAuth, requireCoordinator, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { highlightPriority } = req.body;
+
+    const priorityValue = parseInt(highlightPriority, 10);
+    if (isNaN(priorityValue) || priorityValue < 0) {
+      return res.status(400).json({
+        error: { message: 'highlightPriority must be a non-negative integer' }
+      });
+    }
+
+    const existingPrayer = await getPrayerById(id);
+    if (!existingPrayer) {
+      return res.status(404).json({
+        error: { message: 'Prayer request not found' }
+      });
+    }
+
+    const updatedPrayer = await updatePrayerHighlight(id, priorityValue);
+
+    res.json({
+      message: priorityValue > 0 ? 'Prayer highlighted successfully.' : 'Prayer highlight removed.',
+      prayer: {
+        id: updatedPrayer.id,
+        type: updatedPrayer.type,
+        highlightPriority: updatedPrayer.highlight_priority,
+        content: updatedPrayer.sanitized_content || updatedPrayer.original_content,
         updatedAt: updatedPrayer.updated_at
       }
     });

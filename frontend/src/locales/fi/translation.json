@@ -6,28 +6,66 @@
   "nav": {
     "home": "Etusivu",
     "admin": "Hallinta",
+    "intercessionList": "Esirukouslista",
     "login": "Kirjaudu",
     "logout": "Kirjaudu ulos"
   },
   "prayers": {
+    "invocation": "Isän ja Pojan ja Pyhän Hengen nimeen. Aamen.",
+    "bishop": {
+      "title": "Piispan rukousaihe",
+      "pill": "Piispa",
+      "empty": "Ei piispan aihetta tälle viikolle"
+    },
     "pastor": {
       "title": "Kirkkoherran aihe",
       "empty": "Ei kirkkoherran aihetta tälle viikolle"
     },
     "staff": {
-      "title": "Työntekijöiden rukousaiheet",
-      "empty": "Ei työntekijöiden rukousaiheita tälle viikolle"
+      "title": "Työalojen rukousaiheet",
+      "empty": "Ei työalojen rukousaiheita tälle viikolle"
     },
     "public": {
-      "title": "Seurakunnan rukousaiheet",
-      "empty": "Ei julkisia rukousaiheita tälle viikolle"
+      "title": "Seurakuntalaisten rukousaiheet",
+      "empty": "Ei seurakuntalaisten rukousaiheita tälle viikolle"
+    },
+    "lordsPrayer": {
+      "title": "Isä meidän",
+      "text": "Isä meidän, joka olet taivaissa.\nPyhitetty olkoon sinun nimesi.\nTulkoon sinun valtakuntasi.\nTapahtukoon sinun tahtosi,\nmyös maan päällä niin kuin taivaassa.\nAnna meille tänä päivänä meidän jokapäiväinen leipämme.\nJa anna meille meidän syntimme anteeksi,\nniin kuin mekin anteeksi annamme niille,\njotka ovat meitä vastaan rikkoneet.\nÄläkä saata meitä kiusaukseen,\nvaan päästä meidät pahasta.\nSillä sinun on valtakunta ja voima ja kunnia\niankaikkisesti. Aamen."
     },
     "submit": {
       "title": "Jätä rukouspyyntö",
+      "openButton": "✨ Jätä rukouspyyntö",
+      "loggedInAs": "Kirjautuneena käyttäjänä",
+      "timelineTitle": "Valitse näkyvyysaika kalenterista",
+      "timelineDesc": "Milloin rukousaihe tulee näkyviin ja milloin se päättyy",
       "placeholder": "Kirjoita rukouspyyntösi tähän...",
-      "button": "Lähetä",
+      "button": "Lähetä rukouspyyntö",
       "success": "Rukouspyyntö lähetetty! Se tarkistetaan ennen julkaisua.",
-      "error": "Rukouspyynnön lähetys epäonnistui"
+      "error": "Rukouspyynnön lähetys epäonnistui",
+      "close": "Sulje"
+    },
+    "seeAll": "Näytä kaikki ({{count}})",
+    "showLess": "Pienennä",
+    "highlighted": "Nosto",
+    "filterByMinistry": "Suodata työaloittain:"
+  },
+  "ministries": {
+    "all": "Kaikki",
+    "groups": {
+      "local": "Paikalliset rukousaiheet",
+      "international": "Kansainväliset rukousaiheet",
+      "children_youth": "Lapset, nuoret ja perheet",
+      "diaconal_care": "Diakonia ja huolenpito"
+    },
+    "tags": {
+      "diaconia": "Diakonia",
+      "youth": "Nuorisotyö",
+      "mission": "Lähetystyö",
+      "music": "Musiikkityö",
+      "early_childhood": "Varhaiskasvatus",
+      "worship": "Jumalanpalvelus",
+      "community": "Yhteisötyö"
     }
   },
   "counter": {
@@ -49,13 +87,25 @@
       "delete": "Poista",
       "confirmDelete": "Haluatko varmasti poistaa tämän rukouspyynnön?"
     },
+    "highlights": {
+      "title": "Rukousnostot",
+      "desc": "Valitse työalojen ja seurakuntalaisten aiheista 1–4 nostoa. Korkeimman Z-arvon rukoukset näytetään ensin. Jos nosto päättyy aikataulun umpeutuessa, seuraava Z-jonossa oleva nousee automaattisesti tilalle.",
+      "zValue": "Noston Z-arvo (prioriteetti)",
+      "highlight": "Nosta esiin",
+      "remove": "Poista nosto",
+      "activeHighlights": "Aktiiviset nostot (Top 1–4 esillä)",
+      "availablePrayers": "Kaikki hyväksytyt aiheet"
+    },
     "users": {
       "title": "Käyttäjähallinta",
       "role": "Rooli",
       "changeRole": "Vaihda rooli",
       "roles": {
         "admin": "Ylläpitäjä",
+        "bishop": "Piispa",
+        "coordinator": "Koordinaattori",
         "worker": "Työntekijä",
+        "prayer_group": "Rukousryhmä",
         "user": "Käyttäjä"
       }
     },
@@ -64,9 +114,22 @@
       "add": "Lisää aihe",
       "edit": "Muokkaa aihetta"
     },
+    "bishop": {
+      "title": "Piispan aihe",
+      "add": "Lisää piispan aihe",
+      "placeholder": "Kirjoita piispan rukousaihe tähän...",
+      "success": "Piispan rukousaihe lisätty onnistuneesti."
+    },
     "staff": {
-      "title": "Lisää työntekijän rukouspyyntö",
-      "add": "Lisää pyyntö"
+      "title": "Lisää työalan rukouspyyntö",
+      "add": "Lisää työalan pyyntö",
+      "group": "Rukousryhmä",
+      "tag": "Työalatunniste"
+    },
+    "export": {
+      "title": "Tulosta esirukous",
+      "all": "Tulosta kaikki",
+      "highlightsOnly": "Tulosta vain nostot"
     }
   },
   "common": {

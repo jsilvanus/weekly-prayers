@@ -6,28 +6,66 @@
   "nav": {
     "home": "Hem",
     "admin": "Admin",
+    "intercessionList": "Förbönslista",
     "login": "Logga in",
     "logout": "Logga ut"
   },
   "prayers": {
+    "invocation": "I Faderns och Sonens och den heliga Andes namn. Amen.",
+    "bishop": {
+      "title": "Biskopens ämne",
+      "pill": "Biskop",
+      "empty": "Inget ämne från biskopen denna vecka"
+    },
     "pastor": {
-      "title": "Kyrkoherderns ämne",
+      "title": "Kyrkoherdens ämne",
       "empty": "Inget ämne från kyrkoherden denna vecka"
     },
     "staff": {
-      "title": "Personalens böneämnen",
-      "empty": "Inga böneämnen från personalen denna vecka"
+      "title": "Arbetsområdenas böneämnen",
+      "empty": "Inga böneämnen från arbetsområdena denna vecka"
     },
     "public": {
-      "title": "Församlingens böneämnen",
-      "empty": "Inga offentliga böneämnen denna vecka"
+      "title": "Församlingsbornas böneämnen",
+      "empty": "Inga böneämnen från församlingsborna denna vecka"
+    },
+    "lordsPrayer": {
+      "title": "Fader vår",
+      "text": "Fader vår, som är i himmelen.\nHelgat varde ditt namn.\nTillkomme ditt rike.\nSke din vilja,\nsåsom i himmelen så ock på jorden.\nVårt dagliga bröd giv oss i dag,\noch förlåt oss våra skulder,\nsåsom ock vi förlåta dem oss skyldiga äro.\nOch inled oss icke i frestelse,\nutan fräls oss ifrån ondo.\nTy riket är ditt och makten och härligheten\ni evighet. Amen."
     },
     "submit": {
       "title": "Lämna en bönebegäran",
+      "openButton": "✨ Lämna en bönebegäran",
+      "loggedInAs": "Inloggad som",
+      "timelineTitle": "Välj synlighetstid i kalendern",
+      "timelineDesc": "När bönen blir synlig och när den löper ut",
       "placeholder": "Skriv din bönebegäran här...",
-      "button": "Skicka",
+      "button": "Skicka bönebegäran",
       "success": "Bönebegäran skickad! Den granskas innan publicering.",
-      "error": "Kunde inte skicka bönebegäran"
+      "error": "Kunde inte skicka bönebegäran",
+      "close": "Stäng"
+    },
+    "seeAll": "Visa alla ({{count}})",
+    "showLess": "Minska",
+    "highlighted": "Lyft",
+    "filterByMinistry": "Filtrera efter arbetsområde:"
+  },
+  "ministries": {
+    "all": "Alla",
+    "groups": {
+      "local": "Lokala böner",
+      "international": "Internationella böner",
+      "children_youth": "Barn, unga och familjer",
+      "diaconal_care": "Diakoni och omsorg"
+    },
+    "tags": {
+      "diaconia": "Diakoni",
+      "youth": "Ungdomsarbete",
+      "mission": "Missionsarbete",
+      "music": "Musikverksamhet",
+      "early_childhood": "Småbarnspedagogik",
+      "worship": "Gudstjänstliv",
+      "community": "Samhällsarbete"
     }
   },
   "counter": {
@@ -49,24 +87,49 @@
       "delete": "Radera",
       "confirmDelete": "Är du säker på att du vill radera denna bönebegäran?"
     },
+    "highlights": {
+      "title": "Bönelyft",
+      "desc": "Välj 1–4 lyfta böneämnen. Böner med högst Z-värde visas först. Om ett lyft löper ut ersätts det automatiskt av nästa i Z-kön.",
+      "zValue": "Z-värde för lyft (prioritet)",
+      "highlight": "Lyft fram",
+      "remove": "Ta bort lyft",
+      "activeHighlights": "Aktiva lyft (Top 1–4 visas)",
+      "availablePrayers": "Alla godkända ämnen"
+    },
     "users": {
       "title": "Användarhantering",
       "role": "Roll",
       "changeRole": "Ändra roll",
       "roles": {
         "admin": "Administratör",
+        "bishop": "Biskop",
+        "coordinator": "Koordinator",
         "worker": "Personal",
+        "prayer_group": "Bönegrupp",
         "user": "Användare"
       }
     },
     "pastor": {
-      "title": "Kyrkoherderns ämne",
+      "title": "Kyrkoherdens ämne",
       "add": "Lägg till ämne",
       "edit": "Redigera ämne"
     },
+    "bishop": {
+      "title": "Biskopens ämne",
+      "add": "Lägg till biskopens ämne",
+      "placeholder": "Skriv in biskopens böneämne här...",
+      "success": "Biskopens böneämne lades till."
+    },
     "staff": {
-      "title": "Lägg till personalens bönebegäran",
-      "add": "Lägg till begäran"
+      "title": "Lägg till arbetsområdes bönebegäran",
+      "add": "Lägg till begäran",
+      "group": "Bönegrupp",
+      "tag": "Arbetsområde"
+    },
+    "export": {
+      "title": "Skriv ut förbön",
+      "all": "Skriv ut alla",
+      "highlightsOnly": "Skriv ut endast lyfta"
     }
   },
   "common": {

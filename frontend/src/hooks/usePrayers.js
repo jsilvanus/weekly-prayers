@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 
 export function usePrayers(week = null, year = null) {
-  const [prayers, setPrayers] = useState({ pastor: [], staff: [], public: [] });
+  const [prayers, setPrayers] = useState({ bishop: [], pastor: [], staff: [], public: [] });
   const [weekInfo, setWeekInfo] = useState({ week: null, year: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

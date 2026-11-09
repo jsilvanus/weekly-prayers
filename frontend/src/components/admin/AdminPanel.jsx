@@ -6,31 +6,49 @@ import PrayerManager from './PrayerManager';
 import UserManager from './UserManager';
 import StaffPrayerForm from './StaffPrayerForm';
 import PastorPrayerForm from './PastorPrayerForm';
+import BishopPrayerForm from './BishopPrayerForm';
+import HighlightManager from './HighlightManager';
+import SettingsManager from './SettingsManager';
 
 function AdminPanel() {
   const { t } = useTranslation();
-  const { isWorkerOrAbove, isAdmin, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('prayers');
+  const { isWorkerOrAbove, isCoordinatorOrAbove, isAdmin, isBishop, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState(isBishop ? 'bishop' : 'prayers');
 
   if (loading) {
     return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
-  if (!isWorkerOrAbove) {
+  if (!isWorkerOrAbove && !isBishop) {
     return <Navigate to="/" replace />;
   }
 
-  const tabs = [
-    { id: 'prayers', label: t('admin.prayers.title'), component: PrayerManager },
-    { id: 'staff', label: t('admin.staff.title'), component: StaffPrayerForm },
-  ];
+  const tabs = [];
 
-  if (isAdmin) {
-    tabs.push({ id: 'pastor', label: t('admin.pastor.title'), component: PastorPrayerForm });
-    tabs.push({ id: 'users', label: t('admin.users.title'), component: UserManager });
+  // Bishop and bishop assistant only have access to bishop prayer management
+  if (isBishop && !isAdmin) {
+    tabs.push({ id: 'bishop', label: t('admin.bishop.title'), component: BishopPrayerForm });
+  } else {
+    // Workers and above
+    tabs.push(
+      { id: 'prayers', label: t('admin.prayers.title'), component: PrayerManager },
+      { id: 'staff', label: t('admin.staff.title'), component: StaffPrayerForm }
+    );
+
+    if (isCoordinatorOrAbove) {
+      tabs.push({ id: 'highlights', label: t('admin.highlights.title'), component: HighlightManager });
+    }
+
+    if (isAdmin) {
+      tabs.push({ id: 'pastor', label: t('admin.pastor.title'), component: PastorPrayerForm });
+      tabs.push({ id: 'bishop', label: t('admin.bishop.title'), component: BishopPrayerForm });
+      tabs.push({ id: 'settings', label: '⚙️ Seurakunnan ilme & asetukset', component: SettingsManager });
+      tabs.push({ id: 'users', label: t('admin.users.title'), component: UserManager });
+    }
   }
 
-  const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component || PrayerManager;
+  const effectiveActiveTab = tabs.some(t => t.id === activeTab) ? activeTab : tabs[0]?.id;
+  const ActiveComponent = tabs.find((tab) => tab.id === effectiveActiveTab)?.component || (isBishop ? BishopPrayerForm : PrayerManager);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -45,7 +63,7 @@ function AdminPanel() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === tab.id
+                effectiveActiveTab === tab.id
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
