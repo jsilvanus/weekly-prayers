@@ -1475,6 +1475,56 @@ async function run() {
     await wait(400);
     await saveScreenshot(page, '18_staff_prayer_form_yhtyma_wide.png');
 
+    // 19. Admin / Worker - Prayer Moderation Dashboard (Public Prayers moderation queue with AI flags)
+    console.log('19. Capturing Prayer Moderation Dashboard with AI flags & moderation actions...');
+    currentMockUser = mockData.users[1]; // Matti Meikäläinen (Admin)
+    await page.evaluate(() => {
+      sessionStorage.setItem('token', 'mock-admin-jwt');
+    });
+    await page.goto('http://127.0.0.1:5173/admin', { waitUntil: 'networkidle0' });
+    await wait(800);
+
+    const modTabs = await page.$$('nav button');
+    for (const tab of modTabs) {
+      const text = await (await tab.getProperty('textContent')).jsonValue();
+      if (text.includes('Rukouspyyntöjen') || text.includes('Moderation') || text.includes('hallinta')) {
+        await tab.click();
+        await wait(600);
+        break;
+      }
+    }
+    await saveScreenshot(page, '19_admin_prayer_moderation_dashboard.png');
+
+    // 20. Worker Role Logged-in View (Scoped interface: Moderation and Staff Prayers only)
+    console.log('20. Capturing Worker Role Dashboard (Scoped interface)...');
+    currentMockUser = mockData.users[2]; // Anna Virtanen (Diakoni / worker)
+    await page.evaluate(() => {
+      sessionStorage.setItem('token', 'mock-worker-jwt');
+    });
+    await page.goto('http://127.0.0.1:5173/admin', { waitUntil: 'networkidle0' });
+    await wait(800);
+    await saveScreenshot(page, '20_worker_role_dashboard.png');
+
+    // 21. Coordinator Role Logged-in View (Scoped interface: Moderation, Staff, Highlights)
+    console.log('21. Capturing Coordinator Role Dashboard (Scoped interface)...');
+    currentMockUser = mockData.users[0]; // Maria Koordinaattori
+    await page.evaluate(() => {
+      sessionStorage.setItem('token', 'mock-coord-jwt');
+    });
+    await page.goto('http://127.0.0.1:5173/admin', { waitUntil: 'networkidle0' });
+    await wait(800);
+    await saveScreenshot(page, '21_coordinator_role_dashboard.png');
+
+    // 22. Prayer Group Role Logged-in Header & Navigation
+    console.log('22. Capturing Prayer Group Role Logged-in Navigation...');
+    currentMockUser = mockData.users[6]; // Tuula Rukoilija (prayer_group)
+    await page.evaluate(() => {
+      sessionStorage.setItem('token', 'mock-prayer-group-jwt');
+    });
+    await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle0' });
+    await wait(800);
+    await saveScreenshot(page, '22_prayer_group_role_header_and_access.png');
+
     console.log('All screenshots completed successfully!');
   } finally {
     await browser.close();
