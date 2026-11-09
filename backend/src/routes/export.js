@@ -468,7 +468,6 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span class="toggle-badge" id="badge-bishop-0">⚪ Merkitse</span>
-            <span style="font-size: 9pt; background:#f3e8ff; color:#6b21a8; padding:2px 8px; border-radius:12px; font-weight:600;">Piispa</span>
             <img src="/tampere_piispan_vaakuna.png" alt="Piispan vaakuna" style="max-height: 48px; max-width: 60px; object-fit: contain;" />
           </div>
         </div>

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { usePrayers } from '../../hooks/usePrayers';
 import { useSettings } from '../../context/SettingsContext';
 import OpeningInvocation from './OpeningInvocation';
-import DailyWord from './DailyWord';
+import FrontPageBibleWidget from './FrontPageBibleWidget';
 import BishopPrayer from './BishopPrayer';
 import PastorPrayer from './PastorPrayer';
 import MinistryPrayers from './MinistryPrayers';
@@ -59,8 +59,8 @@ function HomePage() {
       {/* Liturgical opening invocation */}
       <OpeningInvocation />
 
-      {/* Collapsible Word of the day / Bible reading stub */}
-      <DailyWord />
+      {/* Two specific Bible modes: Daily verse and Liturgy of the Hours for nearest rukoushetki */}
+      <FrontPageBibleWidget />
 
       {/* Optional Bishop's Prayer with crest (only renders if added) */}
       <BishopPrayer prayers={prayers.bishop} />

@@ -70,6 +70,14 @@ function Header() {
               {t('nav.home')}
             </Link>
 
+            <Link
+              to="/bible"
+              className="text-xs md:text-sm font-medium text-gray-700 hover:text-primary-700 transition-colors flex items-center gap-1"
+            >
+              <span>📖</span>
+              <span>{t('nav.bible') || 'Raamattu'}</span>
+            </Link>
+
             {canAccessPrayerList && (
               <a
                 href="/api/export/intercession"

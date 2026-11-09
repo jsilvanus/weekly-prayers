@@ -5,6 +5,7 @@
   },
   "nav": {
     "home": "Home",
+    "bible": "Bible",
     "admin": "Admin",
     "intercessionList": "Prayer List",
     "login": "Login",

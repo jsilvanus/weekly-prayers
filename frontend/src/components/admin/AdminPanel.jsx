@@ -9,6 +9,7 @@ import PastorPrayerForm from './PastorPrayerForm';
 import BishopPrayerForm from './BishopPrayerForm';
 import HighlightManager from './HighlightManager';
 import SettingsManager from './SettingsManager';
+import BibleManager from './BibleManager';
 
 function AdminPanel() {
   const { t } = useTranslation();
@@ -42,6 +43,7 @@ function AdminPanel() {
     if (isAdmin) {
       tabs.push({ id: 'pastor', label: t('admin.pastor.title'), component: PastorPrayerForm });
       tabs.push({ id: 'bishop', label: t('admin.bishop.title'), component: BishopPrayerForm });
+      tabs.push({ id: 'bible', label: '📖 Raamattu & Anno API', component: BibleManager });
       tabs.push({ id: 'settings', label: '⚙️ Seurakunnan ilme & asetukset', component: SettingsManager });
       tabs.push({ id: 'users', label: t('admin.users.title'), component: UserManager });
     }

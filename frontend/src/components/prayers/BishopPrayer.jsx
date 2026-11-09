@@ -35,9 +35,6 @@ function BishopPrayer({ prayers = [] }) {
 
           {/* Bishop's Crest (Vaakuna) */}
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-900 border border-purple-200">
-              {bishopTitle}
-            </span>
             <div className="shrink-0 drop-shadow-sm" title={`Piispa ${bishopName} - vaakuna`}>
               <img
                 src={crestUrl}

@@ -10,6 +10,7 @@ import countsRouter from './routes/counts.js';
 import exportRouter from './routes/export.js';
 import embedRouter from './routes/embed.js';
 import settingsRouter from './routes/settings.js';
+import bibleRouter from './routes/bible.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ app.use('/api/counts', countsRouter);
 app.use('/api/export', exportRouter);
 app.use('/api/embed', embedRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/bible', bibleRouter);
 
 // Basic route
 app.get('/', (req, res) => {

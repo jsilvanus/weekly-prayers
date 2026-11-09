@@ -107,6 +107,24 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ role }),
     }),
+
+  // Bible & Anno API
+  getBibleToday: (date) => request(`/bible/today${date ? `?date=${date}` : ''}`),
+  getBibleOverrides: () => request('/bible/overrides'),
+  createBibleOverride: (data) =>
+    request('/bible/overrides', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateBibleOverride: (id, data) =>
+    request(`/bible/overrides/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteBibleOverride: (id) =>
+    request(`/bible/overrides/${id}`, { method: 'DELETE' }),
+  testAnnoApiStatus: (url) =>
+    request(`/bible/anno-status${url ? `?url=${encodeURIComponent(url)}` : ''}`),
 };
 
 export { ApiError };

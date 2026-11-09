@@ -252,7 +252,6 @@ function generateExportHtml(highlightsOnly = false, initialMode = 'print') {
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="toggle-badge" id="badge-bishop-0">⚪ Merkitse</span>
-          <span style="font-size: 9pt; background:#f3e8ff; color:#6b21a8; padding:2px 8px; border-radius:12px; font-weight:600;">Piispa</span>
           <img src="${tampereCrestBase64}" alt="Tampereen piispan vaakuna" style="max-height: 48px; max-width: 60px; object-fit: contain;" />
         </div>
       </div>
@@ -896,6 +895,144 @@ function createMockServer() {
       return;
     }
 
+    if (url.pathname === '/api/bible/today') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        date: '2026-11-09',
+        isToday: true,
+        dailyVerse: {
+          isManual: true,
+          id: 1,
+          title: 'Herra on minun paimeneni',
+          reference: 'Ps. 23:1–3',
+          text: 'Herra on minun paimeneni, ei minulta mitään puutu. Viheriäisille niityille hän vie minut lepäämään, virvoittavien vetten tykö hän minut johdattaa. Hän virvoittaa minun sieluni.',
+          meditation: 'Paimenpsalmi muistuttaa meitä Jumalan hellästä huolenpidosta ja levosta arjen kiireen keskellä.',
+          source: 'manual'
+        },
+        liturgyOfTheHours: {
+          morning: {
+            name: 'Aamurukous (Laudes)',
+            hour: 'morning',
+            timeSlot: '06:00 – 10:00',
+            antiphon: 'Ylistetty olkoon Herra, Israelin Jumala, sillä hän on katsonut kansansa puoleen ja valmistanut sille lunastuksen.',
+            psalms: [{
+              reference: 'Ps. 63:2–9',
+              text: 'Jumala, minun Jumalani, sinua minä etsin varhain.\nSieluni janoaa sinua, ruumiini ikävöi sinua\nkuivassa, nääntyneessä ja vedettömässä maassa.\n  Niin minä katselen sinua pyhäkössä,\nnähdäkseni sinun voimasi ja kunniasi.'
+            }],
+            readings: [{
+              reference: '1. Tess. 5:5–8',
+              text: 'Te kaikki olette valkeuden lapsia ja päivän lapsia; me emme ole yön emmekä pimeyden lapsia. Älkäämme siis nukkuko niinkuin muut, vaan valvokaamme ja olkaamme raittiit.'
+            }],
+            prayer: 'Kaikkivaltias, iankaikkinen Jumala, sinä olet johdattanut meidät uuden päivän valoon. Varjele meitä tänään voimallasi, ettemme lankeaisi syntiin emmekä joutuisi mihinkään vaaraan.'
+          },
+          noon: {
+            name: 'Päivärukous (Seksti)',
+            hour: 'noon',
+            timeSlot: '11:00 – 16:00',
+            antiphon: 'Herra on minun valoni ja apuni, ketä minä pelkäisin?',
+            psalms: [{
+              reference: 'Ps. 121:1–8',
+              text: 'Minä nostan silmäni vuoria kohti:\nmistä tulee minulle apu?\n  Apu minulle tulee Herralta,\njoka on tehnyt taivaan ja maan.'
+            }],
+            readings: [{
+              reference: 'Gal. 6:9–10',
+              text: 'Älkäämme siis väsykö tekemään hyvää, sillä me saamme aikanamme niittää, jos emme lannistu.'
+            }],
+            prayer: 'Herra Jeesus Kristus, sinä nousit ristille keskipäivän hetkellä pelastaaksesi maailman synnistä ja kuolemasta. Vuodata Henkesi meidän sydämiimme.'
+          },
+          evening: {
+            name: 'Iltarukous (Vesper)',
+            hour: 'evening',
+            timeSlot: '17:00 – 20:00',
+            antiphon: 'Nouskoon minun rukoukseni suitsutusuhrina sinun kasvojesi eteen, kätteni kohottaminen iltauhrina.',
+            psalms: [{
+              reference: 'Ps. 141:1–4',
+              text: 'Herra, minä huudan sinua, riennä minun tyköni,\nkuule minun ääneni, kun minä sinua huudan.'
+            }],
+            readings: [{
+              reference: 'Luuk. 24:29',
+              text: 'Jää meidän luoksemme, sillä ilta joutuu ja päivä on jo laskemassa.'
+            }],
+            prayer: 'Valaise meidän pimeytemme, laupias Herra, ja varjele meitä suuressa armossasi kaikista tämän yön vaaroista.'
+          },
+          night: {
+            name: 'Yörukous (Kompletorio)',
+            hour: 'night',
+            timeSlot: '21:00 – 05:00',
+            antiphon: 'Valvoessamme varjele meitä, Herra, nukkuessamme siunaa meitä, että valvoisimme Kristuksen kanssa ja lepäisimme rauhassa.',
+            psalms: [{
+              reference: 'Ps. 91:1–6',
+              text: 'Joka Korkeimman suojassa istuu ja Kaikkivaltiaan varjossa yöpyy, hän sanoo Herralle: »Sinä olet minun turvani ja linnani, minun Jumalani, johon minä turvaan.»'
+            }],
+            readings: [{
+              reference: 'Jer. 14:9',
+              text: 'Sinä olet kuitenkin meidän keskellämme, Herra, ja meidät on otettu sinun nimiisi. Älä jätä meitä!'
+            }],
+            prayer: 'Vieraile, Herra, tässä asunnossa ja aja kauas pois kaikki vihollisen juonet. Sinun pyhät enkelisi asukoot täällä varjellen meitä rauhassa.'
+          }
+        },
+        nearestHourKey: 'morning',
+        nearestHour: {
+          name: 'Aamurukous (Laudes)',
+          hour: 'morning',
+          timeSlot: '06:00 – 10:00',
+          antiphon: 'Ylistetty olkoon Herra, Israelin Jumala, sillä hän on katsonut kansansa puoleen ja valmistanut sille lunastuksen.',
+          psalms: [{
+            reference: 'Ps. 63:2–9',
+            text: 'Jumala, minun Jumalani, sinua minä etsin varhain.\nSieluni janoaa sinua, ruumiini ikävöi sinua\nkuivassa, nääntyneessä ja vedettömässä maassa.\n  Niin minä katselen sinua pyhäkössä,\nnähdäkseni sinun voimasi ja kunniasi.'
+          }],
+          readings: [{
+            reference: '1. Tess. 5:5–8',
+            text: 'Te kaikki olette valkeuden lapsia ja päivän lapsia; me emme ole yön emmekä pimeyden lapsia. Älkäämme siis nukkuko niinkuin muut, vaan valvokaamme ja olkaamme raittiit.'
+          }],
+          prayer: 'Kaikkivaltias, iankaikkinen Jumala, sinä olet johdattanut meidät uuden päivän valoon. Varjele meitä tänään voimallasi, ettemme lankeaisi syntiin emmekä joutuisi mihinkään vaaraan.'
+        },
+        liturgicalInfo: {
+          date: '2026-11-09',
+          dayName: '24. sunnuntai helluntaista',
+          theme: 'Valvokaa!',
+          season: 'Helluntain jälkeinen aika',
+          color: { color: 'vihreä', english: 'green' }
+        },
+        annoApiSource: 'anno-api'
+      }));
+      return;
+    }
+
+    if (url.pathname === '/api/bible/overrides') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        overrides: [
+          {
+            id: 1,
+            title: 'Herra on minun paimeneni',
+            verse_reference: 'Ps. 23:1–3',
+            verse_text: 'Herra on minun paimeneni, ei minulta mitään puutu. Viheriäisille niityille hän vie minut lepäämään, virvoittavien vetten tykö hän minut johdattaa. Hän virvoittaa minun sieluni.',
+            meditation: 'Paimenpsalmi muistuttaa meitä Jumalan hellästä huolenpidosta ja levosta arjen kiireen keskellä.',
+            commentary: 'Käytetään viikolla 45 ja hiljaisen viikon alussa.',
+            schedule: {
+              dates: ['2026-11-09', '2026-11-15'],
+              ranges: [{ startDate: '2026-11-20', endDate: '2026-11-22' }]
+            },
+            is_active: true
+          }
+        ]
+      }));
+      return;
+    }
+
+    if (url.pathname === '/api/bible/anno-status') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        status: 200,
+        latencyMs: 14,
+        dayName: '24. sunnuntai helluntaista',
+        season: 'Helluntain jälkeinen aika'
+      }));
+      return;
+    }
+
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: { message: 'Not found' } }));
   });
@@ -950,13 +1087,14 @@ async function run() {
     await wait(600);
     await saveScreenshot(page, '01_weekly_prayers_home_evl_branding.png');
 
-    // 2. Expand "Päivän sana" (Word of the day / Bible reading) collapsible
-    console.log('2. Expanding Päivän sana (Word of the day) collapsible...');
-    const dailyWordToggle = await page.$('[data-testid="daily-word-section"] button');
-    if (dailyWordToggle) {
-      await dailyWordToggle.click();
-      await wait(500);
-    }
+    // 2. Switch FrontPage Bible widget to "Hetkirukous" (Liturgy of the hours / nearest prayer hour)
+    console.log('2. Switching FrontPage Bible widget to Hetkirukous mode...');
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('button'));
+      const btn = btns.find(b => b.textContent && b.textContent.includes('Hetkirukous'));
+      if (btn) btn.click();
+    });
+    await wait(600);
     await saveScreenshot(page, '02_daily_word_expanded.png');
 
     // 3. Open "Jätä rukouspyyntö" modal dialog via the top button
@@ -1138,6 +1276,50 @@ async function run() {
       }
     }
     await saveScreenshot(page, '13_user_management_with_prayer_group.png');
+
+    // 14. Dedicated Bible Page - Liturgy of the Hours (/raamattu)
+    console.log('14. Capturing dedicated Bible Page - Liturgy of the Hours (/raamattu)...');
+    await page.goto('http://127.0.0.1:5173/raamattu', { waitUntil: 'networkidle0' });
+    await wait(800);
+    await saveScreenshot(page, '14_dedicated_bible_page_hours.png');
+
+    // 15. Dedicated Bible Page - Daily Verse Tab
+    console.log('15. Capturing dedicated Bible Page - Daily Verse Tab...');
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('button'));
+      const btn = btns.find(b => b.textContent && b.textContent.includes('Päivän sana'));
+      if (btn) btn.click();
+    });
+    await wait(600);
+    await saveScreenshot(page, '15_dedicated_bible_page_verse.png');
+
+    // 16. Admin Bible & Anno API Manager (Anno API toggle, connection test, manual schedule overrides)
+    console.log('16. Capturing Admin Bible & Anno API Manager with scheduling builder...');
+    currentMockUser = mockData.users[1]; // Matti Meikäläinen (Admin)
+    await page.evaluate(() => {
+      sessionStorage.setItem('token', 'mock-admin-jwt');
+    });
+    await page.goto('http://127.0.0.1:5173/admin', { waitUntil: 'networkidle0' });
+    await wait(800);
+
+    const adminNavTabs = await page.$$('nav button');
+    for (const tab of adminNavTabs) {
+      const text = await (await tab.getProperty('textContent')).jsonValue();
+      if (text.includes('Raamattu') || text.includes('Anno API')) {
+        await tab.click();
+        await wait(600);
+        break;
+      }
+    }
+
+    // Trigger test connection to display live status pill
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll('button'));
+      const testBtn = btns.find(b => b.textContent && b.textContent.includes('Testaa yhteys'));
+      if (testBtn) testBtn.click();
+    });
+    await wait(600);
+    await saveScreenshot(page, '16_admin_bible_and_anno_api_manager.png');
 
     console.log('All screenshots completed successfully!');
   } finally {

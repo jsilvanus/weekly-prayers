@@ -5,6 +5,7 @@
   },
   "nav": {
     "home": "Etusivu",
+    "bible": "Raamattu",
     "admin": "Hallinta",
     "intercessionList": "Esirukouslista",
     "login": "Kirjaudu",
