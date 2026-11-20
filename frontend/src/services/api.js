@@ -1,4 +1,34 @@
-const API_BASE = '/api';
+const DEV_ROLE_KEY = 'weekly_prayers_dev_role';
+
+export function getBasePath() {
+  if (typeof window !== 'undefined' && typeof window.__BASE_PATH__ === 'string') {
+    return window.__BASE_PATH__.replace(/\/+$/, '');
+  }
+  // If <base href="..."> is present in document
+  if (typeof document !== 'undefined') {
+    const baseEl = document.querySelector('base');
+    if (baseEl && baseEl.getAttribute('href')) {
+      const href = baseEl.getAttribute('href');
+      try {
+        const url = new URL(href, window.location.origin);
+        const path = url.pathname.replace(/\/+$/, '');
+        return path;
+      } catch (e) {
+        return href.replace(/\/+$/, '');
+      }
+    }
+  }
+  return '';
+}
+
+export function withBasePath(path) {
+  if (!path || typeof path !== 'string') return path;
+  if (/^(https?:|data:|blob:)/i.test(path)) return path;
+  const base = getBasePath();
+  if (!base) return path;
+  if (path === base || path.startsWith(`${base}/`)) return path;
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 class ApiError extends Error {
   constructor(message, status, data) {
@@ -10,6 +40,7 @@ class ApiError extends Error {
 
 async function request(endpoint, options = {}) {
   const token = sessionStorage.getItem('token');
+  const url = withBasePath(`/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`);
 
   const config = {
     ...options,
@@ -20,7 +51,7 @@ async function request(endpoint, options = {}) {
     },
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  const response = await fetch(url, config);
 
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
@@ -49,59 +80,56 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ content, startDate, endDate, tenantId }),
     }),
-  submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide = false, tenantId = null) =>
+  submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId) =>
     request('/prayers/staff', {
       method: 'POST',
       body: JSON.stringify({ content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId }),
     }),
-  submitPastorPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide = false, tenantId = null) =>
+  submitPastorPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId) =>
     request('/prayers/pastor', {
       method: 'POST',
       body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId }),
     }),
-  submitBishopPrayer: (content, startDate, endDate, logoUrl) =>
+  submitBishopPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId) =>
     request('/prayers/bishop', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, logoUrl }),
+      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId }),
     }),
-  updatePrayer: (id, data) =>
+  updatePrayer: (id, updates) =>
     request(`/prayers/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(updates),
     }),
   deletePrayer: (id) =>
-    request(`/prayers/${id}`, { method: 'DELETE' }),
-  approvePrayer: (id, approved) =>
+    request(`/prayers/${id}`, {
+      method: 'DELETE',
+    }),
+  approvePrayer: (id, isApproved) =>
     request(`/prayers/${id}/approve`, {
       method: 'POST',
-      body: JSON.stringify({ approved }),
+      body: JSON.stringify({ isApproved }),
     }),
-  updatePrayerHighlight: (id, highlightPriority) =>
-    request(`/prayers/${id}/highlight`, {
+  updatePrayerPriority: (id, highlightPriority) =>
+    request(`/prayers/${id}/priority`, {
       method: 'PUT',
       body: JSON.stringify({ highlightPriority }),
     }),
 
-  // Settings & Appearance
-  getSettings: () => request('/settings'),
-  updateSettings: (settings) =>
-    request('/settings', {
-      method: 'PUT',
-      body: JSON.stringify({ settings }),
-    }),
-  uploadImage: (image, name) =>
-    request('/settings/upload', {
-      method: 'POST',
-      body: JSON.stringify({ image, name }),
-    }),
-
   // Counts
-  getWeekCount: (week, year) =>
-    request(`/counts/week/${week}?year=${year}`),
-  incrementCount: () =>
-    request('/counts/increment', { method: 'POST' }),
+  getCounts: (tenant) => request(`/counts${tenant ? `?tenant=${tenant}` : ''}`),
+  incrementCount: (tenantId) =>
+    request('/counts/increment', {
+      method: 'POST',
+      body: JSON.stringify({ tenantId }),
+    }),
 
-  // Users (admin)
+  // Export
+  getIntercessionExport: (options = {}) => {
+    const params = new URLSearchParams(options);
+    return request(`/export/intercession?${params}`);
+  },
+
+  // Users (Admin)
   getUsers: () => request('/users'),
   updateUserRole: (id, role) =>
     request(`/users/${id}/role`, {
@@ -109,28 +137,38 @@ export const api = {
       body: JSON.stringify({ role }),
     }),
 
-  // Bible & Anno API
-  getBibleToday: (date) => request(`/bible/today${date ? `?date=${date}` : ''}`),
-  getBibleOverrides: () => request('/bible/overrides'),
-  createBibleOverride: (data) =>
-    request('/bible/overrides', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  updateBibleOverride: (id, data) =>
-    request(`/bible/overrides/${id}`, {
+  // Settings
+  getSettings: () => request('/settings'),
+  updateSettings: (settings) =>
+    request('/settings', {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(settings),
     }),
-  deleteBibleOverride: (id) =>
-    request(`/bible/overrides/${id}`, { method: 'DELETE' }),
-  testAnnoApiStatus: (url) =>
-    request(`/bible/anno-status${url ? `?url=${encodeURIComponent(url)}` : ''}`),
 
-  // Tenants & Yhtymä Multi-tenancy
+  // Bible (Kirkkovuosikalenteri & Anno API)
+  getLiturgicalDay: (date) =>
+    request(`/bible/liturgical-day${date ? `?date=${date}` : ''}`),
+  getSundayGospel: (date) =>
+    request(`/bible/sunday-gospel${date ? `?date=${date}` : ''}`),
+  getDailyPrayerHours: (date) =>
+    request(`/bible/daily-hours${date ? `?date=${date}` : ''}`),
+  getAnnoStatus: () =>
+    request('/bible/status'),
+  testAnnoConnection: (customUrl) =>
+    request('/bible/test-connection', {
+      method: 'POST',
+      body: JSON.stringify({ customUrl }),
+    }),
+
+  // Tenants (Multi-Tenancy)
   getTenants: () => request('/tenants'),
-  getTenantCurrent: (slug) => request(`/tenants/current${slug ? `?slug=${slug}` : ''}`),
-  getTenant: (identifier) => request(`/tenants/${identifier}`),
+  getCurrentTenant: (slug) => request(`/tenants/current${slug ? `?slug=${slug}` : ''}`),
+  getTenantById: (identifier) => request(`/tenants/${identifier}`),
+  updateTenant: (identifier, updates) =>
+    request(`/tenants/${identifier}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    }),
 };
 
-export { ApiError };
+export default api;

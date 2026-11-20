@@ -30,7 +30,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.prayers.rule=Host(`${DOMAIN:-}`)"
+      # If DOMAIN_PATH is set (e.g. /rukous), route both Host and PathPrefix, else route Host
+      - "traefik.http.routers.prayers.rule=${TRAEFIK_RULE:-Host(`${DOMAIN:-}`) && (Path(`${DOMAIN_PATH:-/rukous}`) || PathPrefix(`${DOMAIN_PATH:-/rukous}/`))}"
       - "traefik.http.routers.prayers.entrypoints=websecure"
       - "traefik.http.routers.prayers.tls.certresolver=letsencrypt"
       - "traefik.http.services.prayers.loadbalancer.server.port=3000"

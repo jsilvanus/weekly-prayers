@@ -18,12 +18,14 @@
 # Required Environment variables (Settings -> Environments -> production -> Variables):
 #   DEPLOY_PATH         — app deployment directory on the VM (e.g. /opt/apps/rukoukset)
 #   APP_NAME            — application identifier (yields ${APP_NAME}_user and ${APP_NAME}_db)
-#   DOMAIN              — public hostname for Traefik routing
-#   BASE_URL            — public base URL (e.g. https://rukoukset.riihimaenseurakunta.fi)
+#   DOMAIN              — public hostname for Traefik routing (e.g. kehitys.riihimaenseurakunta.fi)
+#   DOMAIN_PATH         — subpath routing (e.g. /rukous)
+#   BASE_URL            — public base URL (e.g. https://kehitys.riihimaenseurakunta.fi/rukous)
 #   NODE_ENV            — production
 #   OIDC_ISSUER         — Tunnus issuer URL (e.g. https://kehitys.riihimaenseurakunta.fi/identity)
 #   OIDC_CLIENT_ID      — OIDC client ID registered in Tunnus (e.g. weekly-prayers)
-#   OIDC_REDIRECT_URI   — e.g. https://rukoukset.riihimaenseurakunta.fi/api/auth/oidc/callback
+#   OIDC_REDIRECT_URI   — e.g. https://kehitys.riihimaenseurakunta.fi/rukous/api/auth/oidc/callback
+#   OIDC_SCOPES         — openid profile email groups
 #   OIDC_GROUP_ROLE_MAP — role mapping (or pattern parish/<tenant>/prayers-<role>)
 #   IMAGE_TAG           — image tag to deploy (e.g. latest, sha-<short>, or vX.Y.Z)
 #   DEFAULT_TENANT_SLUG — default tenant slug (e.g. riihimaki or tuomiokirkko)
@@ -72,14 +74,15 @@ jobs:
           APP_NODE_ENV:           ${{ vars.NODE_ENV || 'production' }}
           APP_PORT:               ${{ vars.APP_PORT || '3000' }}
           APP_NAME:               ${{ vars.APP_NAME || 'prayers' }}
-          APP_DOMAIN:             ${{ vars.DOMAIN }}
-          APP_BASE_URL:           ${{ vars.BASE_URL }}
+          APP_DOMAIN:             ${{ vars.DOMAIN || 'kehitys.riihimaenseurakunta.fi' }}
+          APP_DOMAIN_PATH:        ${{ vars.DOMAIN_PATH || '/rukous' }}
+          APP_BASE_URL:           ${{ vars.BASE_URL || 'https://kehitys.riihimaenseurakunta.fi/rukous' }}
           APP_IMAGE_REPO:         ${{ vars.IMAGE_REPO || 'jsilvanus/weekly-prayers' }}
           APP_IMAGE_TAG:          ${{ vars.IMAGE_TAG || 'latest' }}
           APP_DB_HOST:            ${{ vars.DB_HOST || 'pg.shared.local' }}
           APP_DB_PORT:            ${{ vars.DB_PORT || '5432' }}
           APP_DB_SSL:             ${{ vars.DB_SSL || 'false' }}
-          APP_OIDC_ISSUER:        ${{ vars.OIDC_ISSUER }}
+          APP_OIDC_ISSUER:        ${{ vars.OIDC_ISSUER || 'https://kehitys.riihimaenseurakunta.fi/identity' }}
           APP_OIDC_CLIENT_ID:     ${{ vars.OIDC_CLIENT_ID || 'weekly-prayers' }}
           APP_OIDC_REDIRECT_URI:  ${{ vars.OIDC_REDIRECT_URI }}
           APP_OIDC_SCOPES:        ${{ vars.OIDC_SCOPES || 'openid profile email groups' }}
@@ -94,7 +97,7 @@ jobs:
           envs: >-
             APP_GHCR_TOKEN,APP_DB_PASSWORD,APP_JWT_SECRET,
             APP_OIDC_CLIENT_SECRET,APP_OPENAI_API_KEY,APP_ANTHROPIC_API_KEY,
-            APP_NODE_ENV,APP_PORT,APP_NAME,APP_DOMAIN,APP_BASE_URL,
+            APP_NODE_ENV,APP_PORT,APP_NAME,APP_DOMAIN,APP_DOMAIN_PATH,APP_BASE_URL,
             APP_IMAGE_REPO,APP_IMAGE_TAG,APP_DB_HOST,APP_DB_PORT,APP_DB_SSL,
             APP_OIDC_ISSUER,APP_OIDC_CLIENT_ID,APP_OIDC_REDIRECT_URI,
             APP_OIDC_SCOPES,APP_OIDC_GROUP_ROLE_MAP,APP_DEFAULT_TENANT_SLUG,
@@ -114,6 +117,15 @@ jobs:
             DB_NAME="${APP_NAME}_db"
             DATABASE_URL="postgresql://${DB_USER}:${DB_PASS_ENC}@${APP_DB_HOST}:${APP_DB_PORT}/${DB_NAME}"
 
+            REDIRECT_URI="${APP_OIDC_REDIRECT_URI:-${APP_BASE_URL}/api/auth/oidc/callback}"
+
+            # Compute Traefik rule based on whether DOMAIN_PATH is specified
+            if [ -n "${APP_DOMAIN_PATH:-}" ] && [ "${APP_DOMAIN_PATH}" != "/" ]; then
+              TRAEFIK_RULE="Host(\`${APP_DOMAIN}\`) && (Path(\`${APP_DOMAIN_PATH}\`) || PathPrefix(\`${APP_DOMAIN_PATH}/\`))"
+            else
+              TRAEFIK_RULE="Host(\`${APP_DOMAIN}\`)"
+            fi
+
             # Write .env without echoing secrets
             {
               printf 'NODE_ENV=%s\n'            "${APP_NODE_ENV}"
@@ -121,6 +133,8 @@ jobs:
               printf 'IMAGE_REPO=%s\n'          "${APP_IMAGE_REPO}"
               printf 'IMAGE_TAG=%s\n'           "${APP_IMAGE_TAG}"
               printf 'DOMAIN=%s\n'              "${APP_DOMAIN}"
+              printf 'DOMAIN_PATH=%s\n'         "${APP_DOMAIN_PATH}"
+              printf 'TRAEFIK_RULE=%s\n'        "${TRAEFIK_RULE}"
               printf 'BASE_URL=%s\n'            "${APP_BASE_URL}"
               printf 'FRONTEND_URL=%s\n'        "${APP_BASE_URL}"
               printf 'APP_NAME=%s\n'            "${APP_NAME}"
@@ -135,7 +149,7 @@ jobs:
               printf 'OIDC_ISSUER=%s\n'         "${APP_OIDC_ISSUER}"
               printf 'OIDC_CLIENT_ID=%s\n'      "${APP_OIDC_CLIENT_ID}"
               printf 'OIDC_CLIENT_SECRET=%s\n'  "${APP_OIDC_CLIENT_SECRET}"
-              printf 'OIDC_REDIRECT_URI=%s\n'   "${APP_OIDC_REDIRECT_URI}"
+              printf 'OIDC_REDIRECT_URI=%s\n'   "${REDIRECT_URI}"
               printf 'OIDC_SCOPES=%s\n'         "${APP_OIDC_SCOPES}"
               printf 'OIDC_GROUP_ROLE_MAP=%s\n' "${APP_OIDC_GROUP_ROLE_MAP}"
               printf 'DEFAULT_TENANT_SLUG=%s\n' "${APP_DEFAULT_TENANT_SLUG}"

@@ -26,6 +26,30 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy for reverse proxy headers (Traefik / Nginx)
 app.set('trust proxy', true);
 
+// Compute basePath from BASE_URL (e.g. "https://kehitys.riihimaenseurakunta.fi/rukous" -> "/rukous")
+export function deriveBasePath(rawUrl) {
+  if (!rawUrl) return '';
+  try {
+    const url = new URL(rawUrl);
+    const pathname = url.pathname.replace(/\/+$/, '');
+    return pathname === '/' ? '' : pathname;
+  } catch (e) {
+    return '';
+  }
+}
+
+export function injectBasePathIntoHtml(html, basePath) {
+  const cleanBase = (basePath || '').replace(/\/+$/, '');
+  const baseHref = cleanBase ? `${cleanBase}/` : '/';
+  const injection = `<base href="${baseHref}" /><script>window.__BASE_PATH__ = ${JSON.stringify(cleanBase)};</script>`;
+  if (html.includes('<head>')) {
+    return html.replace('<head>', `<head>\n    ${injection}`);
+  }
+  return html.replace(/<head([^>]*)>/i, `<head$1>\n    ${injection}`);
+}
+
+const basePath = deriveBasePath(process.env.BASE_URL);
+
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: false // Allow inline svgs and data urls
@@ -34,20 +58,26 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Root health check alias (e.g. for container healthchecks)
+// Always keep root health check alive for container healthchecks
 app.use('/health', healthRouter);
-app.use('/api', healthRouter);
+
+// Subpath or root router mount
+const router = express.Router();
+
+// Health check inside mount
+router.use('/health', healthRouter);
+router.use('/api', healthRouter);
 
 // API Routes
-app.use('/api/auth', authRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/prayers', prayersRouter);
-app.use('/api/counts', countsRouter);
-app.use('/api/export', exportRouter);
-app.use('/api/embed', embedRouter);
-app.use('/api/settings', settingsRouter);
-app.use('/api/bible', bibleRouter);
-app.use('/api/tenants', tenantRouter);
+router.use('/api/auth', authRouter);
+router.use('/api/users', usersRouter);
+router.use('/api/prayers', prayersRouter);
+router.use('/api/counts', countsRouter);
+router.use('/api/export', exportRouter);
+router.use('/api/embed', embedRouter);
+router.use('/api/settings', settingsRouter);
+router.use('/api/bible', bibleRouter);
+router.use('/api/tenants', tenantRouter);
 
 // Serve frontend static build if present (single-container / production mode)
 const clientDistCandidates = [
@@ -60,24 +90,40 @@ const clientDistCandidates = [
 let clientDistPath = clientDistCandidates.find(p => fs.existsSync(p));
 
 if (clientDistPath) {
-  app.use(express.static(clientDistPath));
-  app.get('*', (req, res, next) => {
-    // If request starts with /api or /health, don't serve index.html
+  const indexPath = path.join(clientDistPath, 'index.html');
+  const rawHtml = fs.existsSync(indexPath) ? fs.readFileSync(indexPath, 'utf8') : null;
+  const renderedHtml = rawHtml ? injectBasePathIntoHtml(rawHtml, basePath) : null;
+
+  router.use(express.static(clientDistPath, { index: false }));
+
+  router.get('*', (req, res, next) => {
+    // If request starts with /api or /health, pass through to 404
     if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
       return next();
     }
-    res.sendFile(path.join(clientDistPath, 'index.html'));
+    if (renderedHtml) {
+      res.type('html').send(renderedHtml);
+    } else {
+      res.sendFile(indexPath);
+    }
   });
 } else {
   // Basic fallback route when no frontend build is attached
-  app.get('/', (req, res) => {
+  router.get('/', (req, res) => {
     res.json({
       name: 'Weekly Prayers API',
       version: '1.0.0',
-      status: 'running'
+      status: 'running',
+      basePath: basePath || '/',
     });
   });
 }
+
+// Mount router on basePath and also at root if basePath is present
+if (basePath) {
+  app.use(basePath, router);
+}
+app.use('/', router);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -96,7 +142,7 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT} (basePath: "${basePath}")`);
 });
 
 export default app;

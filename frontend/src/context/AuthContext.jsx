@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, withBasePath } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
 
   const login = () => {
     const returnUrl = encodeURIComponent(location.pathname);
-    window.location.href = `/api/auth/login?returnUrl=${returnUrl}`;
+    window.location.href = withBasePath(`/api/auth/login?returnUrl=${returnUrl}`);
   };
 
   const logout = async () => {
