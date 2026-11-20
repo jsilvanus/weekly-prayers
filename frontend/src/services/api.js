@@ -36,6 +36,7 @@ async function request(endpoint, options = {}) {
 
 export const api = {
   // Auth
+  getAuthConfig: () => request('/auth/config'),
   getMe: () => request('/auth/me'),
   logout: () => request('/auth/logout', { method: 'POST' }),
 

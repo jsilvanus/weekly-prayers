@@ -37,6 +37,18 @@ export async function getAllSettings() {
   }
 }
 
+export async function getSetting(key, defaultValue = null) {
+  try {
+    const result = await query('SELECT value FROM site_settings WHERE key = $1', [key]);
+    if (result.rows.length > 0 && result.rows[0].value !== null) {
+      return result.rows[0].value;
+    }
+    return DEFAULT_SETTINGS[key] !== undefined ? DEFAULT_SETTINGS[key] : defaultValue;
+  } catch (error) {
+    return DEFAULT_SETTINGS[key] !== undefined ? DEFAULT_SETTINGS[key] : defaultValue;
+  }
+}
+
 export async function updateSettings(newSettings = {}) {
   const keys = Object.keys(newSettings);
   for (const key of keys) {

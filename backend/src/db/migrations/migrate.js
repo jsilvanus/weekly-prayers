@@ -9,13 +9,26 @@ config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const { Pool } = pg;
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  user: process.env.DB_USER || 'prayers',
-  password: process.env.DB_PASSWORD || 'prayers_secret',
-  database: process.env.DB_NAME || 'weekly_prayers',
-});
+let poolConfig = {};
+if (process.env.DATABASE_URL) {
+  poolConfig.connectionString = process.env.DATABASE_URL;
+} else {
+  poolConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    user: process.env.DB_USER || 'prayers',
+    password: process.env.DB_PASSWORD || 'prayers_secret',
+    database: process.env.DB_NAME || 'weekly_prayers',
+  };
+}
+
+if (process.env.DB_SSL === 'true') {
+  poolConfig.ssl = {
+    rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true',
+  };
+}
+
+const pool = new Pool(poolConfig);
 
 async function ensureMigrationsTable(client) {
   await client.query(`
@@ -49,44 +62,46 @@ async function runMigration(client, filename) {
   console.log(`Migration completed: ${filename}`);
 }
 
-async function migrate() {
+export async function migrate() {
   const client = await pool.connect();
-
   try {
-    await client.query('BEGIN');
-
+    console.log('Checking database migrations...');
     await ensureMigrationsTable(client);
 
     const applied = await getAppliedMigrations(client);
     const files = await getMigrationFiles();
-
     const pending = files.filter(f => !applied.includes(f));
 
     if (pending.length === 0) {
-      console.log('No pending migrations');
-      await client.query('COMMIT');
+      console.log('No pending migrations.');
       return;
     }
 
-    console.log(`Found ${pending.length} pending migration(s)`);
+    console.log(`Found ${pending.length} pending migration(s):`, pending);
 
-    for (const file of pending) {
-      await runMigration(client, file);
+    for (const filename of pending) {
+      await client.query('BEGIN');
+      try {
+        await runMigration(client, filename);
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        console.error(`Migration ${filename} failed:`, error);
+        throw error;
+      }
     }
 
-    await client.query('COMMIT');
-    console.log('All migrations completed successfully');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('Migration failed:', error);
-    throw error;
+    console.log('All migrations applied successfully.');
   } finally {
     client.release();
     await pool.end();
   }
 }
 
-migrate().catch(err => {
-  console.error('Migration error:', err);
-  process.exit(1);
-});
+// Run if called directly
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  migrate().catch(error => {
+    console.error('Migration runner failed:', error);
+    process.exit(1);
+  });
+}
