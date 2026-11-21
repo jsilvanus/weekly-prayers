@@ -1,5 +1,5 @@
 # Build client
-FROM node:20-alpine AS client-builder
+FROM node:24-alpine AS client-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
@@ -7,13 +7,13 @@ COPY frontend/ ./
 RUN npm run build
 
 # Build backend production node_modules
-FROM node:20-alpine AS backend-builder
+FROM node:24-alpine AS backend-builder
 WORKDIR /app/backend
 COPY backend/package*.json ./
 RUN npm ci --omit=dev
 
 # Production image
-FROM node:20-alpine AS production
+FROM node:24-alpine AS production
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
