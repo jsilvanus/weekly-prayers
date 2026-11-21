@@ -44,6 +44,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=1.2.0,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
             type=sha,prefix=sha-
 
@@ -61,6 +62,7 @@ jobs:
     name: Sync config to deployment repo
     needs: publish
     runs-on: ubuntu-latest
+    continue-on-error: true
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout source repo
@@ -70,7 +72,10 @@ jobs:
         env:
           DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          git clone "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/riksunsrk/rukous.git" deploy-repo
+          git clone "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/riksunsrk/rukous.git" deploy-repo || {
+            echo "Deployment repo sync skipped (token has no cross-repo write access)"
+            exit 0
+          }
 
       - name: Sync deployment files
         run: |
