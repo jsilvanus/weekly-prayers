@@ -1,14 +1,23 @@
 import { Router } from 'express';
 import { createHash } from 'crypto';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { randomToken, verifyS256 } from './pkce.js';
 import { fetchCimdMetadata, validateRedirectUri } from './cimd.js';
 import { issueAccessToken, verifyAccessToken, issueLoginTicket, verifyLoginTicket } from './jwt.js';
 import { contentSecurityPolicy, redirectSource } from './csp.js';
-import { saveAuthorizationCode, consumeAuthorizationCode, saveRefreshToken, getRefreshToken } from './store.js';
+import {
+  saveAuthorizationCode,
+  consumeAuthorizationCode,
+  peekAuthorizationCode,
+  saveRefreshToken,
+  getRefreshToken,
+  revokeRefreshTokensBySubject
+} from './store.js';
 import { createMcpServer } from './server.js';
-import { findUserById, findUserByEmail } from '../services/userService.js';
+import { findUserById, findUserByEmail, findUserByOidcSub, syncOidcUser } from '../services/userService.js';
 import { oidcConfig } from '../config/auth.js';
+import { revokeUser } from '../services/jwtService.js';
 
 const router = Router();
 
@@ -110,19 +119,71 @@ function sendHtml(res, html, formAction = [], status = 200) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 1. OAUTH METADATA (RFC 8414 & RFC 9728)
+// 1. OAUTH METADATA (RFC 8414 & RFC 9728) & OIDC RELAY HELPERS
 // ─────────────────────────────────────────────────────────────
 
-function getProtectedResourceMetadata(publicUrl) {
+export function getOidcIssuer() {
+  return process.env.OIDC_ISSUER || oidcConfig?.issuer || 'https://id.riihimaenseurakunta.fi/tunnus';
+}
+
+let remoteJWKSInstance = null;
+let remoteJWKSIssuer = null;
+
+export function getRemoteJWKS(issuer) {
+  if (!remoteJWKSInstance || remoteJWKSIssuer !== issuer) {
+    const jwksUrl = new URL(`${issuer.replace(/\/+$/, '')}/jwks`);
+    remoteJWKSInstance = createRemoteJWKSet(jwksUrl);
+    remoteJWKSIssuer = issuer;
+  }
+  return remoteJWKSInstance;
+}
+
+export function setRemoteJWKS(jwks, issuer = null) {
+  remoteJWKSInstance = jwks;
+  remoteJWKSIssuer = issuer;
+}
+
+let tokenRelayFetch = globalThis.fetch;
+export function setTokenRelayFetch(customFetch) {
+  tokenRelayFetch = customFetch || globalThis.fetch;
+}
+
+export async function relayTokenRequest(body) {
+  const oidcIssuer = getOidcIssuer();
+  if (!oidcIssuer) return null;
+  const tokenUrl = `${oidcIssuer.replace(/\/+$/, '')}/token`;
+  try {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(body)) {
+      if (typeof v === 'string') {
+        params.set(k, v);
+      }
+    }
+    const resp = await tokenRelayFetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      body: params.toString()
+    });
+    const data = await resp.json().catch(() => null);
+    return { ok: resp.ok, status: resp.status, data };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+export function getProtectedResourceMetadata(publicUrl) {
   return {
     resource: getResource(publicUrl),
-    authorization_servers: [publicUrl],
+    authorization_servers: [getOidcIssuer()],
     scopes_supported: ['mcp'],
     bearer_methods_supported: ['header']
   };
 }
 
-function getAuthorizationServerMetadata(publicUrl) {
+export function getAuthorizationServerMetadata(publicUrl) {
   return {
     issuer: publicUrl,
     authorization_endpoint: `${publicUrl}/oauth/authorize`,
@@ -154,6 +215,7 @@ router.get(['/.well-known/oauth-authorization-server', '/.well-known/openid-conf
 router.get('/oauth/authorize', async (req, res) => {
   const q = req.query;
   const publicUrl = getPublicUrl(req);
+  const oidcIssuer = getOidcIssuer();
 
   try {
     if (q.response_type !== 'code' || !q.client_id || !q.redirect_uri || !q.code_challenge || q.code_challenge_method !== 'S256') {
@@ -163,6 +225,19 @@ router.get('/oauth/authorize', async (req, res) => {
     const metadata = await fetchCimdMetadata(q.client_id);
     if (!validateRedirectUri(metadata, q.redirect_uri)) {
       return sendHtml(res, page('Virheellinen redirect_uri', '<h1>Virheellinen redirect_uri</h1><p>Osoite ei vastaa asiakassovelluksen rekisteröityjä osoitteita.</p>'), [], 400);
+    }
+
+    if (q.provider === 'oidc') {
+      const authUrl = new URL(`${oidcIssuer.replace(/\/+$/, '')}/auth`);
+      authUrl.searchParams.set('client_id', q.client_id);
+      authUrl.searchParams.set('redirect_uri', q.redirect_uri);
+      authUrl.searchParams.set('response_type', 'code');
+      authUrl.searchParams.set('code_challenge', q.code_challenge);
+      authUrl.searchParams.set('code_challenge_method', q.code_challenge_method || 'S256');
+      if (q.state) authUrl.searchParams.set('state', q.state);
+      authUrl.searchParams.set('resource', getResource(publicUrl));
+      if (q.scope) authUrl.searchParams.set('scope', q.scope);
+      return res.redirect(authUrl.toString());
     }
 
     const clientName = metadata.client_name || q.client_id;
@@ -184,19 +259,31 @@ router.get('/oauth/authorize', async (req, res) => {
 
         <div class="divider">tai kirjaudu työntekijänä</div>
 
-        <label for="email">Sähköposti (seurakunnan tunnus)</label>
-        <input id="email" name="email" type="email" placeholder="nimi@seurakunta.fi" autocomplete="username">
-
-        <label for="password">Salasana / PIN</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••">
-
-        <button type="submit" name="action" value="login" class="btn btn-secondary">
-          Kirjaudu työntekijänä / ylläpitäjänä
+        <button type="submit" name="action" value="oidc" class="btn btn-oidc">
+          Kirjaudu työntekijänä (Tunnus OIDC)
         </button>
+
+        <details style="margin-top: 1.5rem; font-size: 0.85rem; color: #64748b;">
+          <summary style="cursor: pointer; text-align: center;">Paikallinen kirjautuminen (legacy / fallback)</summary>
+          <div style="margin-top: 0.8rem;">
+            <label for="email">Sähköposti (seurakunnan tunnus)</label>
+            <input id="email" name="email" type="email" placeholder="nimi@seurakunta.fi" autocomplete="username">
+
+            <label for="password">Salasana / PIN</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••">
+
+            <button type="submit" name="action" value="login" class="btn btn-secondary">
+              Kirjaudu paikallisesti
+            </button>
+          </div>
+        </details>
       </form>
     `;
 
-    return sendHtml(res, page('Rukoussovellus - Liitä avustaja (MCP)', body), [redirectSource(q.redirect_uri)]);
+    return sendHtml(res, page('Rukoussovellus - Liitä avustaja (MCP)', body), [
+      redirectSource(q.redirect_uri),
+      redirectSource(oidcIssuer)
+    ]);
   } catch (err) {
     return sendHtml(res, page('Virhe pyynnössä', `<h1>Virhe pyynnössä</h1><p>${escapeHtml(err.message)}</p>`), [], 400);
   }
@@ -242,6 +329,21 @@ router.post('/oauth/authorize', async (req, res) => {
     target.searchParams.set('iss', publicUrl);
     if (q.state) target.searchParams.set('state', q.state);
     return res.redirect(target.toString());
+  }
+
+  // 1.5. ACTION: Employee / Staff OIDC login (Tunnus OIDC Relay)
+  if (body.action === 'oidc') {
+    const oidcIssuer = getOidcIssuer();
+    const authUrl = new URL(`${oidcIssuer.replace(/\/+$/, '')}/auth`);
+    authUrl.searchParams.set('client_id', q.client_id);
+    authUrl.searchParams.set('redirect_uri', q.redirect_uri);
+    authUrl.searchParams.set('response_type', 'code');
+    authUrl.searchParams.set('code_challenge', q.code_challenge);
+    authUrl.searchParams.set('code_challenge_method', q.code_challenge_method || 'S256');
+    if (q.state) authUrl.searchParams.set('state', q.state);
+    authUrl.searchParams.set('resource', getResource(publicUrl));
+    if (q.scope) authUrl.searchParams.set('scope', q.scope);
+    return res.redirect(authUrl.toString());
   }
 
   // 2. ACTION: User Login (Staff / Admin)
@@ -337,28 +439,42 @@ router.post('/oauth/token', async (req, res) => {
       return res.status(400).json({ error: 'invalid_request', error_description: 'code and code_verifier required' });
     }
 
-    const record = await consumeAuthorizationCode(b.code);
-    if (!record || b.client_id !== record.clientId || b.redirect_uri !== record.redirectUri || !verifyS256(b.code_verifier, record.challenge)) {
-      return res.status(400).json({ error: 'invalid_grant' });
+    const isLocal = await peekAuthorizationCode(b.code);
+    if (isLocal) {
+      const record = await consumeAuthorizationCode(b.code);
+      if (!record || b.client_id !== record.clientId || b.redirect_uri !== record.redirectUri || !verifyS256(b.code_verifier, record.challenge)) {
+        return res.status(400).json({ error: 'invalid_grant' });
+      }
+
+      const accessToken = await issueAccessToken(publicUrl, resource, record.subject, record.clientId, record.scope);
+      const refreshToken = randomToken();
+      await saveRefreshToken({
+        token: refreshToken,
+        clientId: record.clientId,
+        subject: record.subject,
+        scope: record.scope,
+        expires: Date.now() + 30 * 86_400_000
+      });
+
+      return res.json({
+        access_token: accessToken,
+        token_type: 'Bearer',
+        expires_in: 3600,
+        refresh_token: refreshToken,
+        scope: record.scope
+      });
     }
 
-    const accessToken = await issueAccessToken(publicUrl, resource, record.subject, record.clientId, record.scope);
-    const refreshToken = randomToken();
-    await saveRefreshToken({
-      token: refreshToken,
-      clientId: record.clientId,
-      subject: record.subject,
-      scope: record.scope,
-      expires: Date.now() + 30 * 86_400_000
-    });
+    // Try central relay
+    const central = await relayTokenRequest(b);
+    if (central && central.ok && central.data) {
+      return res.status(central.status).json(central.data);
+    }
+    if (central && central.data && central.data.error) {
+      return res.status(central.status).json(central.data);
+    }
 
-    return res.json({
-      access_token: accessToken,
-      token_type: 'Bearer',
-      expires_in: 3600,
-      refresh_token: refreshToken,
-      scope: record.scope
-    });
+    return res.status(400).json({ error: 'invalid_grant' });
   }
 
   if (b.grant_type === 'refresh_token') {
@@ -367,22 +483,35 @@ router.post('/oauth/token', async (req, res) => {
     }
 
     const record = await getRefreshToken(b.refresh_token);
-    if (!record || b.client_id !== record.clientId) {
-      return res.status(400).json({ error: 'invalid_grant' });
+    if (record) {
+      if (b.client_id !== record.clientId) {
+        return res.status(400).json({ error: 'invalid_grant' });
+      }
+
+      if (record.subject !== 'anonymous') {
+        const user = await findUserById(record.subject);
+        if (!user) return res.status(400).json({ error: 'invalid_grant' });
+      }
+
+      const accessToken = await issueAccessToken(publicUrl, resource, record.subject, record.clientId, record.scope);
+      return res.json({
+        access_token: accessToken,
+        token_type: 'Bearer',
+        expires_in: 3600,
+        scope: record.scope
+      });
     }
 
-    if (record.subject !== 'anonymous') {
-      const user = await findUserById(record.subject);
-      if (!user) return res.status(400).json({ error: 'invalid_grant' });
+    // Try central relay
+    const central = await relayTokenRequest(b);
+    if (central && central.ok && central.data) {
+      return res.status(central.status).json(central.data);
+    }
+    if (central && central.data && central.data.error) {
+      return res.status(central.status).json(central.data);
     }
 
-    const accessToken = await issueAccessToken(publicUrl, resource, record.subject, record.clientId, record.scope);
-    return res.json({
-      access_token: accessToken,
-      token_type: 'Bearer',
-      expires_in: 3600,
-      scope: record.scope
-    });
+    return res.status(400).json({ error: 'invalid_grant' });
   }
 
   return res.status(400).json({ error: 'unsupported_grant_type' });
@@ -422,27 +551,90 @@ router.all('/mcp', async (req, res) => {
   }
 
   const token = header.slice('Bearer '.length).trim();
-  let payload;
-  try {
-    const verified = await verifyAccessToken(publicUrl, resource, token);
-    payload = verified.payload;
-  } catch (err) {
-    return challenge('invalid_token');
+  let user = null;
+
+  // 1. Dual-Layer Token Verification: Check Tunnus RS256 token first
+  const oidcIssuer = getOidcIssuer();
+  if (oidcIssuer) {
+    try {
+      const jwks = getRemoteJWKS(oidcIssuer);
+      const verified = await jwtVerify(token, jwks, {
+        issuer: oidcIssuer,
+        audience: [resource, publicUrl]
+      });
+      const payload = verified.payload;
+      if (payload && payload.sub) {
+        try {
+          user = await findUserByOidcSub(payload.sub);
+          if (!user) {
+            user = await findUserById(payload.sub);
+          }
+          if (!user && payload.email) {
+            user = await findUserByEmail(payload.email);
+          }
+        } catch {
+          // DB may not be available in all environments
+        }
+
+        if (!user) {
+          const email = payload.email || `${payload.sub}@oidc.local`;
+          const name = payload.name || payload.preferred_username || email;
+          let role = 'user';
+          if (Array.isArray(payload.groups) && payload.groups.some((g) => /admin/i.test(g))) {
+            role = 'admin';
+          } else if (payload.role) {
+            role = payload.role;
+          }
+          try {
+            user = await syncOidcUser({
+              oidcSub: payload.sub,
+              email,
+              name,
+              role
+            });
+          } catch {
+            user = {
+              id: payload.sub,
+              name,
+              email,
+              role,
+              isAnonymous: false
+            };
+          }
+        }
+        if (user) {
+          user.isAnonymous = false;
+        }
+      }
+    } catch {
+      // Signature error, HS256, or expired - fall back to local check
+    }
   }
 
-  // Resolve user identity
-  let user;
-  if (payload.sub === 'anonymous') {
-    user = {
-      id: 'anonymous',
-      name: 'Anonyymi seurakuntalainen',
-      role: 'user',
-      isAnonymous: true
-    };
-  } else {
-    user = await findUserById(payload.sub);
-    if (!user) {
+  // 2. Dual-Layer Fallback: Verify local HS256 access token
+  if (!user) {
+    let payload;
+    try {
+      const verified = await verifyAccessToken(publicUrl, resource, token);
+      payload = verified.payload;
+    } catch {
       return challenge('invalid_token');
+    }
+
+    // Resolve user identity
+    if (payload.sub === 'anonymous') {
+      user = {
+        id: 'anonymous',
+        name: 'Anonyymi seurakuntalainen',
+        role: 'user',
+        isAnonymous: true
+      };
+    } else {
+      user = await findUserById(payload.sub);
+      if (!user) {
+        return challenge('invalid_token');
+      }
+      user.isAnonymous = false;
     }
   }
 
@@ -459,5 +651,52 @@ router.all('/mcp', async (req, res) => {
 
   await transport.handleRequest(req, res, req.body);
 });
+
+// ─────────────────────────────────────────────────────────────
+// 5. OIDC BACK-CHANNEL LOGOUT & REVOCATION (/api/auth/backchannel, /mcp/backchannel)
+// ─────────────────────────────────────────────────────────────
+
+export async function handleBackchannelLogout(req, res) {
+  const logoutToken = req.body?.logout_token;
+  if (!logoutToken) {
+    return res.status(400).json({ error: 'invalid_request', error_description: 'logout_token required' });
+  }
+
+  const oidcIssuer = getOidcIssuer();
+  try {
+    const jwks = getRemoteJWKS(oidcIssuer);
+    const verified = await jwtVerify(logoutToken, jwks, {
+      issuer: oidcIssuer
+    });
+    const payload = verified.payload;
+    if (!payload || !payload.sub) {
+      return res.status(400).json({ error: 'invalid_request', error_description: 'sub required in logout_token' });
+    }
+
+    const sub = payload.sub;
+    // 1. Revoke refresh tokens in MCP store
+    await revokeRefreshTokensBySubject(sub);
+
+    // 2. If user exists in DB, also revoke by user.id if different
+    let user = null;
+    try {
+      user = await findUserByOidcSub(sub);
+    } catch {
+      // DB may not be available
+    }
+    if (user && user.id && user.id !== sub) {
+      await revokeRefreshTokensBySubject(user.id);
+      revokeUser(user.id);
+    }
+    revokeUser(sub);
+
+    res.set('Cache-Control', 'no-store');
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    return res.status(400).json({ error: 'invalid_request', error_description: 'logout_token verification failed' });
+  }
+}
+
+router.post(['/api/auth/backchannel', '/mcp/backchannel'], handleBackchannelLogout);
 
 export default router;

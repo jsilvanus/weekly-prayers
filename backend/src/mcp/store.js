@@ -25,6 +25,24 @@ export async function saveAuthorizationCode({ code, clientId, redirectUri, chall
   }
 }
 
+export async function peekAuthorizationCode(code) {
+  try {
+    const res = await query(
+      `SELECT code FROM mcp_authorization_codes
+       WHERE code = $1 AND expires_at > NOW()`,
+      [code]
+    );
+    if (res.rows.length > 0) {
+      return true;
+    }
+  } catch (err) {
+    // Check in-memory
+  }
+
+  const record = memCodes.get(code);
+  return Boolean(record && record.expires > Date.now());
+}
+
 export async function consumeAuthorizationCode(code) {
   try {
     const res = await query(
@@ -104,4 +122,27 @@ export async function getRefreshToken(token) {
     return record;
   }
   return null;
+}
+
+export async function revokeRefreshTokensBySubject(subject) {
+  if (!subject) return;
+  try {
+    await query(
+      `DELETE FROM mcp_refresh_tokens WHERE subject = $1`,
+      [subject]
+    );
+  } catch (err) {
+    // Check in-memory
+  }
+
+  for (const [key, record] of memRefresh.entries()) {
+    if (record.subject === subject) {
+      memRefresh.delete(key);
+    }
+  }
+}
+
+export function clearMemoryStores() {
+  memCodes.clear();
+  memRefresh.clear();
 }

@@ -8,6 +8,7 @@ import { mapGroupsToRoleAndTenant } from '../services/oidcService.js';
 import { getTenantBySlugOrId } from '../services/tenantService.js';
 import { generateToken, revokeToken } from '../services/jwtService.js';
 import { requireAuth } from '../middleware/authenticate.js';
+import { handleBackchannelLogout } from '../mcp/routes.js';
 
 const router = Router();
 
@@ -253,6 +254,9 @@ router.post('/logout', requireAuth, (req, res) => {
     message: 'Logged out successfully',
   });
 });
+
+// POST /api/auth/backchannel - OIDC Back-Channel Logout
+router.post('/backchannel', handleBackchannelLogout);
 
 // GET /api/auth/me - Get current user info
 router.get('/me', requireAuth, (req, res) => {

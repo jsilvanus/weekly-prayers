@@ -3,6 +3,27 @@ import { jwtConfig } from '../config/auth.js';
 
 // Store for revoked tokens (in production, use Redis)
 const revokedTokens = new Set();
+// Store for revoked users/subjects (subject -> revoked timestamp)
+const revokedUsers = new Map();
+
+export function revokeUser(subject) {
+  if (subject) {
+    revokedUsers.set(subject, Date.now());
+  }
+}
+
+export function isUserRevoked(subject, iat) {
+  if (!subject) return false;
+  const revokedAt = revokedUsers.get(subject);
+  if (!revokedAt) return false;
+  if (!iat) return true;
+  return iat * 1000 <= revokedAt;
+}
+
+export function clearRevocations() {
+  revokedTokens.clear();
+  revokedUsers.clear();
+}
 
 export function generateToken(user) {
   const payload = {
@@ -23,9 +44,15 @@ export function verifyToken(token) {
     throw new Error('Token has been revoked');
   }
 
-  return jwt.verify(token, jwtConfig.secret, {
+  const decoded = jwt.verify(token, jwtConfig.secret, {
     algorithms: [jwtConfig.algorithm],
   });
+
+  if (decoded.sub && isUserRevoked(decoded.sub, decoded.iat)) {
+    throw new Error('Token has been revoked');
+  }
+
+  return decoded;
 }
 
 export function revokeToken(token) {
