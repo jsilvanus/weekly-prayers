@@ -5,9 +5,7 @@
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM pg_enum
-        WHERE enumlabel = 'seurakunta'
-        AND enumtypid = 'tenant_type'::regtype
+        SELECT 1 FROM pg_type WHERE typname = 'tenant_type'
     ) THEN
         CREATE TYPE tenant_type AS ENUM ('seurakunta', 'seurakuntayhtyma');
     END IF;
