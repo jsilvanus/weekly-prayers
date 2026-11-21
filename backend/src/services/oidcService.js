@@ -12,11 +12,30 @@ export const ROLE_RANK = {
 };
 
 /**
+ * Convert wildcard pattern (e.g. "parish/* /rukous-worker") into RegExp with capture groups.
+ * @param {string} pattern
+ * @returns {RegExp}
+ */
+function wildcardPatternToRegex(pattern) {
+  // Escape regex specials except '*'
+  const escaped = pattern
+    .replace(/^\/+/, '')
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '([^/]+)');
+  return new RegExp(`^${escaped}$`);
+}
+
+/**
  * Map OIDC groups array to role and optional tenant slug.
  * Supports:
- *  1. Group pattern: parish/<tenant>/rukous-<role> or parish/<tenant>/prayers-<role>
- *     (e.g. parish/riihimaki/rukous-admin or parish/riihimaki/prayers-admin)
- *  2. Explicit JSON map: OIDC_GROUP_ROLE_MAP
+ *  1. Automatic convention pattern:
+ *     parish/<tenant>/rukous-<role> or parish/<tenant>/prayers-<role>
+ *     (e.g. parish/riihimaki/rukous-worker -> tenant: riihimaki, role: worker)
+ *  2. Explicit wildcard mapping in OIDC_GROUP_ROLE_MAP:
+ *     e.g. "parish/* /rukous-worker": "worker" -> wildcard '*' captures the tenant slug!
+ *     e.g. "parish/* /rukous-admin": "admin"
+ *  3. Explicit exact mapping in OIDC_GROUP_ROLE_MAP:
+ *     e.g. "parish/riihimaki/rukous-admin": "admin"
  *
  * @param {string[]} groups Array of group strings from OIDC claims
  * @param {Record<string, string | { tenant?: string, role: string }>} [groupRoleMap]
@@ -28,32 +47,42 @@ export function mapGroupsToRoleAndTenant(groups, groupRoleMap = {}, defaultTenan
   let highestRank = ROLE_RANK.user || 1;
   let resolvedTenantSlug = defaultTenantSlug || null;
 
-  // Normalize groupRoleMap
-  const normalizedMap = {};
+  // Compile exact and wildcard patterns from groupRoleMap
+  const exactMap = {};
+  const wildcardPatterns = [];
+
   if (groupRoleMap && typeof groupRoleMap === 'object') {
     for (const [k, v] of Object.entries(groupRoleMap)) {
-      const key = k.replace(/^\/+/, '');
-      if (typeof v === 'string') {
-        normalizedMap[key] = { role: v, tenant: defaultTenantSlug };
-      } else if (v && typeof v === 'object' && v.role) {
-        normalizedMap[key] = { role: v.role, tenant: v.tenant || defaultTenantSlug };
+      const cleanKey = k.replace(/^\/+/, '');
+      const role = typeof v === 'string' ? v : v?.role;
+      const explicitTenant = typeof v === 'object' ? v?.tenant : null;
+
+      if (!role) continue;
+
+      if (cleanKey.includes('*')) {
+        wildcardPatterns.push({
+          regex: wildcardPatternToRegex(cleanKey),
+          role,
+          explicitTenant,
+        });
+      } else {
+        exactMap[cleanKey] = {
+          role,
+          tenant: explicitTenant || defaultTenantSlug,
+        };
       }
     }
   }
 
-  // Regex pattern for parish/<tenant>/(rukous|prayers)-<role>
-  // e.g. parish/riihimaki/rukous-admin -> tenant: riihimaki, role: admin
-  // e.g. parish/riihimaki/rukous-worker -> tenant: riihimaki, role: worker
-  // e.g. parish/tuomiokirkko/rukous-coordinator -> tenant: tuomiokirkko, role: coordinator
-  // Also supports prayers- prefix for backward compatibility
-  const groupRegex = /^parish\/([^/]+)\/(?:rukous|prayers)-([a-zA-Z0-9_-]+)$/;
+  // Built-in automatic convention: parish/<tenant>/(rukous|prayers)-<role>
+  const conventionRegex = /^parish\/([^/]+)\/(?:rukous|prayers)-([a-zA-Z0-9_-]+)$/;
 
   for (const rawGroup of groups) {
     const g = String(rawGroup).replace(/^\/+/, '');
 
-    // 1. Check explicit map first
-    if (normalizedMap[g]) {
-      const { role, tenant } = normalizedMap[g];
+    // 1. Exact match in groupRoleMap
+    if (exactMap[g]) {
+      const { role, tenant } = exactMap[g];
       const rank = ROLE_RANK[role] || 0;
       if (rank > highestRank) {
         highestRank = rank;
@@ -63,13 +92,35 @@ export function mapGroupsToRoleAndTenant(groups, groupRoleMap = {}, defaultTenan
       continue;
     }
 
-    // 2. Check pattern parish/<tenant>/(rukous|prayers)-<role>
-    const match = g.match(groupRegex);
-    if (match) {
-      const tenant = match[1];
-      let role = match[2];
+    // 2. Wildcard match in groupRoleMap (e.g. parish/*/rukous-worker)
+    let matchedWildcard = false;
+    for (const wp of wildcardPatterns) {
+      const match = g.match(wp.regex);
+      if (match) {
+        matchedWildcard = true;
+        const capturedTenant = wp.explicitTenant || match[1] || defaultTenantSlug;
+        let role = wp.role;
+        if (role === 'prayer-group') role = 'prayer_group';
 
-      // Normalize role names (e.g. prayer-group -> prayer_group)
+        const rank = ROLE_RANK[role] || 0;
+        if (rank > highestRank) {
+          highestRank = rank;
+          highestRole = role;
+          if (capturedTenant) resolvedTenantSlug = capturedTenant;
+        } else if (rank === highestRank && capturedTenant && !resolvedTenantSlug) {
+          resolvedTenantSlug = capturedTenant;
+        }
+        break;
+      }
+    }
+    if (matchedWildcard) continue;
+
+    // 3. Automatic convention: parish/<tenant>/(rukous|prayers)-<role>
+    const convMatch = g.match(conventionRegex);
+    if (convMatch) {
+      const tenant = convMatch[1];
+      let role = convMatch[2];
+
       if (role === 'prayer-group') role = 'prayer_group';
 
       if (ROLE_RANK[role]) {
