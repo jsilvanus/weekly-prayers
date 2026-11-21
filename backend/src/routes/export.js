@@ -441,7 +441,7 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
           Kaikki
         </button>
         <button id="btn-highlights" class="toggle-btn ${initialHighlightsOnly ? 'active' : ''}" onclick="setFilterMode('highlights')">
-          ⭐ Vain nostot
+          🕯️ Vain nostot
         </button>
       </div>
     </div>
@@ -521,7 +521,7 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
             <div id="prayer-${pid}" class="prayer-item ${isHighlighted ? 'is-highlight' : 'is-regular'}" data-highlight="${isHighlighted ? '1' : '0'}" data-prayer-id="${pid}" onclick="togglePrayerCard('${pid}')">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  ${isHighlighted ? '<span class="highlight-badge">⭐ Nosto</span>' : ''}
+                  ${isHighlighted ? '<span class="highlight-badge">🕯️ Nosto</span>' : ''}
                   ${p.ministryTag ? `<span class="ministry-tag">🏷️ ${escapeHtml(p.ministryTag)}</span>` : ''}
                 </div>
                 <span class="toggle-badge" id="badge-${pid}">⚪ Merkitse</span>
@@ -544,7 +544,7 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
             <div id="prayer-${pid}" class="prayer-item ${isHighlighted ? 'is-highlight' : 'is-regular'}" data-highlight="${isHighlighted ? '1' : '0'}" data-prayer-id="${pid}" onclick="togglePrayerCard('${pid}')">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  ${isHighlighted ? '<span class="highlight-badge">⭐ Nosto</span>' : ''}
+                  ${isHighlighted ? '<span class="highlight-badge">🕯️ Nosto</span>' : ''}
                 </div>
                 <span class="toggle-badge" id="badge-${pid}">⚪ Merkitse</span>
               </div>

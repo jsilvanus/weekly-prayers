@@ -52,7 +52,7 @@ function ExportButton({ week, year }) {
           className="btn-secondary text-xs rounded-l-none bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center gap-1 border-l border-amber-200"
           title="Tulosta vain nostetut rukousaiheet"
         >
-          <span>⭐</span>
+          <span>🕯️</span>
           <span>{t('admin.export.highlightsOnly', 'Vain nostot')}</span>
         </button>
       </div>

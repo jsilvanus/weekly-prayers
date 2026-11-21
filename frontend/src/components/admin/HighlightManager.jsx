@@ -158,7 +158,7 @@ function HighlightManager() {
         <div className="bg-amber-50/70 border border-amber-300 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
-              <span>⭐</span> {t('admin.highlights.activeHighlights')}
+              <span>🕯️</span> {t('admin.highlights.activeHighlights')}
             </h3>
             <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-200 text-amber-900">
               {activeHighlights.length}/4
@@ -276,7 +276,7 @@ function HighlightManager() {
               onClick={() => setFilterType('highlighted')}
               className={`px-2.5 py-1 rounded-md ${filterType === 'highlighted' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700'}`}
             >
-              ⭐ Vain nostetut
+              🕯️ Vain nostetut
             </button>
             <button
               onClick={() => setFilterType('ministry')}
@@ -358,7 +358,7 @@ function HighlightManager() {
                         }`}
                       >
                         {hlActive
-                          ? `⭐ Aktiivinen nosto (Z=${prayer.highlightPriority})`
+                          ? `🕯️ Aktiivinen nosto (Z=${prayer.highlightPriority})`
                           : hlUpcoming
                           ? `⏳ Tuleva nosto (Z=${prayer.highlightPriority})`
                           : `⚠️ Päättynyt nosto (Z=${prayer.highlightPriority})`}
@@ -481,14 +481,14 @@ function HighlightManager() {
                           disabled={actionLoading === prayer.id}
                           className="btn bg-amber-500 hover:bg-amber-600 text-white text-xs py-1 px-2.5"
                         >
-                          ⭐ Nosta (Z=10)
+                          🕯️ Nosta (Z=10)
                         </button>
                         <button
                           onClick={() => handleSetPriority(prayer.id, 20, dates.startDate, dates.endDate)}
                           disabled={actionLoading === prayer.id}
                           className="btn bg-amber-600 hover:bg-amber-700 text-white text-xs py-1 px-2.5"
                         >
-                          🌟 Korkea (Z=20)
+                          🕯️ Korkea (Z=20)
                         </button>
                       </>
                     )}

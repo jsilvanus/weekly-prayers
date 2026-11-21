@@ -569,7 +569,7 @@ function generateExportHtml(highlightsOnly = false, initialMode = 'print') {
           Kaikki
         </button>
         <button id="btn-highlights" class="toggle-btn ${highlightsOnly ? 'active' : ''}" onclick="setFilterMode('highlights')">
-          ⭐ Vain nostot
+          🕯️ Vain nostot
         </button>
       </div>
     </div>
@@ -621,21 +621,21 @@ function generateExportHtml(highlightsOnly = false, initialMode = 'print') {
       <h2>Työalojen rukousaiheet</h2>
       <div class="prayer-item is-highlight" data-prayer-id="staff-0" onclick="togglePrayerCheck('staff-0')">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div><span class="highlight-badge">⭐ Nosto</span><span class="ministry-tag">🏷️ Nuorisotyö</span></div>
+          <div><span class="highlight-badge">🕯️ Nosto</span><span class="ministry-tag">🏷️ Nuorisotyö</span></div>
           <span class="toggle-badge" id="badge-staff-0">⚪ Merkitse</span>
         </div>
         <p>${mockData.prayers.staff[0].content}</p>
       </div>
       <div class="prayer-item is-highlight" data-prayer-id="staff-1" onclick="togglePrayerCheck('staff-1')">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div><span class="highlight-badge">⭐ Nosto</span><span class="ministry-tag">🏷️ Diakonia</span></div>
+          <div><span class="highlight-badge">🕯️ Nosto</span><span class="ministry-tag">🏷️ Diakonia</span></div>
           <span class="toggle-badge" id="badge-staff-1">⚪ Merkitse</span>
         </div>
         <p>${mockData.prayers.staff[1].content}</p>
       </div>
       <div class="prayer-item is-highlight" data-prayer-id="staff-2" onclick="togglePrayerCheck('staff-2')">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div><span class="highlight-badge">⭐ Nosto</span><span class="ministry-tag">🏷️ Lähetystyö</span></div>
+          <div><span class="highlight-badge">🕯️ Nosto</span><span class="ministry-tag">🏷️ Lähetystyö</span></div>
           <span class="toggle-badge" id="badge-staff-2">⚪ Merkitse</span>
         </div>
         <p>${mockData.prayers.staff[2].content}</p>
@@ -653,7 +653,7 @@ function generateExportHtml(highlightsOnly = false, initialMode = 'print') {
       <h2>Seurakuntalaisten rukousaiheet</h2>
       <div class="prayer-item is-highlight" data-prayer-id="public-0" onclick="togglePrayerCheck('public-0')">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span class="highlight-badge">⭐ Nosto</span>
+          <span class="highlight-badge">🕯️ Nosto</span>
           <span class="toggle-badge" id="badge-public-0">⚪ Merkitse</span>
         </div>
         <p>${mockData.prayers.public[0].content}</p>
