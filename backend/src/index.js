@@ -26,7 +26,7 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy for reverse proxy headers (Traefik / Nginx)
 app.set('trust proxy', true);
 
-// Compute basePath from BASE_URL (e.g. "https://kehitys.riihimaenseurakunta.fi/rukous" -> "/rukous")
+// Compute basePath from BASE_URL (e.g. "https://example.com/rukous" -> "/rukous")
 export function deriveBasePath(rawUrl) {
   if (!rawUrl) return '';
   try {

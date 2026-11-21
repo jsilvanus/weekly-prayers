@@ -1,17 +1,17 @@
 # Weekly Prayers - Viikottaiset rukousaiheet
 
-Sovellus seurakunnan viikottaisten rukousaiheiden hallintaan ja näyttämiseen.
+Sovellus seurakuntien ja seurakuntayhtymien viikottaisten rukousaiheiden hallintaan, moderointiin ja esittämiseen.
 
 ## Ominaisuudet
 
-- Kirkkoherran viikottainen rukousaihe
-- Työntekijöiden rukouspyynnöt
-- Julkinen rukouspyyntölista AI-moderoinnilla
-- Kolmen kielen tuki (FI, EN, SV)
-- Microsoft Entra ID -kirjautuminen
-- Upotettava widget ulkoisille sivuille
-- Esirukouksen tuloste messuun
-- Rukouslaskuri
+- **Kirkkoherran ja piispan rukousaiheet:** Viikottaiset teemat ja liturgiset tervehdykset.
+- **Työalojen rukouspyynnöt:** Työntekijöiden ja työalojen (diakonia, nuorisotyö, lähetys jne.) rukousaiheet.
+- **Julkiset rukouspyynnöt:** Seurakuntalaisten jättämät pyynnöt tekoälyavusteisella moderoinnilla ja työntekijöiden hyväksynnällä.
+- **Moniseurakuntatuki (Multi-tenancy):** Tuki seurakunnille ja seurakuntayhtymille hierarkioineen ja yhtymälaajuisille aiheille.
+- **Raamattu & Hetkirukoukset:** Kirkkovuosikalenteri ja hetkirukoukset (Anno API).
+- **Esirukouksen tuloste:** Valmiit tulostepohjat sunnuntain messun esirukousjaksoa varten.
+- **Upotettava widget:** Upotettavissa suoraan verkkosivuille iFramena tai JavaScript-komponenttina.
+- **Kielituki:** Suomi, ruotsi ja englanti (FI, SV, EN).
 
 ## Teknologiat
 
@@ -20,124 +20,63 @@ Sovellus seurakunnan viikottaisten rukousaiheiden hallintaan ja näyttämiseen.
 | Frontend | React 18 + Vite + TailwindCSS |
 | Backend | Node.js + Express (ESM) |
 | Tietokanta | PostgreSQL 16 |
-| Autentikointi | Microsoft Entra ID (MSAL) |
-| AI-moderointi | OpenAI API / Claude API |
+| Autentikointi | OIDC / Tunnus (PKCE) & Microsoft Entra ID |
+| AI-moderointi | OpenAI API / Anthropic Claude API (valinnainen) |
 | I18n | react-i18next |
-| Kontitus | Docker + Docker Compose |
-| Reverse Proxy | Nginx |
+| Kontitus | Docker (multi-stage build) |
 
-## Asennus
+## Paikallinen kehitys
 
 ### Vaatimukset
 
 - Docker ja Docker Compose
-- Node.js 20+ (kehitykseen)
-- Microsoft Azure -tili (Entra ID)
-- OpenAI tai Anthropic API-avain (valinnainen)
+- Node.js 20+
 
-### Kehitysympäristö
+### Asennus ja käynnistys
 
-1. Kopioi ympäristömuuttujat:
+1. Kopioi malliympäristömuuttujat:
 ```bash
 cp .env.example .env
 ```
 
-2. Täytä tarvittavat ympäristömuuttujat `.env`-tiedostoon
-
-3. Käynnistä kehitysympäristö:
+2. Käynnistä kehitysympäristö:
 ```bash
-./scripts/setup.sh
-# tai
 docker-compose -f docker-compose.dev.yml up
 ```
 
-4. Aja migraatiot:
+3. Aja tietokantamigraatiot:
 ```bash
 docker-compose -f docker-compose.dev.yml --profile migrate up migrate
 ```
 
-Backend: http://localhost:3000
-Frontend: http://localhost:5173
+Backend: `http://localhost:3000`  
+Frontend: `http://localhost:5173`
 
-### Tuotanto
+## Käyttöoikeudet ja roolit
 
-```bash
-docker-compose up -d --build
-```
+Roolit määritellään OIDC-ryhmäjäsenyyksien (`parish/<tenant>/rukous-<role>`) tai paikallisen käyttäjähallinnan kautta:
 
-Sovellus käynnistyy osoitteeseen http://localhost (portti 80).
-
-## Ympäristömuuttujat
-
-| Muuttuja | Kuvaus | Pakollinen |
-|----------|--------|------------|
-| DB_USER | PostgreSQL käyttäjä | Kyllä |
-| DB_PASSWORD | PostgreSQL salasana | Kyllä |
-| DB_NAME | Tietokannan nimi | Kyllä |
-| JWT_SECRET | JWT-tokenin salausavain | Kyllä |
-| AZURE_TENANT_ID | Azure AD tenant ID | Kyllä |
-| AZURE_CLIENT_ID | Azure AD client ID | Kyllä |
-| AZURE_CLIENT_SECRET | Azure AD client secret | Kyllä |
-| AZURE_REDIRECT_URI | OAuth callback URL | Kyllä |
-| OPENAI_API_KEY | OpenAI API-avain | Ei* |
-| ANTHROPIC_API_KEY | Anthropic API-avain | Ei* |
-| AI_PROVIDER | "openai" tai "anthropic" | Ei |
-| FRONTEND_URL | Frontend URL CORS:ille | Ei |
-
-*AI-moderointiin tarvitaan joko OpenAI tai Anthropic API-avain.
-
-## Käyttöoikeudet
-
-| Rooli | Kuvaus |
-|-------|--------|
-| admin | Kirkkoherran aihe, käyttäjähallinta, kaikki oikeudet |
-| worker | Työntekijöiden pyynnöt, hyväksyminen, tuloste |
-| user | Kirjautunut käyttäjä |
-| anon | Julkiset pyynnöt, lukuoikeus |
-
-## API-endpointit
-
-### Julkiset
-
-- `GET /api/prayers` - Viikon rukousaiheet
-- `POST /api/prayers` - Jätä julkinen rukouspyyntö
-- `GET /api/counts` - Rukouslaskurin arvo
-- `POST /api/counts/increment` - Lisää rukouslaskuriin
-
-### Autentikoidut (worker+)
-
-- `POST /api/prayers/staff` - Työntekijän rukouspyyntö
-- `PUT /api/prayers/:id` - Muokkaa pyyntöä
-- `DELETE /api/prayers/:id` - Poista pyyntö
-- `POST /api/prayers/:id/approve` - Hyväksy/hylkää
-- `GET /api/export/intercession` - Esirukouksen tuloste
-
-### Admin
-
-- `POST /api/prayers/pastor` - Kirkkoherran aihe
-- `GET /api/users` - Käyttäjälista
-- `PUT /api/users/:id/role` - Muuta roolia
-
-### Upotus (CORS-tuettu)
-
-- `GET /api/embed/data` - JSON-data ulkoisille sivuille
-- `GET /api/embed/widget.js` - JavaScript-widget
-- `GET /api/embed/iframe` - iFrame-sisältö
+| Rooli | Oikeudet |
+|-------|----------|
+| `admin` | Täydet oikeudet: asetukset, käyttäjähallinta, kirkkoherran aiheet |
+| `coordinator` | Rukousaiheiden nostot (Z-prioriteetti), moderointi, esirukoustuloste |
+| `worker` / `bishop` | Työntekijöiden ja piispan pyyntöjen luonti ja hallinta, moderointi |
+| `prayer_group` | Rukousryhmäläisten näkymät ja aiheiden luku |
+| `user` | Kirjautunut peruskäyttäjä |
+| *(anonyymi)* | Julkiset rukousaiheet, pyynnön jättäminen, rukouslaskuri |
 
 ## Upotus ulkoisille sivuille
 
 ### JavaScript-widget
-
 ```html
 <div id="weekly-prayers-widget"></div>
-<script src="https://your-domain.com/api/embed/widget.js"></script>
+<script src="/api/embed/widget.js"></script>
 ```
 
 ### iFrame
-
 ```html
 <iframe
-  src="https://your-domain.com/api/embed/iframe"
+  src="/api/embed/iframe"
   width="100%"
   height="400"
   frameborder="0">
@@ -150,25 +89,22 @@ Sovellus käynnistyy osoitteeseen http://localhost (portti 80).
 weekly-prayers/
 ├── backend/           # Node.js Express API
 │   ├── src/
-│   │   ├── config/    # Konfiguraatiot
-│   │   ├── db/        # Tietokanta ja migraatiot
-│   │   ├── middleware/# Express middlewaret
-│   │   ├── routes/    # API-reitit
-│   │   ├── services/  # Palvelut
-│   │   └── utils/     # Apufunktiot
+│   │   ├── config/    # Sovelluskonfiguraatiot
+│   │   ├── db/        # Tietokantayhteys ja migraatiot
+│   │   ├── middleware/# Autentikointi ja autorisointi
+│   │   ├── routes/    # REST API -reitit
+│   │   └── services/  # Liiketoimintalogiikka ja OIDC
 │   └── Dockerfile
-├── frontend/          # React Vite -sovellus
+├── frontend/          # React Vite SPA
 │   ├── src/
-│   │   ├── components/# React-komponentit
-│   │   ├── context/   # React Context
-│   │   ├── hooks/     # Custom hooks
-│   │   ├── locales/   # Käännökset
-│   │   └── services/  # API-palvelut
+│   │   ├── components/# UI-komponentit
+│   │   ├── context/   # React Contextit (Auth, Settings, Tenant)
+│   │   ├── locales/   # Käännöstiedostot
+│   │   └── services/  # API-asiakas
 │   └── Dockerfile
-├── nginx/             # Nginx reverse proxy
-├── scripts/           # Apuskriptit
-├── docker-compose.yml # Tuotanto
-└── docker-compose.dev.yml # Kehitys
+├── Dockerfile         # Yhdistetty tuotantokuva (frontend + backend)
+├── docker-compose.yml # Compose-määritys
+└── docker-compose.dev.yml
 ```
 
 ## Lisenssi
