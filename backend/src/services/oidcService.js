@@ -1,5 +1,5 @@
 /**
- * Role rank mapping for weekly-prayers
+ * Role rank mapping for weekly-prayers / rukous
  * user (1) < prayer_group (1.5) < bishop = worker (2) < coordinator (3) < admin (4)
  */
 export const ROLE_RANK = {
@@ -14,7 +14,8 @@ export const ROLE_RANK = {
 /**
  * Map OIDC groups array to role and optional tenant slug.
  * Supports:
- *  1. Group pattern: parish/<tenant>/prayers-<role> (e.g. parish/riihimaki/prayers-admin)
+ *  1. Group pattern: parish/<tenant>/rukous-<role> or parish/<tenant>/prayers-<role>
+ *     (e.g. parish/riihimaki/rukous-admin or parish/riihimaki/prayers-admin)
  *  2. Explicit JSON map: OIDC_GROUP_ROLE_MAP
  *
  * @param {string[]} groups Array of group strings from OIDC claims
@@ -40,11 +41,12 @@ export function mapGroupsToRoleAndTenant(groups, groupRoleMap = {}, defaultTenan
     }
   }
 
-  // Regex pattern for parish/<tenant>/prayers-<role>
-  // e.g. parish/riihimaki/prayers-admin -> tenant: riihimaki, role: admin
-  // e.g. parish/tuomiokirkko/prayers-coordinator -> tenant: tuomiokirkko, role: coordinator
-  // Also supports prayer_group role: prayers-prayer-group or prayers-prayer_group
-  const groupRegex = /^parish\/([^/]+)\/prayers-([a-zA-Z0-9_-]+)$/;
+  // Regex pattern for parish/<tenant>/(rukous|prayers)-<role>
+  // e.g. parish/riihimaki/rukous-admin -> tenant: riihimaki, role: admin
+  // e.g. parish/riihimaki/rukous-worker -> tenant: riihimaki, role: worker
+  // e.g. parish/tuomiokirkko/rukous-coordinator -> tenant: tuomiokirkko, role: coordinator
+  // Also supports prayers- prefix for backward compatibility
+  const groupRegex = /^parish\/([^/]+)\/(?:rukous|prayers)-([a-zA-Z0-9_-]+)$/;
 
   for (const rawGroup of groups) {
     const g = String(rawGroup).replace(/^\/+/, '');
@@ -61,7 +63,7 @@ export function mapGroupsToRoleAndTenant(groups, groupRoleMap = {}, defaultTenan
       continue;
     }
 
-    // 2. Check pattern parish/<tenant>/prayers-<role>
+    // 2. Check pattern parish/<tenant>/(rukous|prayers)-<role>
     const match = g.match(groupRegex);
     if (match) {
       const tenant = match[1];
