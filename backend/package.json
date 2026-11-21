@@ -11,14 +11,17 @@
   },
   "dependencies": {
     "@azure/msal-node": "^2.6.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
+    "jose": "^6.2.18",
     "jsonwebtoken": "^9.0.2",
     "openid-client": "^6.9.1",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "zod": "^4.6.7"
   },
   "engines": {
     "node": ">=24.0.0"

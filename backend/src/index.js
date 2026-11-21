@@ -17,6 +17,7 @@ import settingsRouter from './routes/settings.js';
 import bibleRouter from './routes/bible.js';
 import tenantRouter from './routes/tenants.js';
 import docsRouter from './routes/docs.js';
+import mcpRouter from './mcp/routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,6 +82,7 @@ router.use('/api/bible', bibleRouter);
 router.use('/api/tenants', tenantRouter);
 router.use('/api', docsRouter);
 router.use('/', docsRouter);
+router.use('/', mcpRouter);
 
 // Prayer list direct routes/redirects
 router.get(['/esirukouslista', '/esirukous', '/intercession'], (req, res) => {
@@ -107,8 +109,15 @@ if (clientDistPath) {
   router.use(express.static(clientDistPath, { index: false }));
 
   router.get('*', (req, res, next) => {
-    // If request starts with /api or /health, pass through to 404
-    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+    // If request starts with backend endpoints, pass through to routers/404
+    if (
+      req.path.startsWith('/api') ||
+      req.path.startsWith('/health') ||
+      req.path.startsWith('/mcp') ||
+      req.path.startsWith('/oauth') ||
+      req.path.startsWith('/.well-known') ||
+      req.path.startsWith('/docs')
+    ) {
       return next();
     }
     if (renderedHtml) {
