@@ -93,6 +93,23 @@ export async function updateUser(id, { email, name, role, tenantId, oidcSub }) {
   return result.rows[0];
 }
 
+function isEmailInAdminList(email) {
+  if (!email || !process.env.ADMIN_EMAILS) return false;
+  const adminList = process.env.ADMIN_EMAILS.split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return adminList.includes(email.trim().toLowerCase());
+}
+
+async function shouldPromoteToAdmin(email) {
+  if (isEmailInAdminList(email)) {
+    return true;
+  }
+  const result = await query("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'");
+  const adminCount = parseInt(result.rows[0]?.count || '0', 10);
+  return adminCount === 0;
+}
+
 export async function findOrCreateUser({ microsoftOid, email, name }) {
   // Try to find existing user by microsoftOid or email
   let user = await findUserByMicrosoftOid(microsoftOid);
@@ -104,15 +121,29 @@ export async function findOrCreateUser({ microsoftOid, email, name }) {
     }
   }
 
+  const effectiveEmail = email || user?.email;
+  const promote = await shouldPromoteToAdmin(effectiveEmail);
+
   if (user) {
-    // Update last login and potentially email/name if changed
-    if (user.email !== email || user.name !== name) {
-      user = await updateUser(user.id, { email, name });
+    const updates = {};
+    if (email && user.email !== email) updates.email = email;
+    if (name && user.name !== name) updates.name = name;
+    if (promote && user.role !== 'admin') {
+      updates.role = 'admin';
+    }
+
+    if (Object.keys(updates).length > 0) {
+      user = await updateUser(user.id, updates);
     }
     user = await updateUserLogin(user.id);
   } else {
     // Create new user
-    user = await createUser({ microsoftOid, email, name });
+    user = await createUser({
+      microsoftOid,
+      email,
+      name,
+      role: promote ? 'admin' : 'user',
+    });
   }
 
   return user;
@@ -132,11 +163,18 @@ export async function syncOidcUser({ oidcSub, email, name, role, tenantId }) {
     }
   }
 
+  const effectiveEmail = email || user?.email;
+  const promote = await shouldPromoteToAdmin(effectiveEmail);
+
   if (user) {
     const updates = {};
     if (email && user.email !== email) updates.email = email;
     if (name && user.name !== name) updates.name = name;
-    if (role && user.role !== role) updates.role = role;
+    if (promote) {
+      if (user.role !== 'admin') updates.role = 'admin';
+    } else if (role && user.role !== role) {
+      updates.role = role;
+    }
     if (tenantId !== undefined && user.tenant_id !== tenantId) updates.tenantId = tenantId;
 
     if (Object.keys(updates).length > 0) {
@@ -148,7 +186,7 @@ export async function syncOidcUser({ oidcSub, email, name, role, tenantId }) {
       oidcSub,
       email: email || `${oidcSub}@oidc.local`,
       name: name || email || oidcSub,
-      role: role || 'user',
+      role: promote ? 'admin' : (role || 'user'),
       tenantId: tenantId || null,
     });
   }

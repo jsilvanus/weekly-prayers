@@ -4,68 +4,119 @@ import { useSettings } from './SettingsContext';
 
 const TenantContext = createContext(null);
 
+function detectInitialTenant() {
+  if (typeof window === 'undefined') return 'riihimaki';
+
+  // 1. URL Query Parameter (?tenant=... or ?seurakunta=...)
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const fromParam = params.get('tenant') || params.get('seurakunta');
+    if (fromParam) return fromParam;
+  } catch (e) {}
+
+  // 2. URL Path Parameter (/seurakunta/:slug or subpath /rukous/:slug)
+  try {
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const rukousIdx = pathParts.indexOf('rukous');
+    if (rukousIdx !== -1 && pathParts[rukousIdx + 1]) {
+      const nextSeg = pathParts[rukousIdx + 1];
+      if (!['admin', 'bible', 'raamattu', 'api'].includes(nextSeg)) {
+        return nextSeg;
+      }
+    }
+    const seurakuntaIdx = pathParts.indexOf('seurakunta');
+    if (seurakuntaIdx !== -1 && pathParts[seurakuntaIdx + 1]) {
+      return pathParts[seurakuntaIdx + 1];
+    }
+  } catch (e) {}
+
+  // 3. Hostname detection (e.g. rukous.riihimaenseurakunta.fi or riihimaenseurakunta.fi)
+  try {
+    const host = window.location.hostname;
+    if (host && !['localhost', '127.0.0.1'].includes(host)) {
+      if (host.includes('riihimaenseurakunta.fi')) {
+        return 'riihimaki';
+      }
+      return host;
+    }
+  } catch (e) {}
+
+  // 4. Saved user preference in localStorage
+  try {
+    const saved = localStorage.getItem('selected_tenant_slug');
+    if (saved) return saved;
+  } catch (e) {}
+
+  return 'riihimaki';
+}
+
 export function TenantProvider({ children }) {
   const settingsContext = useSettings();
   const settings = settingsContext?.settings || {};
 
-  const [selectedSlug, setSelectedSlug] = useState(() => {
-    return localStorage.getItem('selected_tenant_slug') || 'tuomiokirkko';
-  });
+  const [selectedSlug, setSelectedSlug] = useState(detectInitialTenant);
+  const [allTenantsList, setAllTenantsList] = useState([]);
 
   const [tenantHierarchy, setTenantHierarchy] = useState({
     tenant: {
-      id: 'e2000000-0000-0000-0000-000000000001',
-      name: settings.parish_name || 'Tuomiokirkkoseurakunta',
-      slug: 'tuomiokirkko',
+      id: 'e2000000-0000-0000-0000-000000000010',
+      name: 'Riihimäen seurakunta',
+      slug: 'riihimaki',
       type: 'seurakunta',
-      parent_id: 'e1000000-0000-0000-0000-000000000001',
-      diocese: 'Tampereen hiippakunta'
+      parent_id: null,
+      diocese: 'Tampereen hiippakunta',
+      domain: 'riihimaenseurakunta.fi'
     },
-    yhtyma: {
-      id: 'e1000000-0000-0000-0000-000000000001',
-      name: settings.yhtyma_name || 'Tampereen seurakuntayhtymä',
-      slug: 'tampereen-seurakuntayhtyma',
-      type: 'seurakuntayhtyma'
-    },
-    isPartOfYhtyma: true,
-    sisterParishes: [
-      { id: 'e2000000-0000-0000-0000-000000000002', name: 'Harjun seurakunta', slug: 'harju', type: 'seurakunta' },
-      { id: 'e2000000-0000-0000-0000-000000000003', name: 'Messukylän seurakunta', slug: 'messukyla', type: 'seurakunta' }
-    ],
-    allParishesInYhtyma: [
-      { id: 'e2000000-0000-0000-0000-000000000001', name: settings.parish_name || 'Tuomiokirkkoseurakunta', slug: 'tuomiokirkko', type: 'seurakunta' },
-      { id: 'e2000000-0000-0000-0000-000000000002', name: 'Harjun seurakunta', slug: 'harju', type: 'seurakunta' },
-      { id: 'e2000000-0000-0000-0000-000000000003', name: 'Messukylän seurakunta', slug: 'messukyla', type: 'seurakunta' }
-    ]
+    yhtyma: null,
+    isPartOfYhtyma: false,
+    sisterParishes: [],
+    allParishesInYhtyma: []
   });
 
   const [loading, setLoading] = useState(true);
 
-  const fetchHierarchy = useCallback(async (slug) => {
+  const fetchHierarchy = useCallback(async (slugOrHost) => {
     setLoading(true);
     try {
-      const data = await api.getTenantCurrent(slug);
+      const data = await api.getCurrentTenant(slugOrHost);
       if (data && data.tenant) {
         setTenantHierarchy(data);
+        if (data.tenant.slug && data.tenant.slug !== selectedSlug) {
+          setSelectedSlug(data.tenant.slug);
+        }
       }
     } catch (err) {
       console.warn('Could not fetch tenant hierarchy, using defaults:', err.message);
     } finally {
       setLoading(false);
     }
+  }, [selectedSlug]);
+
+  const fetchAllTenants = useCallback(async () => {
+    try {
+      const res = await api.getTenants();
+      if (res?.tenants) {
+        setAllTenantsList(res.tenants);
+      }
+    } catch (e) {
+      console.warn('Could not fetch all tenants list:', e.message);
+    }
   }, []);
 
   useEffect(() => {
     fetchHierarchy(selectedSlug);
-  }, [selectedSlug, fetchHierarchy]);
+    fetchAllTenants();
+  }, [selectedSlug, fetchHierarchy, fetchAllTenants]);
 
   const switchParish = (slug) => {
     if (!slug) return;
-    localStorage.setItem('selected_tenant_slug', slug);
+    try {
+      localStorage.setItem('selected_tenant_slug', slug);
+    } catch (e) {}
     setSelectedSlug(slug);
   };
 
-  // Overlay configurable names from settings
+  // Overlay configurable names from settings if tuomiokirkko
   const effectiveTenant = {
     ...tenantHierarchy.tenant,
     name: (tenantHierarchy.tenant?.slug === 'tuomiokirkko' && settings?.parish_name)
@@ -85,7 +136,7 @@ export function TenantProvider({ children }) {
     return p;
   });
 
-  const effectiveSisterParishes = effectiveAllParishes.filter(p => p.id !== effectiveTenant.id);
+  const effectiveSisterParishes = effectiveAllParishes.filter(p => p.id !== effectiveTenant?.id);
 
   const value = {
     currentTenant: effectiveTenant,
@@ -93,9 +144,13 @@ export function TenantProvider({ children }) {
     isPartOfYhtyma: tenantHierarchy.isPartOfYhtyma,
     sisterParishes: effectiveSisterParishes,
     allParishesInYhtyma: effectiveAllParishes,
+    allTenants: allTenantsList,
     selectedSlug,
     switchParish,
-    refetchTenant: () => fetchHierarchy(selectedSlug),
+    refetchTenant: () => {
+      fetchHierarchy(selectedSlug);
+      fetchAllTenants();
+    },
     loading
   };
 

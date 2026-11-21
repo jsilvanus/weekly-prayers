@@ -9,6 +9,7 @@ import PastorPrayerForm from './PastorPrayerForm';
 import BishopPrayerForm from './BishopPrayerForm';
 import HighlightManager from './HighlightManager';
 import SettingsManager from './SettingsManager';
+import TenantManager from './TenantManager';
 import BibleManager from './BibleManager';
 
 function AdminPanel() {
@@ -43,8 +44,9 @@ function AdminPanel() {
     if (isAdmin) {
       tabs.push({ id: 'pastor', label: t('admin.pastor.title'), component: PastorPrayerForm });
       tabs.push({ id: 'bishop', label: t('admin.bishop.title'), component: BishopPrayerForm });
-      tabs.push({ id: 'bible', label: '📖 Raamattu & Anno API', component: BibleManager });
+      tabs.push({ id: 'tenants', label: '🏛️ Seurakunnat (Tenants)', component: TenantManager });
       tabs.push({ id: 'settings', label: '⚙️ Seurakunnan ilme & asetukset', component: SettingsManager });
+      tabs.push({ id: 'bible', label: '📖 Raamattu & Anno API', component: BibleManager });
       tabs.push({ id: 'users', label: t('admin.users.title'), component: UserManager });
     }
   }
@@ -58,13 +60,13 @@ function AdminPanel() {
         {t('admin.title')}
       </h1>
 
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex gap-4">
+      <div className="border-b border-gray-200 mb-6 overflow-x-auto pb-1 scrollbar-thin">
+        <nav className="flex gap-2 sm:gap-4 min-w-max">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`pb-3 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${
                 effectiveActiveTab === tab.id
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'

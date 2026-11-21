@@ -162,12 +162,30 @@ export const api = {
 
   // Tenants (Multi-Tenancy)
   getTenants: () => request('/tenants'),
-  getCurrentTenant: (slug) => request(`/tenants/current${slug ? `?slug=${slug}` : ''}`),
+  getCurrentTenant: (slugOrHost) => {
+    if (!slugOrHost) return request('/tenants/current');
+    const param = slugOrHost.includes('.') ? `host=${slugOrHost}` : `slug=${slugOrHost}`;
+    return request(`/tenants/current?${param}`);
+  },
+  getTenantCurrent: (slugOrHost) => {
+    if (!slugOrHost) return request('/tenants/current');
+    const param = slugOrHost.includes('.') ? `host=${slugOrHost}` : `slug=${slugOrHost}`;
+    return request(`/tenants/current?${param}`);
+  },
   getTenantById: (identifier) => request(`/tenants/${identifier}`),
+  createTenant: (data) =>
+    request('/tenants', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   updateTenant: (identifier, updates) =>
     request(`/tenants/${identifier}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
+    }),
+  deleteTenant: (identifier) =>
+    request(`/tenants/${identifier}`, {
+      method: 'DELETE',
     }),
 };
 

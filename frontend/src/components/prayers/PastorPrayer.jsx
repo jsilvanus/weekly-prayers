@@ -5,59 +5,58 @@ function PastorPrayer({ prayers = [] }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
 
+  // Strictly return null if no pastor's prayer has been added (matching BishopPrayer.jsx)
+  if (!prayers || prayers.length === 0) {
+    return null;
+  }
+
   return (
-    <section className="mb-8">
+    <section className="mb-8" data-testid="pastor-prayer-section">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-martti text-xl font-bold text-primary-900">
           {t('prayers.pastor.title')}
         </h2>
       </div>
 
-      {prayers.length === 0 ? (
-        <p className="text-gray-500 italic bg-white p-4 rounded-lg border border-dashed border-gray-200">
-          {t('prayers.pastor.empty')}
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {prayers.map((prayer) => {
-            const logoUrl = prayer.logoUrl || settings?.pastor_logo_url;
+      <div className="space-y-4">
+        {prayers.map((prayer) => {
+          const logoUrl = prayer.logoUrl || settings?.pastor_logo_url;
 
-            return (
-              <div
-                key={prayer.id}
-                className="bg-gradient-to-r from-amber-50/60 via-white to-primary-50/30 rounded-xl p-5 sm:p-6 border-l-4 border-amber-500 shadow-sm"
-              >
-                {/* Optional Pastor / Parish Logo & Yhtymä-wide badge */}
-                {(logoUrl || prayer.isYhtymaWide) && (
-                  <div className="flex items-center justify-between mb-3">
-                    {prayer.isYhtymaWide ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-900 border border-indigo-200">
-                        🏛️ Yhtymän yhteinen
-                      </span>
-                    ) : <span />}
-                    {logoUrl && (
-                      <img
-                        src={logoUrl}
-                        alt="Kirkkoherran sinetti"
-                        className="h-10 w-12 object-contain"
-                      />
-                    )}
-                  </div>
-                )}
-
-                <p className="text-gray-900 text-base sm:text-lg whitespace-pre-wrap leading-relaxed font-aptos">
-                  {prayer.content}
-                </p>
-
-                <div className="mt-4 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                  <span>{prayer.authorName || 'Kirkkoherra'}</span>
-                  <span>{new Date(prayer.createdAt || prayer.startDate).toLocaleDateString()}</span>
+          return (
+            <div
+              key={prayer.id}
+              className="bg-gradient-to-r from-amber-50/60 via-white to-primary-50/30 rounded-xl p-5 sm:p-6 border-l-4 border-amber-500 shadow-sm"
+            >
+              {/* Optional Pastor / Parish Logo & Yhtymä-wide badge */}
+              {(logoUrl || prayer.isYhtymaWide) && (
+                <div className="flex items-center justify-between mb-3">
+                  {prayer.isYhtymaWide ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-900 border border-indigo-200">
+                      🏛️ Yhtymän yhteinen
+                    </span>
+                  ) : <span />}
+                  {logoUrl && (
+                    <img
+                      src={logoUrl}
+                      alt="Kirkkoherran sinetti"
+                      className="h-10 w-12 object-contain"
+                    />
+                  )}
                 </div>
+              )}
+
+              <p className="text-gray-900 text-base sm:text-lg whitespace-pre-wrap leading-relaxed font-aptos">
+                {prayer.content}
+              </p>
+
+              <div className="mt-4 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                <span>{prayer.authorName || 'Kirkkoherra'}</span>
+                <span>{new Date(prayer.createdAt || prayer.startDate).toLocaleDateString()}</span>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
