@@ -44,10 +44,10 @@ function AdminPanel() {
     if (isAdmin) {
       tabs.push({ id: 'pastor', label: t('admin.pastor.title'), component: PastorPrayerForm });
       tabs.push({ id: 'bishop', label: t('admin.bishop.title'), component: BishopPrayerForm });
-      tabs.push({ id: 'tenants', label: '🏛️ Seurakunnat (Tenants)', component: TenantManager });
       tabs.push({ id: 'settings', label: '⚙️ Seurakunnan ilme & asetukset', component: SettingsManager });
       tabs.push({ id: 'bible', label: '📖 Raamattu & Anno API', component: BibleManager });
       tabs.push({ id: 'users', label: t('admin.users.title'), component: UserManager });
+      tabs.push({ id: 'tenants', label: '🏛️ Seurakunnat (Tenants)', component: TenantManager });
     }
   }
 

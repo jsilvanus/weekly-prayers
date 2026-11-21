@@ -38,6 +38,7 @@ function PrayerManager() {
     ...prayers.public.map((p) => ({ ...p, typeLabel: 'public' })),
     ...prayers.staff.map((p) => ({ ...p, typeLabel: 'staff' })),
     ...prayers.pastor.map((p) => ({ ...p, typeLabel: 'pastor' })),
+    ...(prayers.bishop || []).map((p) => ({ ...p, typeLabel: 'bishop' })),
   ];
 
   const pendingPrayers = allPrayers.filter((p) => !p.isApproved && p.typeLabel === 'public');
@@ -99,6 +100,7 @@ function PrayerItem({ prayer, onApprove, onReject, onDelete, loading, showApprov
   const { t } = useTranslation();
 
   const typeColors = {
+    bishop: 'bg-purple-100 text-purple-900 border border-purple-200',
     pastor: 'bg-purple-100 text-purple-800',
     staff: 'bg-blue-100 text-blue-800',
     public: 'bg-gray-100 text-gray-800',
@@ -107,9 +109,16 @@ function PrayerItem({ prayer, onApprove, onReject, onDelete, loading, showApprov
   return (
     <div className="card border border-gray-200">
       <div className="flex items-start justify-between mb-2">
-        <span className={`px-2 py-1 rounded text-xs font-medium ${typeColors[prayer.typeLabel]}`}>
-          {prayer.typeLabel}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-1 rounded text-xs font-medium ${typeColors[prayer.typeLabel] || 'bg-gray-100 text-gray-800'}`}>
+            {prayer.typeLabel}
+          </span>
+          {prayer.authorName && (
+            <span className="text-xs text-gray-500 font-medium">
+              Lisännyt: {prayer.authorName}
+            </span>
+          )}
+        </div>
         {prayer.aiFlagged && (
           <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800">
             AI Flagged

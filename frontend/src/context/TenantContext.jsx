@@ -30,12 +30,15 @@ function detectInitialTenant() {
     }
   } catch (e) {}
 
-  // 3. Hostname detection (e.g. rukous.riihimaenseurakunta.fi or riihimaenseurakunta.fi)
+  // 3. Hostname detection (e.g. riihimaki.rukous.fi, rukous.riihimaenseurakunta.fi)
   try {
     const host = window.location.hostname;
     if (host && !['localhost', '127.0.0.1'].includes(host)) {
-      if (host.includes('riihimaenseurakunta.fi')) {
-        return 'riihimaki';
+      if (host.includes('.rukous.')) {
+        const sub = host.split('.rukous.')[0];
+        if (sub && !['www', 'api', 'app', 'kehitys'].includes(sub)) {
+          return sub;
+        }
       }
       return host;
     }

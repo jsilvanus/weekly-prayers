@@ -18,21 +18,46 @@ export async function getAllTenants() {
 }
 
 /**
- * Helper to clean host/domain strings
+ * Helper to clean host/domain strings (strips protocol, port, trailing slashes)
  */
 function cleanHost(host) {
   if (!host) return '';
-  return host.toLowerCase().split(':')[0].trim();
+  let str = String(host).trim().toLowerCase();
+  // Strip protocol if present
+  str = str.replace(/^[a-z]+:\/\//i, '');
+  // Strip trailing slashes
+  str = str.replace(/\/+$/, '');
+  // Strip port
+  str = str.split(':')[0];
+  return str;
+}
+
+/**
+ * Splits comma-separated domain string into normalized array of domains
+ */
+export function parseDomains(domainStr) {
+  if (!domainStr) return [];
+  return String(domainStr)
+    .split(',')
+    .map(d => cleanHost(d))
+    .filter(Boolean);
 }
 
 /**
  * Get tenant by slug, domain, hostname or UUID
+ * Supports:
+ * - Direct slug or UUID
+ * - Multiple comma-separated domains (e.g. "riihimaenseurakunta.fi, riihimaki.rukous.fi")
+ * - Subdomain routing (e.g. "riihimaki.rukous.fi" -> slug "riihimaki")
+ * - Prefixed hostnames (e.g. "rukous.riihimaenseurakunta.fi" -> "riihimaenseurakunta.fi")
+ * - Path-based hostnames (e.g. "palvelin.fi/rukous")
  */
 export async function getTenantBySlugOrId(identifier) {
   if (!identifier) return null;
 
   const raw = String(identifier).trim();
   const cleaned = cleanHost(raw);
+  const hostOnly = cleaned.split('/')[0];
 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleaned);
   if (isUuid) {
@@ -44,14 +69,44 @@ export async function getTenantBySlugOrId(identifier) {
   let res = await query('SELECT * FROM tenants WHERE slug = $1', [cleaned]);
   if (res.rows[0]) return res.rows[0];
 
-  // 2. Check exact domain
-  res = await query('SELECT * FROM tenants WHERE domain = $1', [cleaned]);
-  if (res.rows[0]) return res.rows[0];
+  if (hostOnly !== cleaned) {
+    res = await query('SELECT * FROM tenants WHERE slug = $1', [hostOnly]);
+    if (res.rows[0]) return res.rows[0];
+  }
 
-  // 3. Strip 'rukous.' prefix if present (e.g. rukous.riihimaenseurakunta.fi -> riihimaenseurakunta.fi)
-  if (cleaned.startsWith('rukous.')) {
-    const stripped = cleaned.replace(/^rukous\./, '');
-    res = await query('SELECT * FROM tenants WHERE domain = $1 OR slug = $1', [stripped]);
+  // 2. Check comma-separated domains for all tenants with domains
+  const allDomainTenants = await query('SELECT * FROM tenants WHERE domain IS NOT NULL');
+  for (const row of allDomainTenants.rows) {
+    const domains = parseDomains(row.domain);
+    for (const d of domains) {
+      if (d === cleaned || d === hostOnly) {
+        return row;
+      }
+      if (cleaned.includes('/') && d === cleaned) {
+        return row;
+      }
+    }
+  }
+
+  // 3. Subdomain matching:
+  // e.g. "riihimaki.rukous.fi" -> subdomain "riihimaki" matches tenant slug
+  if (hostOnly.includes('.')) {
+    const parts = hostOnly.split('.');
+    const potentialSlug = parts[0];
+    if (potentialSlug && !['www', 'rukous', 'api', 'app', 'kehitys'].includes(potentialSlug)) {
+      res = await query('SELECT * FROM tenants WHERE slug = $1', [potentialSlug]);
+      if (res.rows[0]) return res.rows[0];
+    }
+  }
+
+  // 4. Strip 'rukous.' prefix if present (e.g. rukous.riihimaenseurakunta.fi -> riihimaenseurakunta.fi)
+  if (hostOnly.startsWith('rukous.')) {
+    const stripped = hostOnly.replace(/^rukous\./, '');
+    for (const row of allDomainTenants.rows) {
+      const domains = parseDomains(row.domain);
+      if (domains.includes(stripped)) return row;
+    }
+    res = await query('SELECT * FROM tenants WHERE slug = $1', [stripped]);
     if (res.rows[0]) return res.rows[0];
   }
 
@@ -154,7 +209,7 @@ export async function createTenant(data = {}) {
   }
 
   const cleanSlug = (slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')).trim();
-  const cleanDomain = domain ? domain.toLowerCase().trim() : null;
+  const cleanDomain = domain ? parseDomains(domain).join(', ') : null;
 
   // Check slug uniqueness
   const existing = await query('SELECT id FROM tenants WHERE slug = $1', [cleanSlug]);
@@ -235,7 +290,7 @@ export async function updateTenant(identifier, updates = {}) {
     values.push(updates.logo_url || null);
   }
   if (updates.domain !== undefined) {
-    const cleanDomain = updates.domain ? updates.domain.toLowerCase().trim() : null;
+    const cleanDomain = updates.domain ? parseDomains(updates.domain).join(', ') : null;
     fields.push(`domain = $${idx++}`);
     values.push(cleanDomain);
   }

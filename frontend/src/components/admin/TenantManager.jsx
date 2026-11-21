@@ -2,15 +2,6 @@ import { useState, useEffect } from 'react';
 import { useTenant } from '../../context/TenantContext';
 import { api } from '../../services/api';
 
-const PALETTE_OPTIONS = [
-  { id: 'cathedral_blue', name: 'Kirkon sininen (Klassinen)', hex: '#1e3a5f' },
-  { id: 'liturgical_green', name: 'Liturginen vihreä (Arki ja toivo)', hex: '#2d5a3f' },
-  { id: 'episcopal_purple', name: 'Liturginen violetti (Paasto ja piispa)', hex: '#581c87' },
-  { id: 'liturgical_red', name: 'Liturginen punainen (Pyhä Henki)', hex: '#991b1b' },
-  { id: 'liturgical_gold', name: 'Liturginen kulta / valkoinen (Juhlat)', hex: '#b45309' },
-  { id: 'custom', name: 'Mukautettu väri', hex: '' },
-];
-
 export default function TenantManager() {
   const { currentTenant, switchParish, refetchTenant } = useTenant();
   const [tenants, setTenants] = useState([]);
@@ -28,10 +19,7 @@ export default function TenantManager() {
     type: 'seurakunta',
     parent_id: '',
     domain: '',
-    diocese: 'Tampereen hiippakunta',
-    color_palette: 'cathedral_blue',
-    custom_color: '#1e3a5f',
-    logo_url: ''
+    diocese: 'Tampereen hiippakunta'
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -66,10 +54,7 @@ export default function TenantManager() {
       type: t.type || 'seurakunta',
       parent_id: t.parent_id || '',
       domain: t.domain || '',
-      diocese: t.diocese || 'Tampereen hiippakunta',
-      color_palette: t.color_palette || 'cathedral_blue',
-      custom_color: t.custom_color || '#1e3a5f',
-      logo_url: t.logo_url || ''
+      diocese: t.diocese || 'Tampereen hiippakunta'
     });
     setIsModalOpen(true);
   };
@@ -87,9 +72,12 @@ export default function TenantManager() {
 
     try {
       const payload = {
-        ...formData,
+        name: formData.name.trim(),
+        slug: formData.slug.trim().toLowerCase(),
+        type: formData.type,
         parent_id: formData.type === 'seurakunta' && formData.parent_id ? formData.parent_id : null,
-        domain: formData.domain ? formData.domain.trim() : null
+        domain: formData.domain ? formData.domain.trim() : null,
+        diocese: formData.diocese ? formData.diocese.trim() : null
       };
 
       if (editingTenant) {
@@ -132,10 +120,10 @@ export default function TenantManager() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-4">
         <div>
           <h2 className="font-martti text-xl font-bold text-primary-900">
-            Seurakunnat ja seurakuntayhtymät (Multi-Tenancy)
+            Seurakunnat ja yhtymät (Tenants)
           </h2>
           <p className="text-xs text-gray-600 mt-1">
-            Hallitse seurakuntia, yhtymärakennetta, omia verkkotunnuksia (esim. rukous.riihimaenseurakunta.fi) sekä liturgisia värejä.
+            Hallitse seurakuntia, yhtymärakennetta ja verkkotunnusreitityksiä (domain). Ulkoasu, logot ja värit määritetään <strong>Ilme & asetukset</strong> -välilehdellä.
           </p>
         </div>
         <button
@@ -176,8 +164,6 @@ export default function TenantManager() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tenants.map((t) => {
               const isCurrent = currentTenant?.id === t.id || currentTenant?.slug === t.slug;
-              const palette = PALETTE_OPTIONS.find(p => p.id === t.color_palette);
-              const colorDisplay = t.color_palette === 'custom' ? t.custom_color : palette?.hex || '#1e3a5f';
 
               return (
                 <div
@@ -189,11 +175,9 @@ export default function TenantManager() {
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
-                        <span
-                          className="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs"
-                          style={{ backgroundColor: colorDisplay }}
-                          title={`Väri: ${colorDisplay}`}
-                        />
+                        <span className="text-lg">
+                          {t.type === 'seurakuntayhtyma' ? '🏛️' : '⛪'}
+                        </span>
                         <h3 className="font-martti text-lg font-bold text-gray-900 leading-tight">
                           {t.name}
                         </h3>
@@ -205,7 +189,7 @@ export default function TenantManager() {
                             : 'bg-blue-100 text-blue-800 border border-blue-200'
                         }`}
                       >
-                        {t.type === 'seurakuntayhtyma' ? '🏛️ Yhtymä' : '⛪ Seurakunta'}
+                        {t.type === 'seurakuntayhtyma' ? 'Yhtymä' : 'Seurakunta'}
                       </span>
                     </div>
 
@@ -218,9 +202,9 @@ export default function TenantManager() {
                       </div>
 
                       {t.domain ? (
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-gray-700">Verkkotunnus:</span>
-                          <span className="text-emerald-700 font-mono bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                        <div className="flex items-start gap-1.5">
+                          <span className="font-semibold text-gray-700 shrink-0">Verkkotunnukset:</span>
+                          <span className="text-emerald-700 font-mono bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 break-all">
                             🌐 {t.domain}
                           </span>
                         </div>
@@ -298,12 +282,12 @@ export default function TenantManager() {
             <form onSubmit={handleSubmit} className="space-y-4 text-sm">
               <div>
                 <label className="block font-medium text-gray-700 mb-1">
-                  Nimi *
+                  Seurakunnan / yhtymän nimi *
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Esim. Riihimäen seurakunta"
+                  placeholder="esim. Riihimäen seurakunta"
                   value={formData.name}
                   onChange={(e) => {
                     const name = e.target.value;
@@ -375,17 +359,17 @@ export default function TenantManager() {
 
               <div>
                 <label className="block font-medium text-gray-700 mb-1">
-                  Oma verkkotunnus (Domain)
+                  Verkkotunnukset (Domain & aliverkot)
                 </label>
                 <input
                   type="text"
-                  placeholder="riihimaenseurakunta.fi tai rukous.riihimaenseurakunta.fi"
+                  placeholder="riihimaenseurakunta.fi, riihimaki.rukous.fi"
                   value={formData.domain}
                   onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Kun kävijä avaa tämän osoitteen, sovellus aktivoi tämän seurakunnan automaattisesti.
+                  Voit syöttää useita verkkotunnuksia pilkulla eroteltuna. Tukee pääverkkotunnuksia (<code>riihimaenseurakunta.fi</code>), aliverkkoja (<code>riihimaki.rukous.fi</code>) sekä polkuja (<code>palvelin.fi/rukous</code>).
                 </p>
               </div>
 
@@ -398,50 +382,6 @@ export default function TenantManager() {
                   placeholder="Tampereen hiippakunta"
                   value={formData.diocese}
                   onChange={(e) => setFormData(prev => ({ ...prev, diocese: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-medium text-gray-700 mb-1">
-                    Liturginen väripaletti
-                  </label>
-                  <select
-                    value={formData.color_palette}
-                    onChange={(e) => setFormData(prev => ({ ...prev, color_palette: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                  >
-                    {PALETTE_OPTIONS.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {formData.color_palette === 'custom' && (
-                  <div>
-                    <label className="block font-medium text-gray-700 mb-1">
-                      Mukautettu HEX-väri
-                    </label>
-                    <input
-                      type="color"
-                      value={formData.custom_color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, custom_color: e.target.value }))}
-                      className="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block font-medium text-gray-700 mb-1">
-                  Logon URL-osoite
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://... tai /logo.png"
-                  value={formData.logo_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 />
               </div>

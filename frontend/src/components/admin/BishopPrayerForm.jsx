@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useSettings } from '../../context/SettingsContext';
@@ -18,7 +18,23 @@ function BishopPrayerForm() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [currentBishopPrayer, setCurrentBishopPrayer] = useState(null);
   const fileInputRef = useRef(null);
+
+  const loadActiveBishopPrayer = async () => {
+    try {
+      const data = await api.getPrayers();
+      if (data?.prayers?.bishop && data.prayers.bishop.length > 0) {
+        setCurrentBishopPrayer(data.prayers.bishop[0]);
+      } else {
+        setCurrentBishopPrayer(null);
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    loadActiveBishopPrayer();
+  }, []);
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -54,6 +70,7 @@ function BishopPrayerForm() {
       setMessage({ type: 'success', text: t('admin.bishop.success') });
       setContent('');
       setLogoUrl('');
+      await loadActiveBishopPrayer();
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
     } finally {
@@ -74,6 +91,25 @@ function BishopPrayerForm() {
           </p>
         </div>
       </div>
+
+      {currentBishopPrayer && (
+        <div className="mb-6 p-4 bg-purple-50 rounded-xl border border-purple-200 shadow-2xs">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-900 flex items-center gap-1.5">
+                <span>✓</span> Kuluvan viikon voimassaoleva piispan aihe
+              </span>
+              <div className="text-xs text-purple-700 mt-0.5">
+                Lisännyt: <strong className="font-semibold text-purple-900">{currentBishopPrayer.authorName || 'Käyttäjä'}</strong>
+                {currentBishopPrayer.createdAt && ` (${new Date(currentBishopPrayer.createdAt).toLocaleDateString('fi-FI')})`}
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-800 italic bg-white p-3 rounded-lg border border-purple-100">
+            "{currentBishopPrayer.content}"
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="card border-purple-200">
         <textarea

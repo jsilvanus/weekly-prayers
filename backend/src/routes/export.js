@@ -478,7 +478,10 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
           <div>
             <h2 style="margin: 0; border: none; padding: 0;">☩ Piispan rukousaihe</h2>
-            <span style="font-size: 10pt; color: #6b21a8; font-weight: 500;">Piispa Matti Repo</span>
+            <div style="font-size: 10pt; color: #6b21a8; font-weight: 500;">
+              Piispa Matti Repo
+              ${prayers.bishop[0]?.authorName ? `<span style="font-size: 8.5pt; color: #6b21a8; opacity: 0.85; font-weight: normal; margin-left: 8px;">(Lisännyt: ${escapeHtml(prayers.bishop[0].authorName)})</span>` : ''}
+            </div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span class="toggle-badge" id="badge-bishop-0">⚪ Merkitse</span>

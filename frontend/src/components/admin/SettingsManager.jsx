@@ -16,9 +16,21 @@ function SettingsManager() {
 
   const handleFileUpload = (field, file) => {
     if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Valitse kuvatiedosto (PNG, JPG tai SVG).' });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Kuvatiedosto on liian suuri. Suositeltu enimmäiskoko logolle on 2 Mt.' });
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       setFormData((prev) => ({ ...prev, [field]: e.target.result }));
+      setMessage({ type: 'success', text: 'Kuva ladattu esikatseluun. Muista tallentaa asetukset sivun alareunasta!' });
     };
     reader.readAsDataURL(file);
   };
