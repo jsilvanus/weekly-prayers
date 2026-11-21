@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getPrayersForWeek, createPrayer, getPrayerById, updatePrayer, deletePrayer, approvePrayer, updatePrayerHighlight } from '../services/prayerService.js';
-import { getCurrentWeekInfo, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
+import { getCurrentWeekInfo, getCurrentWeekInfoForTenant, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
 import { optionalAuth, requireAuth } from '../middleware/authenticate.js';
 import { isWorkerOrAbove, requireWorker, requireAdmin, requireCoordinator, requireBishopOrAdmin } from '../middleware/authorize.js';
 import { sanitizePrayerContent } from '../services/aiSanitizer.js';
@@ -10,9 +10,9 @@ const router = Router();
 // GET /api/prayers - Get current week's prayers
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const { week, year } = getCurrentWeekInfo();
     const tenantSlug = req.query.tenant || null;
     const tenantId = req.query.tenantId || req.headers['x-tenant-id'] || null;
+    const { week, year } = await getCurrentWeekInfoForTenant(tenantId || tenantSlug);
 
     const isStaff = isWorkerOrAbove(req.user);
 
@@ -99,10 +99,10 @@ router.post('/', optionalAuth, async (req, res, next) => {
       prayerStartDate = startDate;
       prayerEndDate = endDate;
     } else {
-      const { week, year } = getCurrentWeekInfo();
-      const dates = getWeekDates(week, year);
-      prayerStartDate = formatDate(dates.startDate);
-      prayerEndDate = formatDate(dates.endDate);
+      const tenantCtx = req.headers['x-tenant-id'] || req.query.tenant || null;
+      const currentWeek = await getCurrentWeekInfoForTenant(tenantCtx);
+      prayerStartDate = formatDate(currentWeek.startDate);
+      prayerEndDate = formatDate(currentWeek.endDate);
     }
 
     // Run AI sanitization
@@ -170,10 +170,10 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
       prayerStartDate = startDate;
       prayerEndDate = endDate;
     } else {
-      const { week, year } = getCurrentWeekInfo();
-      const dates = getWeekDates(week, year);
-      prayerStartDate = formatDate(dates.startDate);
-      prayerEndDate = formatDate(dates.endDate);
+      const tenantCtx = req.headers['x-tenant-id'] || req.query.tenant || null;
+      const currentWeek = await getCurrentWeekInfoForTenant(tenantCtx);
+      prayerStartDate = formatDate(currentWeek.startDate);
+      prayerEndDate = formatDate(currentWeek.endDate);
     }
 
     // Ministry/Staff prayers don't need AI sanitization or approval
@@ -239,10 +239,10 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
       prayerStartDate = startDate;
       prayerEndDate = endDate;
     } else {
-      const { week, year } = getCurrentWeekInfo();
-      const dates = getWeekDates(week, year);
-      prayerStartDate = formatDate(dates.startDate);
-      prayerEndDate = formatDate(dates.endDate);
+      const tenantCtx = req.headers['x-tenant-id'] || req.query.tenant || null;
+      const currentWeek = await getCurrentWeekInfoForTenant(tenantCtx);
+      prayerStartDate = formatDate(currentWeek.startDate);
+      prayerEndDate = formatDate(currentWeek.endDate);
     }
 
     // Pastor prayers are auto-approved
@@ -302,10 +302,10 @@ router.post('/bishop', requireAuth, requireBishopOrAdmin, async (req, res, next)
       prayerStartDate = startDate;
       prayerEndDate = endDate;
     } else {
-      const { week, year } = getCurrentWeekInfo();
-      const dates = getWeekDates(week, year);
-      prayerStartDate = formatDate(dates.startDate);
-      prayerEndDate = formatDate(dates.endDate);
+      const tenantCtx = req.headers['x-tenant-id'] || req.query.tenant || null;
+      const currentWeek = await getCurrentWeekInfoForTenant(tenantCtx);
+      prayerStartDate = formatDate(currentWeek.startDate);
+      prayerEndDate = formatDate(currentWeek.endDate);
     }
 
     // Bishop prayers are auto-approved

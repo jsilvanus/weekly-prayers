@@ -1,12 +1,11 @@
 import { query } from '../db/index.js';
-import { getWeekDates, formatDate } from '../utils/weekHelper.js';
+import { getWeekDates, formatDate, getWeekSettingsForTenant } from '../utils/weekHelper.js';
 
 /**
  * Get prayers for a specific week
  */
 export async function getPrayersForWeek(week, year, options = {}) {
   const { includeUnapproved = false, includeOriginal = false, tenantId = null, tenantSlug = null } = options;
-  const { startDate, endDate } = getWeekDates(week, year);
 
   let targetTenantId = tenantId;
   let targetTenantParentId = null;
@@ -23,6 +22,12 @@ export async function getPrayersForWeek(week, year, options = {}) {
       targetTenantParentId = tRes.rows[0].parent_id;
     }
   }
+
+  const weekSettings = await getWeekSettingsForTenant(targetTenantId || tenantSlug);
+  const { startDate, endDate } = getWeekDates(week, year, {
+    cycleMode: weekSettings.week_cycle_mode,
+    rolloverDay: weekSettings.week_rollover_day
+  });
 
   let sql = `
     SELECT

@@ -140,7 +140,9 @@ export function SettingsProvider({ children }) {
     daily_word_title: 'Päivän sana',
     daily_word_verse: 'Ps. 103:1–4',
     daily_word_content: 'Ylistä Herraa, minun sieluni, ja kaikki mitä minussa on, hänen pyhää nimeään. Ylistä Herraa, minun sieluni, äläkä unohda, mitä hyvää hän on sinulle tehnyt.',
-    daily_word_reflection: 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan. Hän antaa anteeksi syntisi ja parantaa sairautesi.'
+    daily_word_reflection: 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan. Hän antaa anteeksi syntisi ja parantaa sairautesi.',
+    week_rollover_day: 'thursday',
+    week_cycle_mode: 'thursday_cycle'
   });
   const [loading, setLoading] = useState(true);
 

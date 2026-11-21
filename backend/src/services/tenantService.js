@@ -202,6 +202,8 @@ export async function createTenant(data = {}) {
     color_palette = 'cathedral_blue',
     custom_color = '#1e3a5f',
     domain = null,
+    week_rollover_day = 'thursday',
+    week_cycle_mode = 'thursday_cycle',
   } = data;
 
   if (!name || !name.trim()) {
@@ -219,8 +221,8 @@ export async function createTenant(data = {}) {
 
   const sql = `
     INSERT INTO tenants (
-      name, slug, type, parent_id, diocese, logo_url, color_palette, custom_color, domain, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+      name, slug, type, parent_id, diocese, logo_url, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
     RETURNING *
   `;
 
@@ -234,6 +236,8 @@ export async function createTenant(data = {}) {
     color_palette || 'cathedral_blue',
     custom_color || '#1e3a5f',
     cleanDomain || null,
+    week_rollover_day || 'thursday',
+    week_cycle_mode || 'thursday_cycle',
   ];
 
   const result = await query(sql, values);
@@ -293,6 +297,14 @@ export async function updateTenant(identifier, updates = {}) {
     const cleanDomain = updates.domain ? parseDomains(updates.domain).join(', ') : null;
     fields.push(`domain = $${idx++}`);
     values.push(cleanDomain);
+  }
+  if (updates.week_rollover_day !== undefined) {
+    fields.push(`week_rollover_day = $${idx++}`);
+    values.push(updates.week_rollover_day);
+  }
+  if (updates.week_cycle_mode !== undefined) {
+    fields.push(`week_cycle_mode = $${idx++}`);
+    values.push(updates.week_cycle_mode);
   }
 
   if (fields.length === 0) return tenant;

@@ -423,6 +423,55 @@ function SettingsManager() {
           </div>
         </div>
 
+        {/* 5. Prayer Week Cycle & Rollover */}
+        <div className="card">
+          <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-2">
+            <span>📅</span> Rukousviikon kierto ja vaihtumispäivä
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">
+            Määritä milloin seurakunnan esirukousviikko vaihtuu. Seurakuntatyössä viikko aloitetaan usein torstaisin tulevaa sunnuntaita varten.
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label text-xs font-semibold">Viikon vaihtumispäivä</label>
+              <select
+                value={formData.week_rollover_day || 'thursday'}
+                onChange={(e) => setFormData({ ...formData, week_rollover_day: e.target.value })}
+                className="input text-xs"
+              >
+                <option value="thursday">Torstai (Seurakunnan suositus)</option>
+                <option value="wednesday">Keskiviikko</option>
+                <option value="friday">Perjantai</option>
+                <option value="monday">Maanantai (Standardi kalenteriviikko)</option>
+              </select>
+              <p className="text-[11px] text-gray-500 mt-1">
+                Päivä, jolloin sivuston aktiivinen esirukouslista ja aiheet siirtyvät uuteen viikkoon.
+              </p>
+            </div>
+
+            <div>
+              <label className="label text-xs font-semibold">Rukousviikon sykli ja aikaväli</label>
+              <select
+                value={formData.week_cycle_mode || 'thursday_cycle'}
+                onChange={(e) => setFormData({ ...formData, week_cycle_mode: e.target.value })}
+                className="input text-xs"
+              >
+                <option value="thursday_cycle">Torstaista keskiviikkoon (To–Ke, sunnuntai viikon keskellä)</option>
+                <option value="rollover">Ennakoiva viikonvaihto (To–Su ennakoi tulevaa sunnuntaita)</option>
+                <option value="calendar">Tavallinen kalenteriviikko (Ma–Su)</option>
+              </select>
+              <p className="text-[11px] text-gray-500 mt-1">
+                To–Ke -sykli kattaa 7 päivää siten, että tulevan sunnuntain messu on rukousviikon keskipisteenä.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 bg-primary-50/60 border border-primary-200/80 rounded-lg p-3 text-xs text-primary-900">
+            <span className="font-semibold">💡 Vinkki:</span> Kun valitset <em>Torstai</em>, työntekijät ja seurakuntalaiset näkevät tulevan viikonlopun esirukouslistan valmiina jo torstaiaamusta alkaen.
+          </div>
+        </div>
+
         {/* Save button and messages */}
         <div className="flex items-center justify-between pt-2">
           {message ? (

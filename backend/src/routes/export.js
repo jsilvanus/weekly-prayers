@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getPrayersForWeek } from '../services/prayerService.js';
-import { getCurrentWeekInfo, getWeekDates, formatDate } from '../utils/weekHelper.js';
+import { getCurrentWeekInfo, getCurrentWeekInfoForTenant, getWeekDates, getWeekSettingsForTenant, formatDate } from '../utils/weekHelper.js';
 import { requireAuth } from '../middleware/authenticate.js';
 import { requirePrayerListAccess } from '../middleware/authorize.js';
 
@@ -21,10 +21,11 @@ function deriveBasePath(rawUrl) {
 // Accessible by admin, coordinator, worker, bishop, and prayer_group
 router.get(['/intercession', '/esirukouslista'], requireAuth, requirePrayerListAccess, async (req, res, next) => {
   try {
-    let { week, year, highlightsOnly, mode } = req.query;
+    let { week, year, highlightsOnly, mode, tenant, tenantId } = req.query;
+    const targetTenant = tenantId || tenant || req.headers['x-tenant-id'] || null;
 
     if (!week || !year) {
-      const current = getCurrentWeekInfo();
+      const current = await getCurrentWeekInfoForTenant(targetTenant);
       week = week || current.week;
       year = year || current.year;
     }
@@ -36,10 +37,16 @@ router.get(['/intercession', '/esirukouslista'], requireAuth, requirePrayerListA
 
     const prayers = await getPrayersForWeek(week, year, {
       includeUnapproved: false,
-      includeOriginal: false
+      includeOriginal: false,
+      tenantId: targetTenant,
+      tenantSlug: tenant
     });
 
-    const { startDate, endDate } = getWeekDates(week, year);
+    const weekSettings = await getWeekSettingsForTenant(targetTenant);
+    const { startDate, endDate } = getWeekDates(week, year, {
+      cycleMode: weekSettings.week_cycle_mode,
+      rolloverDay: weekSettings.week_rollover_day
+    });
     const basePath = deriveBasePath(process.env.BASE_URL);
 
     const html = generateIntercessionHTML({

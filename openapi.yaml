@@ -1,0 +1,699 @@
+openapi: 3.1.0
+info:
+  title: Weekly Prayers API (Rukoussovellus)
+  description: >
+    REST API for the Evangelical Lutheran Church Weekly Prayers application (Suomen ev.lut. kirkon rukoussovellus).
+    Provides public prayer submission, moderation, parish/union multi-tenancy, bishop and pastor topics,
+    intercession prayer list exports (esirukouslista), weekly prayer counters, liturgical readings (Anno / Kirkkovuosi),
+    and tenant configuration.
+  version: 1.2.0
+  contact:
+    name: Yhteinen rukous - Suomen ev.lut. kirkko
+servers:
+  - url: /
+    description: Current host / relative root
+  - url: /rukous
+    description: Production subpath mount
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter your JSON Web Token (JWT)
+
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+      description: Authentication cookie set upon login
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+        services:
+          type: object
+          properties:
+            api:
+              type: string
+              example: ok
+            database:
+              type: string
+              example: ok
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, bishop, coordinator, worker, prayer_group, user]
+        tenantId:
+          type: string
+          format: uuid
+          nullable: true
+
+    PrayerRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [bishop, pastor, staff, public]
+        content:
+          type: string
+        originalContent:
+          type: string
+          nullable: true
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        isApproved:
+          type: boolean
+        highlightPriority:
+          type: integer
+          description: Z-priority value (higher values displayed first in Top 1-4)
+        highlightStartDate:
+          type: string
+          format: date
+          nullable: true
+        highlightEndDate:
+          type: string
+          format: date
+          nullable: true
+        ministryGroup:
+          type: string
+          enum: [local, international]
+        ministryTag:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+        isYhtymaWide:
+          type: boolean
+        tenantId:
+          type: string
+          format: uuid
+          nullable: true
+        tenantName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Riihimäen seurakunta
+        slug:
+          type: string
+          example: riihimaki
+        type:
+          type: string
+          enum: [seurakunta, seurakuntayhtyma]
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        diocese:
+          type: string
+          example: Tampereen hiippakunta
+        domain:
+          type: string
+          nullable: true
+          example: riihimaenseurakunta.fi
+        logoUrl:
+          type: string
+          nullable: true
+        colorPalette:
+          type: string
+          example: cathedral_blue
+        customColor:
+          type: string
+          example: "#1e3a5f"
+        weekRolloverDay:
+          type: string
+          enum: [thursday, monday, wednesday, friday]
+          default: thursday
+        weekCycleMode:
+          type: string
+          enum: [thursday_cycle, rollover, calendar]
+          default: thursday_cycle
+
+    SiteSettings:
+      type: object
+      properties:
+        parish_name:
+          type: string
+        parish_subtitle:
+          type: string
+        yhtyma_name:
+          type: string
+        color_palette:
+          type: string
+        custom_color:
+          type: string
+        show_church_logo:
+          type: string
+        show_parish_logo:
+          type: string
+        church_logo_url:
+          type: string
+        parish_logo_url:
+          type: string
+        bishop_name:
+          type: string
+        bishop_diocese:
+          type: string
+        bishop_crest_url:
+          type: string
+        pastor_logo_url:
+          type: string
+        daily_word_enabled:
+          type: string
+        daily_word_title:
+          type: string
+        daily_word_verse:
+          type: string
+        daily_word_content:
+          type: string
+        daily_word_reflection:
+          type: string
+        week_rollover_day:
+          type: string
+          example: thursday
+        week_cycle_mode:
+          type: string
+          example: thursday_cycle
+
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      description: Check system and database connectivity status.
+      responses:
+        '200':
+          description: System healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/auth/login:
+    post:
+      summary: Local user login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+
+  /api/auth/register:
+    post:
+      summary: User registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '201':
+          description: User registered
+
+  /api/auth/me:
+    get:
+      summary: Get currently authenticated user
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+
+  /api/auth/logout:
+    post:
+      summary: Logout user
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /api/prayers:
+    get:
+      summary: Get current week prayers
+      description: Returns prayer requests grouped into bishop, pastor, staff, and public. Respects tenant week cycle settings.
+      parameters:
+        - in: query
+          name: tenant
+          schema:
+            type: string
+          description: Parish / tenant slug
+        - in: query
+          name: tenantId
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of prayers for current week
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  week:
+                    type: integer
+                  year:
+                    type: integer
+                  prayers:
+                    type: object
+                    properties:
+                      bishop:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PrayerRequest'
+                      pastor:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PrayerRequest'
+                      staff:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PrayerRequest'
+                      public:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PrayerRequest'
+    post:
+      summary: Submit a public prayer request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Prayer request submitted
+
+  /api/prayers/week/{week}:
+    get:
+      summary: Get prayers for a specific week
+      parameters:
+        - in: path
+          name: week
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: year
+          schema:
+            type: integer
+        - in: query
+          name: tenant
+          schema:
+            type: string
+        - in: query
+          name: tenantId
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Prayers for requested week
+
+  /api/prayers/pending:
+    get:
+      summary: Get pending unapproved prayers (worker+)
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        '200':
+          description: List of pending prayers
+
+  /api/prayers/{id}/approve:
+    post:
+      summary: Approve or reject a prayer (worker+)
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [isApproved]
+              properties:
+                isApproved:
+                  type: boolean
+      responses:
+        '200':
+          description: Prayer approval status updated
+
+  /api/prayers/{id}/highlight:
+    put:
+      summary: Set prayer highlight Z-value and active date window (coordinator+)
+      description: Sets priority (Z-value) and date range. Defaults to one week if dates omitted. Setting priority to 0 clears highlight.
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [highlightPriority]
+              properties:
+                highlightPriority:
+                  type: integer
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Highlight updated
+
+  /api/counts:
+    get:
+      summary: Get prayer count for current week
+      parameters:
+        - in: query
+          name: tenant
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current count
+
+  /api/counts/increment:
+    post:
+      summary: Increment prayer counter (Rukoilin-button)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenantId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Counter incremented
+
+  /api/export/intercession:
+    get:
+      summary: Get Sunday mass intercession list (esirukouslista)
+      description: Returns formatted HTML view for printing or tablet reading in Sunday service.
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: query
+          name: week
+          schema:
+            type: integer
+        - in: query
+          name: year
+          schema:
+            type: integer
+        - in: query
+          name: highlightsOnly
+          schema:
+            type: boolean
+        - in: query
+          name: mode
+          schema:
+            type: string
+            enum: [print, toggle, mobile]
+        - in: query
+          name: tenant
+          schema:
+            type: string
+        - in: query
+          name: token
+          schema:
+            type: string
+            description: Direct query token authentication for tablet/sacristy access
+      responses:
+        '200':
+          description: Intercession HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/settings:
+    get:
+      summary: Get site settings and visual branding
+      responses:
+        '200':
+          description: Settings object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  settings:
+                    $ref: '#/components/schemas/SiteSettings'
+    put:
+      summary: Update site settings and week rollover (admin only)
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                settings:
+                  $ref: '#/components/schemas/SiteSettings'
+      responses:
+        '200':
+          description: Settings updated
+
+  /api/tenants:
+    get:
+      summary: List all parishes and unions
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tenant'
+    post:
+      summary: Create a new tenant (admin only)
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                type:
+                  type: string
+                  enum: [seurakunta, seurakuntayhtyma]
+                parentId:
+                  type: string
+                  format: uuid
+                diocese:
+                  type: string
+                domain:
+                  type: string
+                colorPalette:
+                  type: string
+                customColor:
+                  type: string
+                weekRolloverDay:
+                  type: string
+                weekCycleMode:
+                  type: string
+      responses:
+        '201':
+          description: Tenant created
+
+  /api/tenants/current:
+    get:
+      summary: Detect and resolve current tenant hierarchy
+      parameters:
+        - in: query
+          name: identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resolved tenant and union hierarchy
+
+  /api/tenants/{identifier}:
+    get:
+      summary: Get tenant by ID or slug
+      parameters:
+        - in: path
+          name: identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tenant details
+    put:
+      summary: Update tenant (admin only)
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: identifier
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                slug:
+                  type: string
+                domain:
+                  type: string
+                weekRolloverDay:
+                  type: string
+                weekCycleMode:
+                  type: string
+      responses:
+        '200':
+          description: Tenant updated
+    delete:
+      summary: Delete tenant (admin only)
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tenant deleted
+
+  /api/bible/today:
+    get:
+      summary: Get today's liturgical Bible texts from Church Calendar (Anno API)
+      responses:
+        '200':
+          description: Daily Bible readings

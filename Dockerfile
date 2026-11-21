@@ -25,6 +25,7 @@ ENV PORT=3000
 COPY --from=backend-builder --chown=nodejs:nodejs /app/backend/node_modules ./node_modules
 COPY --chown=nodejs:nodejs backend/src ./src
 COPY --chown=nodejs:nodejs backend/package*.json ./
+COPY --chown=nodejs:nodejs openapi.yaml ./openapi.yaml
 
 # Copy compiled frontend into client/dist
 COPY --from=client-builder --chown=nodejs:nodejs /app/frontend/dist ./client/dist

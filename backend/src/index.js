@@ -16,6 +16,7 @@ import embedRouter from './routes/embed.js';
 import settingsRouter from './routes/settings.js';
 import bibleRouter from './routes/bible.js';
 import tenantRouter from './routes/tenants.js';
+import docsRouter from './routes/docs.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,6 +79,8 @@ router.use('/api/embed', embedRouter);
 router.use('/api/settings', settingsRouter);
 router.use('/api/bible', bibleRouter);
 router.use('/api/tenants', tenantRouter);
+router.use('/api', docsRouter);
+router.use('/', docsRouter);
 
 // Prayer list direct routes/redirects
 router.get(['/esirukouslista', '/esirukous', '/intercession'], (req, res) => {

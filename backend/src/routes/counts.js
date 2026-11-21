@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../db/index.js';
-import { getCurrentWeekInfo } from '../utils/weekHelper.js';
+import { getCurrentWeekInfo, getCurrentWeekInfoForTenant } from '../utils/weekHelper.js';
 
 const router = Router();
 
@@ -8,7 +8,7 @@ const router = Router();
 router.get('/week/:week', async (req, res, next) => {
   try {
     let { week } = req.params;
-    let { year } = req.query;
+    let { year, tenant, tenantId } = req.query;
 
     week = parseInt(week, 10);
     year = year ? parseInt(year, 10) : new Date().getFullYear();
@@ -31,7 +31,8 @@ router.get('/week/:week', async (req, res, next) => {
 // POST /api/counts/increment - Increment prayer count for current week
 router.post('/increment', async (req, res, next) => {
   try {
-    const { week, year } = getCurrentWeekInfo();
+    const tenantCtx = req.body?.tenantId || req.query.tenant || null;
+    const { week, year } = await getCurrentWeekInfoForTenant(tenantCtx);
 
     // Upsert: insert or update count
     const result = await query(
@@ -56,7 +57,8 @@ router.post('/increment', async (req, res, next) => {
 // GET /api/counts - Get current week's count
 router.get('/', async (req, res, next) => {
   try {
-    const { week, year } = getCurrentWeekInfo();
+    const tenantCtx = req.query.tenant || req.query.tenantId || null;
+    const { week, year } = await getCurrentWeekInfoForTenant(tenantCtx);
 
     const result = await query(
       'SELECT count FROM prayer_counts WHERE week_number = $1 AND year = $2',

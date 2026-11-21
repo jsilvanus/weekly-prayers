@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getPrayersForWeek } from '../services/prayerService.js';
-import { getCurrentWeekInfo, getWeekDates, formatDate } from '../utils/weekHelper.js';
+import { getCurrentWeekInfo, getCurrentWeekInfoForTenant, getWeekDates, getWeekSettingsForTenant, formatDate } from '../utils/weekHelper.js';
 
 const router = Router();
 
@@ -21,12 +21,19 @@ router.use(embedCors);
 // GET /api/embed/data - Get prayer data for embedding (CORS enabled)
 router.get('/data', async (req, res, next) => {
   try {
-    const { week, year } = getCurrentWeekInfo();
-    const { startDate, endDate } = getWeekDates(week, year);
+    const tenantCtx = req.query.tenant || req.query.tenantId || null;
+    const { week, year } = await getCurrentWeekInfoForTenant(tenantCtx);
+    const weekSettings = await getWeekSettingsForTenant(tenantCtx);
+    const { startDate, endDate } = getWeekDates(week, year, {
+      cycleMode: weekSettings.week_cycle_mode,
+      rolloverDay: weekSettings.week_rollover_day
+    });
 
     const prayers = await getPrayersForWeek(week, year, {
       includeUnapproved: false,
-      includeOriginal: false
+      includeOriginal: false,
+      tenantId: req.query.tenantId,
+      tenantSlug: req.query.tenant
     });
 
     res.json({
@@ -123,12 +130,19 @@ router.get('/widget.js', (req, res) => {
 // GET /api/embed/iframe - Embeddable iframe content
 router.get('/iframe', async (req, res, next) => {
   try {
-    const { week, year } = getCurrentWeekInfo();
-    const { startDate, endDate } = getWeekDates(week, year);
+    const tenantCtx = req.query.tenant || req.query.tenantId || null;
+    const { week, year } = await getCurrentWeekInfoForTenant(tenantCtx);
+    const weekSettings = await getWeekSettingsForTenant(tenantCtx);
+    const { startDate, endDate } = getWeekDates(week, year, {
+      cycleMode: weekSettings.week_cycle_mode,
+      rolloverDay: weekSettings.week_rollover_day
+    });
 
     const prayers = await getPrayersForWeek(week, year, {
       includeUnapproved: false,
-      includeOriginal: false
+      includeOriginal: false,
+      tenantId: req.query.tenantId,
+      tenantSlug: req.query.tenant
     });
 
     const html = `<!DOCTYPE html>

@@ -18,7 +18,9 @@ const DEFAULT_SETTINGS = {
   daily_word_title: 'Päivän sana',
   daily_word_verse: 'Ps. 103:1–4',
   daily_word_content: 'Ylistä Herraa, minun sieluni, ja kaikki mitä minussa on, hänen pyhää nimeään. Ylistä Herraa, minun sieluni, äläkä unohda, mitä hyvää hän on sinulle tehnyt.',
-  daily_word_reflection: 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan. Hän antaa anteeksi syntisi ja parantaa sairautesi.'
+  daily_word_reflection: 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan. Hän antaa anteeksi syntisi ja parantaa sairautesi.',
+  week_rollover_day: 'thursday',
+  week_cycle_mode: 'thursday_cycle'
 };
 
 export async function getAllSettings() {
@@ -74,6 +76,14 @@ export async function updateSettings(newSettings = {}) {
       await query(
         `UPDATE tenants SET name = $1, updated_at = NOW() WHERE type = 'seurakuntayhtyma'`,
         [newSettings.yhtyma_name.trim()]
+      );
+    }
+    if (newSettings.week_rollover_day || newSettings.week_cycle_mode) {
+      const rollover = newSettings.week_rollover_day || 'thursday';
+      const cycle = newSettings.week_cycle_mode || 'thursday_cycle';
+      await query(
+        `UPDATE tenants SET week_rollover_day = $1, week_cycle_mode = $2, updated_at = NOW()`,
+        [rollover, cycle]
       );
     }
   } catch (e) {
