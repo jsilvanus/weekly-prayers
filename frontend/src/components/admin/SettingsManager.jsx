@@ -1,18 +1,35 @@
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSettings } from '../../context/SettingsContext';
-import { ChurchCircleLogo, LocalParishLogo, BishopCrestLogo, PastorSealLogo } from '../../assets/churchIcons';
+import {
+  useSettings,
+  DEFAULT_MINISTRY_GROUPS,
+  DEFAULT_MINISTRY_TAGS,
+  parseSettingsList
+} from '../../context/SettingsContext';
+import { ChurchCircleLogo, LocalParishLogo, PastorSealLogo } from '../../assets/churchIcons';
+import { CHURCH_LOGO_VARIANTS, resolveChurchLogoVariant } from '../../utils/churchLogo';
 
 function SettingsManager() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { settings, palettes, saveSettings } = useSettings();
 
   const [formData, setFormData] = useState({ ...settings });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // File upload refs
   const parishLogoRef = useRef(null);
   const bishopCrestRef = useRef(null);
+  const pastorLogoRef = useRef(null);
+  const churchLogoRef = useRef(null);
+
+  // New group & tag inputs for Section: Työalat ja ryhmät
+  const [newGroupInput, setNewGroupInput] = useState('');
+  const [newTagInput, setNewTagInput] = useState('');
+
+  // Parsed current groups and tags
+  const currentGroups = parseSettingsList(formData.ministry_groups, DEFAULT_MINISTRY_GROUPS);
+  const currentTags = parseSettingsList(formData.ministry_tags, DEFAULT_MINISTRY_TAGS);
 
   const handleFileUpload = (field, file) => {
     if (!file) return;
@@ -35,6 +52,53 @@ function SettingsManager() {
     reader.readAsDataURL(file);
   };
 
+  // Group addition & removal
+  const handleAddGroup = () => {
+    const trimmed = newGroupInput.trim();
+    if (!trimmed) return;
+    if (currentGroups.includes(trimmed)) {
+      setMessage({ type: 'error', text: 'Tämä ryhmä on jo olemassa.' });
+      return;
+    }
+    const updated = [...currentGroups, trimmed];
+    setFormData((prev) => ({ ...prev, ministry_groups: JSON.stringify(updated) }));
+    setNewGroupInput('');
+  };
+
+  const handleRemoveGroup = (groupToRemove) => {
+    const updated = currentGroups.filter((g) => g !== groupToRemove);
+    setFormData((prev) => ({ ...prev, ministry_groups: JSON.stringify(updated) }));
+  };
+
+  // Tag addition & removal
+  const handleAddTag = () => {
+    const trimmed = newTagInput.trim();
+    if (!trimmed) return;
+    if (currentTags.includes(trimmed)) {
+      setMessage({ type: 'error', text: 'Tämä työala/tunniste on jo olemassa.' });
+      return;
+    }
+    const updated = [...currentTags, trimmed];
+    setFormData((prev) => ({ ...prev, ministry_tags: JSON.stringify(updated) }));
+    setNewTagInput('');
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    const updated = currentTags.filter((tag) => tag !== tagToRemove);
+    setFormData((prev) => ({ ...prev, ministry_tags: JSON.stringify(updated) }));
+  };
+
+  const handleResetGroupsAndTags = () => {
+    if (window.confirm('Haluatko palauttaa ryhmät ja työalat oletusasetuksiin?')) {
+      setFormData((prev) => ({
+        ...prev,
+        ministry_groups: JSON.stringify(DEFAULT_MINISTRY_GROUPS),
+        ministry_tags: JSON.stringify(DEFAULT_MINISTRY_TAGS)
+      }));
+      setMessage({ type: 'success', text: 'Oletusryhmät ja työalat palautettu.' });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -50,6 +114,12 @@ function SettingsManager() {
     }
   };
 
+  // Current resolved variant for live preview badge
+  const activePreviewVariant = resolveChurchLogoVariant(
+    formData.church_logo_variant || 'auto',
+    i18n.language || 'fi'
+  );
+
   return (
     <div className="space-y-6">
       <div className="border-b border-gray-200 pb-4">
@@ -57,12 +127,12 @@ function SettingsManager() {
           Seurakunnan asetukset ja kirkon graafinen ilme
         </h2>
         <p className="text-xs text-gray-600 mt-1">
-          Määritä seurakunnan nimi, viralliset logot, Suomen ev.lut. kirkon graafisen ohjeiston väripaletti sekä Päivän sana -osio.
+          Määritä seurakunnan nimi, viralliset logot ja kieliversiot, Suomen ev.lut. kirkon graafisen ohjeiston väripaletti, kirkkoherran ja piispan tiedot sekä työalojen ryhmittelyt.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 1. Parish Details */}
+        {/* 1. Parish Details & Clergy */}
         <div className="card">
           <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
             <span>🏛️</span> Seurakunnan ja yhtymän perustiedot
@@ -95,7 +165,7 @@ function SettingsManager() {
                 Näkyy rukoussivun seurakuntavalitsimessa ja yhtymän yhteisissä aiheissa.
               </p>
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <label className="label">Alaotsikko / Teema</label>
               <input
                 type="text"
@@ -105,25 +175,93 @@ function SettingsManager() {
                 placeholder="esim. Viikon rukousaiheet"
               />
             </div>
-            <div>
-              <label className="label">Piispan nimi</label>
-              <input
-                type="text"
-                value={formData.bishop_name || ''}
-                onChange={(e) => setFormData({ ...formData, bishop_name: e.target.value })}
-                className="input text-sm"
-                placeholder="esim. Matti Repo"
-              />
+
+            {/* Kirkkoherran perustiedot */}
+            <div className="p-3.5 bg-amber-50/50 rounded-xl border border-amber-200/80 sm:col-span-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
+                  <span>✝️</span> Kirkkoherran asetukset
+                </span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-xs font-medium text-amber-900">Näytä aihe etusivulla:</span>
+                  <input
+                    type="checkbox"
+                    checked={formData.show_pastor_prayer !== 'false'}
+                    onChange={(e) => setFormData({ ...formData, show_pastor_prayer: String(e.target.checked) })}
+                    className="rounded text-amber-600 focus:ring-amber-500"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="label text-xs">Kirkkoherran nimi</label>
+                  <input
+                    type="text"
+                    value={formData.pastor_name || ''}
+                    onChange={(e) => setFormData({ ...formData, pastor_name: e.target.value })}
+                    className="input text-sm"
+                    placeholder="esim. Olli-Pekka Silfverhuth"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Tulostuu kirkkoherran esirukousaiheen yhteyteen (ei aiheen syöttäjän nimeä).
+                  </p>
+                </div>
+                <div>
+                  <label className="label text-xs">Kirkkoherran titteli</label>
+                  <input
+                    type="text"
+                    value={formData.pastor_title || ''}
+                    onChange={(e) => setFormData({ ...formData, pastor_title: e.target.value })}
+                    className="input text-sm"
+                    placeholder="esim. Kirkkoherra tai Tuomiorovasti"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="label">Hiippakunta</label>
-              <input
-                type="text"
-                value={formData.bishop_diocese || ''}
-                onChange={(e) => setFormData({ ...formData, bishop_diocese: e.target.value })}
-                className="input text-sm"
-                placeholder="esim. Tampereen hiippakunta"
-              />
+
+            {/* Piispan perustiedot */}
+            <div className="p-3.5 bg-purple-50/50 rounded-xl border border-purple-200/80 sm:col-span-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-purple-950 uppercase tracking-wide flex items-center gap-1.5">
+                  <span>☩</span> Piispan asetukset
+                </span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-xs font-medium text-purple-900">Näytä aihe etusivulla:</span>
+                  <input
+                    type="checkbox"
+                    checked={formData.show_bishop_prayer !== 'false'}
+                    onChange={(e) => setFormData({ ...formData, show_bishop_prayer: String(e.target.checked) })}
+                    className="rounded text-purple-600 focus:ring-purple-500"
+                  />
+                </label>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="label text-xs">Piispan nimi</label>
+                  <input
+                    type="text"
+                    value={formData.bishop_name || ''}
+                    onChange={(e) => setFormData({ ...formData, bishop_name: e.target.value })}
+                    className="input text-sm"
+                    placeholder="esim. Matti Repo"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Tulostuu piispan esirukousaiheen yhteyteen.
+                  </p>
+                </div>
+                <div>
+                  <label className="label text-xs">Hiippakunta</label>
+                  <input
+                    type="text"
+                    value={formData.bishop_diocese || ''}
+                    onChange={(e) => setFormData({ ...formData, bishop_diocese: e.target.value })}
+                    className="input text-sm"
+                    placeholder="esim. Tampereen hiippakunta"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -265,69 +403,227 @@ function SettingsManager() {
           </div>
         </div>
 
-        {/* 3. Logos and Crests */}
-        <div className="card">
-          <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
-            <span>🖼️</span> Kirkon ja seurakunnan logot
-          </h3>
+        {/* 3. Logos and Crests (Kirkon viralliset logot, kieliversiot, sinetit) */}
+        <div className="card space-y-6">
+          <div className="border-b border-gray-100 pb-3">
+            <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide flex items-center gap-2">
+              <span>🖼️</span> Kirkon ja seurakunnan logot ja tunnukset
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Suomen ev.lut. kirkon virallinen ympyrälogo kieliversioineen, seurakunnan oma logo, kirkkoherran sinetti ja piispan vaakuna.
+            </p>
+          </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            {/* General Church Logo */}
-            <div className="p-3.5 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-gray-800">
-                  Kirkon virallinen ympyrälogo (2024–2025)
-                </label>
+          {/* Section: Suomen ev.lut. kirkon virallinen logo & kieliversiointi */}
+          <div className="p-4 bg-emerald-50/40 rounded-xl border border-emerald-200/80 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/60 pb-3">
+              <div>
+                <h4 className="text-sm font-bold text-emerald-950 flex items-center gap-2">
+                  <span>⛪</span> Suomen ev.lut. kirkon virallinen logo
+                </h4>
+                <p className="text-xs text-emerald-800">
+                  Kirkon virallinen risti-ympyrälogo eri kieliversioina. Voidaan näyttää automaattisesti käyttäjän kielen mukaan tai pakottaa seurakunnan pääkieli.
+                </p>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-emerald-200 shadow-2xs">
+                <span className="text-xs font-semibold text-gray-700">Näytä yläpalkissa:</span>
                 <input
                   type="checkbox"
                   checked={formData.show_church_logo !== 'false'}
                   onChange={(e) => setFormData({ ...formData, show_church_logo: String(e.target.checked) })}
-                  className="rounded text-primary-600"
+                  className="rounded text-emerald-600 focus:ring-emerald-500"
                 />
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white rounded-full border border-gray-200 p-1 flex items-center justify-center">
-                  <ChurchCircleLogo className="w-8 h-8 text-primary-700" />
-                </div>
-                <div className="text-[11px] text-gray-500">
-                  Suomen ev.lut. kirkon virallinen risti-ympyrälogo yläpalkissa.
-                </div>
+              </label>
+            </div>
+
+            {/* Language Mode Selector */}
+            <div>
+              <label className="block text-xs font-semibold text-emerald-950 uppercase tracking-wider mb-2">
+                Logon kielitila (Language mode)
+              </label>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  {
+                    id: 'auto',
+                    title: '🌐 Automaattinen',
+                    desc: 'Käyttäjän kielen mukaan (fi ➔ fi_se, sv ➔ se_fi, en/muut ➔ en_fi)'
+                  },
+                  {
+                    id: 'fi_se',
+                    title: '🇫🇮 Pakota suomi (fi_se)',
+                    desc: 'Suomen evankelis-luterilainen kirkko (pääkieli suomi)'
+                  },
+                  {
+                    id: 'se_fi',
+                    title: '🇸🇪 Pakota ruotsi (se_fi)',
+                    desc: 'Evangelisk-lutherska kyrkan i Finland (pääkieli ruotsi)'
+                  },
+                  {
+                    id: 'en_fi',
+                    title: '🇬🇧 Pakota englanti (en_fi)',
+                    desc: 'The Evangelical Lutheran Church of Finland (kansainvälinen)'
+                  }
+                ].map((mode) => {
+                  const isSelected = (formData.church_logo_variant || 'auto') === mode.id;
+                  return (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, church_logo_variant: mode.id })}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? 'border-emerald-600 bg-white ring-2 ring-emerald-500/20 shadow-xs text-emerald-950'
+                          : 'border-emerald-200/70 bg-white/70 hover:bg-white text-gray-700'
+                      }`}
+                    >
+                      <div className="text-xs font-bold mb-1 flex items-center justify-between">
+                        <span>{mode.title}</span>
+                        {isSelected && <span className="text-emerald-600 font-mono text-[10px]">✓ Valittu</span>}
+                      </div>
+                      <div className="text-[11px] text-gray-600 leading-snug">
+                        {mode.desc}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Local Parish Logo */}
-            <div className="p-3.5 bg-gray-50 rounded-lg border border-gray-200">
+            {/* Visual SVG Gallery / Preview Cards */}
+            <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-gray-800">
-                  Seurakunnan oma logo (PNG/SVG)
-                </label>
-                <input
-                  type="checkbox"
-                  checked={formData.show_parish_logo !== 'false'}
-                  onChange={(e) => setFormData({ ...formData, show_parish_logo: String(e.target.checked) })}
-                  className="rounded text-primary-600"
-                />
+                <span className="text-xs font-semibold text-emerald-950 uppercase tracking-wider">
+                  Viralliset SVG-logot (Napsauta korttia valitaksesi kyseinen kieliversio)
+                </span>
+                <span className="text-[11px] text-emerald-800 font-medium bg-emerald-100/60 px-2 py-0.5 rounded">
+                  Aktiivinen esikatselussa: <strong className="font-mono">{activePreviewVariant}</strong>
+                </span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white rounded border border-gray-200 p-1 flex items-center justify-center shrink-0">
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                {Object.values(CHURCH_LOGO_VARIANTS).map((variant) => {
+                  const isForcedSelected = formData.church_logo_variant === variant.id;
+                  const isCurrentlyActive = activePreviewVariant === variant.id;
+
+                  return (
+                    <div
+                      key={variant.id}
+                      onClick={() => setFormData({ ...formData, church_logo_variant: variant.id })}
+                      className={`p-3.5 rounded-xl border bg-white cursor-pointer transition-all flex flex-col justify-between ${
+                        isForcedSelected
+                          ? 'border-emerald-600 ring-2 ring-emerald-500/20 shadow-sm'
+                          : isCurrentlyActive
+                          ? 'border-emerald-400 bg-emerald-50/20'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-gray-100 text-gray-800">
+                            {variant.id}
+                          </span>
+                          {isForcedSelected ? (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                              ✓ Pakotettu
+                            </span>
+                          ) : isCurrentlyActive ? (
+                            <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              🌐 Aktiivinen (Käyttäjäkieli)
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="w-full h-24 flex items-center justify-center p-2 my-2 bg-stone-50/70 rounded-lg border border-stone-100">
+                          <img
+                            src={`/logos/${variant.fileName}`}
+                            alt={variant.subtitle}
+                            className="max-h-full max-w-full object-contain drop-shadow-2xs"
+                          />
+                        </div>
+
+                        <div className="text-xs font-semibold text-gray-900 mt-1">
+                          {variant.fallbackLabel}
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                          {variant.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Optional Custom Church Logo Override Upload */}
+            <div className="pt-2 border-t border-emerald-200/50 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <span className="text-emerald-900">
+                Haluatko ladata seurakuntakohtaisen mukautetun risti-ikonin oletusvektorien tilalle?
+              </span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={churchLogoRef}
+                  onChange={(e) => handleFileUpload('church_logo_url', e.target.files?.[0])}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => churchLogoRef.current?.click()}
+                  className="btn-secondary text-xs py-1 px-2.5"
+                >
+                  📁 {formData.church_logo_url ? 'Vaihda oma logo' : 'Lataa oma logo'}
+                </button>
+                {formData.church_logo_url && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, church_logo_url: '' })}
+                    className="text-xs text-red-600 underline"
+                  >
+                    Palauta virallinen kirkon SVG
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Three Emblem Cards: Parish Logo, Bishop Crest, Pastor Seal */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            {/* 1. Local Parish Logo */}
+            <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-gray-800">
+                    Seurakunnan oma logo
+                  </label>
+                  <input
+                    type="checkbox"
+                    checked={formData.show_parish_logo !== 'false'}
+                    onChange={(e) => setFormData({ ...formData, show_parish_logo: String(e.target.checked) })}
+                    className="rounded text-primary-600"
+                  />
+                </div>
+                <div className="w-full h-20 bg-white rounded-lg border border-gray-200 p-2 flex items-center justify-center my-2">
                   {formData.parish_logo_url ? (
                     <img src={formData.parish_logo_url} alt="Seurakunnan logo" className="max-h-full max-w-full object-contain" />
                   ) : (
-                    <LocalParishLogo className="w-8 h-8 text-amber-600" />
+                    <LocalParishLogo className="w-10 h-10 text-amber-600" />
                   )}
                 </div>
-                <div>
-                  <input
-                    type="file"
-                    ref={parishLogoRef}
-                    onChange={(e) => handleFileUpload('parish_logo_url', e.target.files?.[0])}
-                    accept="image/*"
-                    className="hidden"
-                  />
+              </div>
+              <div>
+                <input
+                  type="file"
+                  ref={parishLogoRef}
+                  onChange={(e) => handleFileUpload('parish_logo_url', e.target.files?.[0])}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="flex items-center gap-2 mt-2">
                   <button
                     type="button"
                     onClick={() => parishLogoRef.current?.click()}
-                    className="btn-secondary text-xs py-1 px-2.5"
+                    className="btn-secondary text-xs py-1 px-2.5 w-full text-center"
                   >
                     📁 {formData.parish_logo_url ? 'Vaihda logo' : 'Lataa logo'}
                   </button>
@@ -335,7 +631,7 @@ function SettingsManager() {
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, parish_logo_url: '' })}
-                      className="text-[11px] text-red-600 ml-2 underline"
+                      className="text-[11px] text-red-600 underline shrink-0"
                     >
                       Palauta
                     </button>
@@ -344,57 +640,236 @@ function SettingsManager() {
               </div>
             </div>
 
-            {/* Bishop's Crest (Default: Tampereen hiippakunta) */}
-            <div className="p-3.5 bg-purple-50/50 rounded-lg border border-purple-200 sm:col-span-2">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-purple-950">
-                  Piispan virallinen vaakuna (Oletus: Tampereen hiippakunta / Piispa Matti Repo)
-                </label>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-16 bg-white rounded border border-purple-200 p-1 flex items-center justify-center shrink-0 shadow-sm">
+            {/* 2. Bishop's Crest */}
+            <div className="p-3.5 bg-purple-50/50 rounded-xl border border-purple-200 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-purple-950">
+                    Piispan virallinen vaakuna
+                  </label>
+                </div>
+                <div className="w-full h-20 bg-white rounded-lg border border-purple-200 p-2 flex items-center justify-center my-2 shadow-2xs">
                   <img
                     src={formData.bishop_crest_url || '/tampere_piispan_vaakuna.png'}
                     alt="Piispan vaakuna"
                     className="max-h-full max-w-full object-contain"
                   />
                 </div>
-                <div>
-                  <input
-                    type="file"
-                    ref={bishopCrestRef}
-                    onChange={(e) => handleFileUpload('bishop_crest_url', e.target.files?.[0])}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <div className="flex items-center gap-2">
+              </div>
+              <div>
+                <input
+                  type="file"
+                  ref={bishopCrestRef}
+                  onChange={(e) => handleFileUpload('bishop_crest_url', e.target.files?.[0])}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => bishopCrestRef.current?.click()}
+                    className="btn-secondary text-xs py-1 px-2.5 border-purple-300 text-purple-900 hover:bg-purple-100 w-full text-center"
+                  >
+                    📁 {formData.bishop_crest_url && formData.bishop_crest_url !== '/tampere_piispan_vaakuna.png' ? 'Vaihda vaakuna' : 'Lataa oma vaakuna'}
+                  </button>
+                  {formData.bishop_crest_url && formData.bishop_crest_url !== '/tampere_piispan_vaakuna.png' && (
                     <button
                       type="button"
-                      onClick={() => bishopCrestRef.current?.click()}
-                      className="btn-secondary text-xs py-1 px-2.5 border-purple-300 text-purple-900 hover:bg-purple-100"
+                      onClick={() => setFormData({ ...formData, bishop_crest_url: '/tampere_piispan_vaakuna.png' })}
+                      className="text-[11px] text-red-600 underline shrink-0"
                     >
-                      📁 {formData.bishop_crest_url && formData.bishop_crest_url !== '/tampere_piispan_vaakuna.png' ? 'Vaihda vaakuna' : 'Lataa oma vaakuna'}
+                      Palauta
                     </button>
-                    {formData.bishop_crest_url && formData.bishop_crest_url !== '/tampere_piispan_vaakuna.png' && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, bishop_crest_url: '/tampere_piispan_vaakuna.png' })}
-                        className="text-[11px] text-red-600 underline"
-                      >
-                        Palauta Tampereen hiippakunnan vaakuna
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-gray-500 mt-1">
-                    Käytetään oletuksena piispan rukousaiheen yhteydessä ja sunnuntain messun esirukoustulosteessa.
-                  </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Pastor's Seal / Logo */}
+            <div className="p-3.5 bg-amber-50/50 rounded-xl border border-amber-200 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-amber-950">
+                    Kirkkoherran sinetti / tunnus
+                  </label>
+                </div>
+                <div className="w-full h-20 bg-white rounded-lg border border-amber-200 p-2 flex items-center justify-center my-2 shadow-2xs">
+                  {formData.pastor_logo_url ? (
+                    <img
+                      src={formData.pastor_logo_url}
+                      alt="Kirkkoherran sinetti"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <PastorSealLogo className="w-10 h-10 opacity-70" />
+                  )}
+                </div>
+              </div>
+              <div>
+                <input
+                  type="file"
+                  ref={pastorLogoRef}
+                  onChange={(e) => handleFileUpload('pastor_logo_url', e.target.files?.[0])}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => pastorLogoRef.current?.click()}
+                    className="btn-secondary text-xs py-1 px-2.5 border-amber-300 text-amber-900 hover:bg-amber-100 w-full text-center"
+                  >
+                    📁 {formData.pastor_logo_url ? 'Vaihda sinetti' : 'Lataa sinetti'}
+                  </button>
+                  {formData.pastor_logo_url && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, pastor_logo_url: '' })}
+                      className="text-[11px] text-red-600 underline shrink-0"
+                    >
+                      Poista
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 4. Daily Word / Bible Stuff (Päivän sana) */}
+        {/* 4. Työalat ja ryhmät (Ministries and Groups Management) */}
+        <div className="card space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
+            <div>
+              <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide flex items-center gap-2">
+                <span>📋</span> Työalan rukouspyyntöjen ryhmät ja tunnisteet
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Määritä vapaasti seurakuntasi käyttämät vastuuryhmät ja työalatunnisteet (tags). Työntekijät valitsevat näistä lisätessään työalan rukouspyyntöjä.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleResetGroupsAndTags}
+              className="text-xs text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md transition-colors"
+            >
+              🔄 Palauta oletusryhmät
+            </button>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Ministry Groups */}
+            <div className="p-3.5 bg-blue-50/40 rounded-xl border border-blue-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-blue-950 uppercase tracking-wide">
+                  Ryhmät / Vastuualueet ({currentGroups.length})
+                </label>
+                <span className="text-[11px] text-blue-800">Vapaa määrä</span>
+              </div>
+
+              {/* Group Chips */}
+              <div className="flex flex-wrap gap-2 min-h-[50px] p-2 bg-white rounded-lg border border-blue-100">
+                {currentGroups.map((group) => (
+                  <span
+                    key={group}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-900 border border-blue-200"
+                  >
+                    <span>{group}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveGroup(group)}
+                      className="text-blue-600 hover:text-red-700 font-bold ml-0.5"
+                      title={`Poista ryhmä "${group}"`}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              {/* Add Group Input */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newGroupInput}
+                  onChange={(e) => setNewGroupInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddGroup();
+                    }
+                  }}
+                  placeholder="Uusi ryhmä (esim. Musiikki)..."
+                  className="input text-xs flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddGroup}
+                  disabled={!newGroupInput.trim()}
+                  className="btn-secondary text-xs py-1 px-3 border-blue-300 text-blue-900 hover:bg-blue-100 disabled:opacity-50"
+                >
+                  Lisää
+                </button>
+              </div>
+            </div>
+
+            {/* Ministry Tags */}
+            <div className="p-3.5 bg-emerald-50/40 rounded-xl border border-emerald-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-emerald-950 uppercase tracking-wide">
+                  Työalat ja tunnisteet ({currentTags.length})
+                </label>
+                <span className="text-[11px] text-emerald-800">Vapaa määrä</span>
+              </div>
+
+              {/* Tag Chips */}
+              <div className="flex flex-wrap gap-2 min-h-[50px] p-2 bg-white rounded-lg border border-emerald-100">
+                {currentTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-900 border border-emerald-200"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="text-emerald-600 hover:text-red-700 font-bold ml-0.5"
+                      title={`Poista työala "${tag}"`}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              {/* Add Tag Input */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newTagInput}
+                  onChange={(e) => setNewTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="Uusi työala (esim. Viestintä)..."
+                  className="input text-xs flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  disabled={!newTagInput.trim()}
+                  className="btn-secondary text-xs py-1 px-3 border-emerald-300 text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
+                >
+                  Lisää
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Daily Word / Bible Stuff (Päivän sana) */}
         <div className="card">
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
             <div>
@@ -463,7 +938,7 @@ function SettingsManager() {
           </div>
         </div>
 
-        {/* 5. Prayer Week Cycle & Rollover */}
+        {/* 6. Prayer Week Cycle & Rollover */}
         <div className="card">
           <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-2">
             <span>📅</span> Rukousviikon kierto ja vaihtumispäivä

@@ -217,7 +217,7 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
 // POST /api/prayers/pastor - Submit the pastor's prayer topic (admin only)
 router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    const { content, startDate, endDate, logoUrl, isYhtymaWide, tenantId } = req.body;
+    const { content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority } = req.body;
 
     // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -256,6 +256,7 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
       startDate: prayerStartDate,
       endDate: prayerEndDate,
       isApproved: true,
+      highlightPriority: parseInt(highlightPriority, 10) || 0,
       logoUrl: logoUrl || null,
       isYhtymaWide: !!isYhtymaWide,
       tenantId: tenantId || req.user.tenant_id || null
@@ -282,7 +283,7 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
 // POST /api/prayers/bishop - Submit the optional bishop's prayer topic (bishop or admin)
 router.post('/bishop', requireAuth, requireBishopOrAdmin, async (req, res, next) => {
   try {
-    const { content, startDate, endDate, logoUrl } = req.body;
+    const { content, startDate, endDate, logoUrl, highlightPriority, isYhtymaWide, tenantId } = req.body;
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return res.status(400).json({
@@ -319,7 +320,10 @@ router.post('/bishop', requireAuth, requireBishopOrAdmin, async (req, res, next)
       startDate: prayerStartDate,
       endDate: prayerEndDate,
       isApproved: true,
-      logoUrl: logoUrl || null
+      highlightPriority: parseInt(highlightPriority, 10) || 0,
+      logoUrl: logoUrl || null,
+      isYhtymaWide: !!isYhtymaWide,
+      tenantId: tenantId || req.user.tenant_id || null
     });
 
     res.status(201).json({
@@ -446,13 +450,15 @@ router.delete('/:id', requireAuth, requireWorker, async (req, res, next) => {
 router.post('/:id/approve', requireAuth, requireWorker, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { approved } = req.body;
+    const rawApproved = req.body.approved !== undefined ? req.body.approved : req.body.isApproved;
 
-    if (typeof approved !== 'boolean') {
+    if (typeof rawApproved !== 'boolean' && rawApproved !== 'true' && rawApproved !== 'false') {
       return res.status(400).json({
         error: { message: 'approved field must be a boolean' }
       });
     }
+
+    const approved = rawApproved === true || rawApproved === 'true';
 
     // Get existing prayer
     const existingPrayer = await getPrayerById(id);

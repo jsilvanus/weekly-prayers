@@ -1,36 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../services/api';
 import { useTenant } from '../../context/TenantContext';
+import { useSettings } from '../../context/SettingsContext';
 import DateRangeCalendar from '../common/DateRangeCalendar';
-
-const MINISTRY_GROUPS = [
-  { id: 'local', key: 'groups.local' },
-  { id: 'international', key: 'groups.international' },
-  { id: 'children_youth', key: 'groups.children_youth' },
-  { id: 'diaconal_care', key: 'groups.diaconal_care' },
-];
-
-const PRESET_TAGS = [
-  'Diakonia',
-  'Nuorisotyö',
-  'Lähetystyö',
-  'Musiikkityö',
-  'Varhaiskasvatus',
-  'Jumalanpalvelus',
-  'Yhteisötyö'
-];
 
 function StaffPrayerForm() {
   const { t } = useTranslation();
   const { currentTenant, yhtyma, isPartOfYhtyma } = useTenant();
+  const { ministryGroups, ministryTags } = useSettings();
+
   const [content, setContent] = useState('');
-  const [ministryGroup, setMinistryGroup] = useState('local');
-  const [ministryTag, setMinistryTag] = useState('Diakonia');
+  const [ministryGroup, setMinistryGroup] = useState(ministryGroups?.[0] || 'Paikallinen seurakuntatyö');
+  const [ministryTag, setMinistryTag] = useState(ministryTags?.[0] || 'Diakonia');
   const [customTag, setCustomTag] = useState('');
   const [isYhtymaWide, setIsYhtymaWide] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+
+  // Update default selections if settings change
+  useEffect(() => {
+    if (ministryGroups && ministryGroups.length > 0 && !ministryGroups.includes(ministryGroup)) {
+      setMinistryGroup(ministryGroups[0]);
+    }
+  }, [ministryGroups]);
+
+  useEffect(() => {
+    if (ministryTags && ministryTags.length > 0 && !ministryTags.includes(ministryTag)) {
+      setMinistryTag(ministryTags[0]);
+    }
+  }, [ministryTags]);
 
   const formatDateStr = (d) => {
     const year = d.getFullYear();
@@ -79,25 +78,25 @@ function StaffPrayerForm() {
   return (
     <div>
       <h2 className="text-xl font-semibold text-primary-800 mb-6">
-        {t('admin.staff.title')}
+        {t('admin.staff.title', 'Työalan rukouspyyntö')}
       </h2>
 
-      <form onSubmit={handleSubmit} className="card">
-        {/* Ministry Group & Tag Selection */}
-        <div className="grid gap-4 sm:grid-cols-2 mb-4">
+      <form onSubmit={handleSubmit} className="card space-y-4">
+        {/* Ministry Group & Tag Selection from Parish Settings */}
+        <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-              {t('admin.staff.group')} (1–4)
+              {t('admin.staff.group', 'Ryhmä / Vastuualue')}
             </label>
             <select
               value={ministryGroup}
               onChange={(e) => setMinistryGroup(e.target.value)}
-              className="input w-full"
+              className="input w-full text-sm"
               disabled={loading}
             >
-              {MINISTRY_GROUPS.map((grp) => (
-                <option key={grp.id} value={grp.id}>
-                  {t(`ministries.${grp.key}`)}
+              {ministryGroups?.map((grp) => (
+                <option key={grp} value={grp}>
+                  {grp}
                 </option>
               ))}
             </select>
@@ -105,7 +104,7 @@ function StaffPrayerForm() {
 
           <div>
             <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-              {t('admin.staff.tag')}
+              {t('admin.staff.tag', 'Työala / Tunniste')}
             </label>
             <div className="flex gap-2">
               <select
@@ -114,10 +113,10 @@ function StaffPrayerForm() {
                   setMinistryTag(e.target.value);
                   setCustomTag('');
                 }}
-                className="input w-1/2"
+                className="input w-1/2 text-sm"
                 disabled={loading}
               >
-                {PRESET_TAGS.map((tag) => (
+                {ministryTags?.map((tag) => (
                   <option key={tag} value={tag}>
                     {tag}
                   </option>
@@ -137,7 +136,7 @@ function StaffPrayerForm() {
 
         {/* Yhtymä-wide toggle */}
         {isPartOfYhtyma && (
-          <div className="mb-4 p-3.5 bg-gradient-to-r from-blue-50/80 to-indigo-50/60 border border-blue-200/80 rounded-xl" data-testid="yhtyma-wide-toggle">
+          <div className="p-3.5 bg-gradient-to-r from-blue-50/80 to-indigo-50/60 border border-blue-200/80 rounded-xl" data-testid="yhtyma-wide-toggle">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -160,25 +159,35 @@ function StaffPrayerForm() {
           </div>
         )}
 
-        {/* Prayer content */}
-        <textarea
-          className="textarea h-36 mb-4"
-          placeholder="Kirjoita työalan rukouspyyntö tähän..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          maxLength={2000}
-          disabled={loading}
-        />
+        {/* Prayer content with Character Count at top right */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-semibold text-gray-800 uppercase tracking-wide">
+              Rukouspyynnön teksti
+            </label>
+            <span className="text-xs font-mono font-medium text-primary-800 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
+              {content.length} / 2000
+            </span>
+          </div>
+          <textarea
+            className="textarea h-36 w-full text-sm"
+            placeholder="Kirjoita työalan rukouspyyntö tähän..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            maxLength={2000}
+            disabled={loading}
+          />
+        </div>
 
         {/* Date range visibility selector */}
-        <div className="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+        <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
           <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={() => setShowCalendar(!showCalendar)}
               className="text-xs font-semibold text-primary-700 hover:text-primary-800 flex items-center gap-1"
             >
-              <span>📅 {t('prayers.submit.timelineTitle')}</span>
+              <span>📅 {t('prayers.submit.timelineTitle', 'Näkyvyysaika')}</span>
               <span className="text-[10px] text-gray-500">
                 {showCalendar ? '▲' : '▼'}
               </span>
@@ -193,7 +202,7 @@ function StaffPrayerForm() {
               <DateRangeCalendar
                 startDate={startDate}
                 endDate={endDate}
-                onChange={(s, e) => {
+                onChange={({ startDate: s, endDate: e }) => {
                   setStartDate(s);
                   setEndDate(e);
                 }}
@@ -202,20 +211,19 @@ function StaffPrayerForm() {
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">{content.length}/2000</span>
+        <div className="flex items-center justify-end pt-1">
           <button
             type="submit"
-            className="btn-primary"
+            className="btn-primary text-sm px-6"
             disabled={loading || !content.trim()}
           >
-            {loading ? t('common.loading') : t('admin.staff.add')}
+            {loading ? t('common.loading') : t('admin.staff.add', '➕ Lisää työalan aihe')}
           </button>
         </div>
 
         {message && (
           <div
-            className={`mt-4 p-3 rounded-lg ${
+            className={`p-3 rounded-lg text-xs ${
               message.type === 'success'
                 ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'

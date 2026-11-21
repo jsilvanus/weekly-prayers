@@ -3,21 +3,26 @@
  * (Suomen evankelis-luterilaisen kirkon visuaaliset elementit ja piktogrammit)
  */
 
-// Official EVL Circle Logo with Cross (Syksyn 2024 uudistettu ympyrälogo)
-export function ChurchCircleLogo({ className = "w-9 h-9", color = "currentColor" }) {
+import { getChurchLogoUrl } from '../utils/churchLogo';
+
+// Official EVL Circle Logo with Cross (Suomen ev.lut. kirkon virallinen ympyrälogo)
+export function ChurchCircleLogo({
+  className = "w-9 h-9",
+  variant = 'auto',
+  userLocale = 'fi',
+  alt = "Suomen evankelis-luterilainen kirkko"
+}) {
+  const logoUrl = getChurchLogoUrl(variant, userLocale);
   return (
-    <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Suomen evankelis-luterilainen kirkko">
-      <circle cx="50" cy="50" r="46" stroke={color} strokeWidth="6" />
-      {/* Central stylized Latin Cross */}
-      <path
-        d="M50 14 V86 M26 38 H74"
-        stroke={color}
-        strokeWidth="7"
-        strokeLinecap="round"
-      />
-      {/* Surrounding circular arcs and rays */}
-      <circle cx="50" cy="38" r="16" stroke={color} strokeWidth="3" strokeDasharray="3 3" opacity="0.6" />
-    </svg>
+    <img
+      src={logoUrl}
+      alt={alt}
+      className={`${className} object-contain`}
+      onError={(e) => {
+        e.target.onerror = null;
+        e.target.src = '/logos/evl_fi_se.svg';
+      }}
+    />
   );
 }
 

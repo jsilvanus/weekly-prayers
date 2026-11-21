@@ -69,8 +69,16 @@ function PrayerForm({ onSuccess, isModal = false }) {
       </div>
 
       <form onSubmit={handleSubmit}>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-xs font-semibold text-gray-700">
+            {t('prayers.submit.contentLabel', 'Rukousaiheesi')}
+          </label>
+          <span className="text-xs font-mono font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+            {content.length} / 1000
+          </span>
+        </div>
         <textarea
-          className="textarea h-28 mb-3"
+          className="textarea h-28 mb-3 w-full"
           placeholder={t('prayers.submit.placeholder')}
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -105,10 +113,7 @@ function PrayerForm({ onSuccess, isModal = false }) {
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <span className="text-sm text-gray-500">
-            {content.length}/1000
-          </span>
+        <div className="flex items-center justify-end pt-2 border-t border-gray-100">
           <button
             type="submit"
             className="btn-primary"

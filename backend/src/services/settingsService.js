@@ -13,7 +13,13 @@ const DEFAULT_SETTINGS = {
   bishop_name: 'Matti Repo',
   bishop_diocese: 'Tampereen hiippakunta',
   bishop_crest_url: '/tampere_piispan_vaakuna.png',
+  show_bishop_prayer: 'true',
+  pastor_name: 'Olli-Pekka Silfverhuth',
+  pastor_title: 'Kirkkoherra',
   pastor_logo_url: '',
+  show_pastor_prayer: 'true',
+  ministry_groups: JSON.stringify(['Paikallinen seurakuntatyö', 'Kansainvälinen vastuu ja lähetys', 'Lapset ja nuoret', 'Diakonia ja lähimmäispalvelu']),
+  ministry_tags: JSON.stringify(['Diakonia', 'Nuorisotyö', 'Lähetystyö', 'Musiikkityö', 'Varhaiskasvatus', 'Jumalanpalvelus', 'Yhteisötyö']),
   daily_word_enabled: 'true',
   daily_word_title: 'Päivän sana',
   daily_word_verse: 'Ps. 103:1–4',
@@ -21,7 +27,8 @@ const DEFAULT_SETTINGS = {
   daily_word_reflection: 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan. Hän antaa anteeksi syntisi ja parantaa sairautesi.',
   week_rollover_day: 'thursday',
   week_cycle_mode: 'thursday_cycle',
-  highlight_icon: 'candle'
+  highlight_icon: 'candle',
+  church_logo_variant: 'auto'
 };
 
 export async function getAllSettings() {
@@ -91,6 +98,12 @@ export async function updateSettings(newSettings = {}) {
       await query(
         `UPDATE tenants SET highlight_icon = $1, updated_at = NOW()`,
         [newSettings.highlight_icon]
+      );
+    }
+    if (newSettings.church_logo_variant) {
+      await query(
+        `UPDATE tenants SET church_logo_variant = $1, updated_at = NOW()`,
+        [newSettings.church_logo_variant]
       );
     }
   } catch (e) {

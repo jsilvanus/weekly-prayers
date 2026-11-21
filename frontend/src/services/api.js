@@ -85,15 +85,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId }),
     }),
-  submitPastorPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId) =>
+  submitPastorPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority) =>
     request('/prayers/pastor', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId }),
+      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority }),
     }),
-  submitBishopPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId) =>
+  submitBishopPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority) =>
     request('/prayers/bishop', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId }),
+      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority }),
     }),
   updatePrayer: (id, updates) =>
     request(`/prayers/${id}`, {
@@ -107,7 +107,7 @@ export const api = {
   approvePrayer: (id, isApproved) =>
     request(`/prayers/${id}/approve`, {
       method: 'POST',
-      body: JSON.stringify({ isApproved }),
+      body: JSON.stringify({ approved: Boolean(isApproved), isApproved: Boolean(isApproved) }),
     }),
   updatePrayerHighlight: (id, highlightPriority, startDate, endDate) =>
     request(`/prayers/${id}/highlight`, {

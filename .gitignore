@@ -39,3 +39,9 @@ temp/
 # Database
 *.sql.backup
 pgdata/
+
+# Maintenance / helper scripts
+upgrade-all-d-repos.*
+push-via-ssh.js
+commit-and-push-upgraded.js
+*-report.md

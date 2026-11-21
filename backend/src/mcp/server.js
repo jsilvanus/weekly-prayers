@@ -637,6 +637,7 @@ export function createMcpServer({ publicUrl, user }) {
         week_rollover_day: z.enum(['thursday', 'wednesday', 'friday', 'monday']).optional().describe('Viikon vaihtumispäivä (oletus: "thursday")'),
         week_cycle_mode: z.enum(['thursday_cycle', 'rollover', 'calendar']).optional().describe('Rukousviikon sykli ("thursday_cycle" = To–Ke, "rollover" = ennakoiva, "calendar" = Ma–Su)'),
         highlight_icon: z.enum(['candle', 'star', 'hands']).optional().describe('Nostokuvake rukousaiheille ("candle" = 🕯️, "star" = ⭐, "hands" = 🙏)'),
+        church_logo_variant: z.enum(['auto', 'fi_se', 'se_fi', 'en_fi']).optional().describe('Kirkon virallisen logon kieliversio: "auto" (käyttäjän asetuksen mukaan), "fi_se" (suomi/ruotsi), "se_fi" (ruotsi/suomi), "en_fi" (englanti/suomi)'),
         parish_name: z.string().optional().describe('Seurakunnan nimi'),
         color_palette: z.string().optional().describe('Kirkon väripaletti')
       }

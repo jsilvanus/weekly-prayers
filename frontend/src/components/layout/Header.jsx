@@ -18,7 +18,7 @@ const roleBadgeStyles = {
 };
 
 function Header() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, isAuthenticated, login, logout, isWorkerOrAbove, isBishop, canAccessPrayerList } = useAuth();
   const { settings } = useSettings();
   const { currentTenant } = useTenant();
@@ -104,7 +104,11 @@ function Header() {
                     className="h-9 w-9 md:h-10 md:w-10 object-contain rounded-full"
                   />
                 ) : (
-                  <ChurchCircleLogo className="w-9 h-9 md:w-10 md:h-10 text-primary-700" />
+                  <ChurchCircleLogo
+                    variant={settings.church_logo_variant || currentTenant?.church_logo_variant || 'auto'}
+                    userLocale={i18n?.language}
+                    className="w-9 h-9 md:w-10 md:h-10"
+                  />
                 )}
               </div>
             )}

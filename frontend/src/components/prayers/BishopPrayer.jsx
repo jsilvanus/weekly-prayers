@@ -1,21 +1,20 @@
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
-import { BishopCrestLogo } from '../../assets/churchIcons';
 
 function BishopPrayer({ prayers = [] }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
 
-  // Strictly return null if no bishop's prayer has been added
-  if (!prayers || prayers.length === 0) {
+  // If disabled in settings or no bishop's prayer has been added
+  if (settings?.show_bishop_prayer === 'false' || !prayers || prayers.length === 0) {
     return null;
   }
 
+  // Only one visible at a time (highest Z-priority and active date)
   const prayer = prayers[0];
   const bishopTitle = t('prayers.bishop.pill') || 'Piispa';
   const bishopName = settings?.bishop_name || 'Matti Repo';
-  const authorDisplay = prayer.authorName || `${bishopTitle} ${bishopName}`;
-  const crestUrl = prayer.logoUrl || settings?.bishop_crest_url || '/tampere_piispan_vaakuna.png';
+  const crestUrl = settings?.bishop_crest_url || '/tampere_piispan_vaakuna.png';
 
   return (
     <section className="mb-8" data-testid="bishop-prayer-section">
@@ -33,27 +32,29 @@ function BishopPrayer({ prayers = [] }) {
             </div>
           </div>
 
-          {/* Bishop's Crest (Vaakuna) */}
-          <div className="flex items-center gap-2">
-            <div className="shrink-0 drop-shadow-sm" title={`Piispa ${bishopName} - vaakuna`}>
-              <img
-                src={crestUrl}
-                alt="Piispan vaakuna"
-                className="w-12 h-14 object-contain"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/tampere_piispan_vaakuna.png';
-                }}
-              />
+          {/* Bishop's Crest (Vaakuna) from Parish settings */}
+          {crestUrl && (
+            <div className="flex items-center gap-2">
+              <div className="shrink-0 drop-shadow-sm" title={`Piispa ${bishopName} - vaakuna`}>
+                <img
+                  src={crestUrl}
+                  alt="Piispan vaakuna"
+                  className="w-12 h-14 object-contain"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/tampere_piispan_vaakuna.png';
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        <blockquote className="text-gray-900 whitespace-pre-wrap leading-relaxed text-base italic pl-3 border-l-3 border-purple-400 my-3">
+        <blockquote className="text-gray-900 whitespace-pre-wrap leading-relaxed text-base italic pl-3 border-l-3 border-purple-400 my-3 font-aptos">
           &rdquo;{prayer.content}&rdquo;
         </blockquote>
 
-        {/* Visibility footer without dateranges */}
+        {/* Visibility footer with diocese and connection info */}
         <div className="flex items-center justify-between text-xs text-purple-700 font-medium pt-2 border-t border-purple-100">
           <span className="font-semibold text-purple-800">
             {settings?.bishop_diocese || 'Tampereen hiippakunta'}

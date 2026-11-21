@@ -134,6 +134,33 @@ export function getHighlightEmoji(iconKey) {
   return map[iconKey] || '🕯️';
 }
 
+export const DEFAULT_MINISTRY_GROUPS = [
+  'Paikallinen seurakuntatyö',
+  'Kansainvälinen vastuu ja lähetys',
+  'Lapset ja nuoret',
+  'Diakonia ja lähimmäispalvelu'
+];
+
+export const DEFAULT_MINISTRY_TAGS = [
+  'Diakonia',
+  'Nuorisotyö',
+  'Lähetystyö',
+  'Musiikkityö',
+  'Varhaiskasvatus',
+  'Jumalanpalvelus',
+  'Yhteisötyö'
+];
+
+export function parseSettingsList(val, fallback = []) {
+  if (!val) return fallback;
+  if (Array.isArray(val)) return val;
+  try {
+    const parsed = JSON.parse(val);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  } catch (e) {}
+  return fallback;
+}
+
 const SettingsContext = createContext(null);
 
 export function SettingsProvider({ children }) {
@@ -147,10 +174,17 @@ export function SettingsProvider({ children }) {
     show_parish_logo: 'true',
     church_logo_url: '',
     parish_logo_url: '',
+    church_logo_variant: 'auto',
     bishop_name: 'Matti Repo',
     bishop_diocese: 'Tampereen hiippakunta',
     bishop_crest_url: '/tampere_piispan_vaakuna.png',
+    show_bishop_prayer: 'true',
+    pastor_name: 'Olli-Pekka Silfverhuth',
+    pastor_title: 'Kirkkoherra',
     pastor_logo_url: '',
+    show_pastor_prayer: 'true',
+    ministry_groups: JSON.stringify(DEFAULT_MINISTRY_GROUPS),
+    ministry_tags: JSON.stringify(DEFAULT_MINISTRY_TAGS),
     daily_word_enabled: 'true',
     daily_word_title: 'Päivän sana',
     daily_word_verse: 'Ps. 103:1–4',
@@ -209,6 +243,8 @@ export function SettingsProvider({ children }) {
 
   const highlightIcon = settings.highlight_icon || 'candle';
   const highlightEmoji = getHighlightEmoji(highlightIcon);
+  const ministryGroups = parseSettingsList(settings.ministry_groups, DEFAULT_MINISTRY_GROUPS);
+  const ministryTags = parseSettingsList(settings.ministry_tags, DEFAULT_MINISTRY_TAGS);
 
   return (
     <SettingsContext.Provider
@@ -220,7 +256,9 @@ export function SettingsProvider({ children }) {
         loading,
         highlightIcon,
         highlightEmoji,
-        getHighlightEmoji
+        getHighlightEmoji,
+        ministryGroups,
+        ministryTags
       }}
     >
       {children}

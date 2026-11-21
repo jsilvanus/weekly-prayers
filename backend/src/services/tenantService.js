@@ -6,7 +6,7 @@ import { query } from '../db/index.js';
 export async function getAllTenants() {
   const result = await query(
     `SELECT t.id, t.name, t.slug, t.type, t.parent_id, t.diocese, t.logo_url, 
-            t.color_palette, t.custom_color, t.domain, t.week_rollover_day, t.week_cycle_mode, t.highlight_icon,
+            t.color_palette, t.custom_color, t.domain, t.week_rollover_day, t.week_cycle_mode, t.highlight_icon, t.church_logo_variant,
             t.created_at, t.updated_at,
             p.name as parent_name,
             (SELECT COUNT(*) FROM prayer_requests pr WHERE pr.tenant_id = t.id) as prayer_count,
@@ -149,7 +149,8 @@ export async function getTenantHierarchy(identifier = null) {
       domain: 'riihimaenseurakunta.fi',
       week_rollover_day: 'thursday',
       week_cycle_mode: 'thursday_cycle',
-      highlight_icon: 'candle'
+      highlight_icon: 'candle',
+      church_logo_variant: 'auto'
     };
   }
 
@@ -163,7 +164,7 @@ export async function getTenantHierarchy(identifier = null) {
     yhtyma = yhtymaRes.rows[0] || null;
 
     const parishesRes = await query(
-      'SELECT id, name, slug, type, parent_id, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, highlight_icon FROM tenants WHERE parent_id = $1 ORDER BY name ASC',
+      'SELECT id, name, slug, type, parent_id, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, highlight_icon, church_logo_variant FROM tenants WHERE parent_id = $1 ORDER BY name ASC',
       [tenant.parent_id]
     );
 
@@ -173,7 +174,7 @@ export async function getTenantHierarchy(identifier = null) {
     // Current tenant IS the yhtymä
     yhtyma = tenant;
     const parishesRes = await query(
-      'SELECT id, name, slug, type, parent_id, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, highlight_icon FROM tenants WHERE parent_id = $1 ORDER BY name ASC',
+      'SELECT id, name, slug, type, parent_id, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, highlight_icon, church_logo_variant FROM tenants WHERE parent_id = $1 ORDER BY name ASC',
       [tenant.id]
     );
     allParishesInYhtyma = parishesRes.rows;
@@ -209,6 +210,7 @@ export async function createTenant(data = {}) {
     week_rollover_day = 'thursday',
     week_cycle_mode = 'thursday_cycle',
     highlight_icon = 'candle',
+    church_logo_variant = 'auto',
   } = data;
 
   if (!name || !name.trim()) {
@@ -226,8 +228,8 @@ export async function createTenant(data = {}) {
 
   const sql = `
     INSERT INTO tenants (
-      name, slug, type, parent_id, diocese, logo_url, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, highlight_icon, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+      name, slug, type, parent_id, diocese, logo_url, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, highlight_icon, church_logo_variant, created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
     RETURNING *
   `;
 
@@ -244,6 +246,7 @@ export async function createTenant(data = {}) {
     week_rollover_day || 'thursday',
     week_cycle_mode || 'thursday_cycle',
     highlight_icon || 'candle',
+    church_logo_variant || 'auto',
   ];
 
   const result = await query(sql, values);
@@ -315,6 +318,10 @@ export async function updateTenant(identifier, updates = {}) {
   if (updates.highlight_icon !== undefined) {
     fields.push(`highlight_icon = $${idx++}`);
     values.push(updates.highlight_icon || 'candle');
+  }
+  if (updates.church_logo_variant !== undefined) {
+    fields.push(`church_logo_variant = $${idx++}`);
+    values.push(updates.church_logo_variant || 'auto');
   }
 
   if (fields.length === 0) return tenant;
