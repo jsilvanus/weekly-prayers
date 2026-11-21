@@ -124,7 +124,8 @@ export function TenantProvider({ children }) {
     ...tenantHierarchy.tenant,
     name: (tenantHierarchy.tenant?.slug === 'tuomiokirkko' && settings?.parish_name)
       ? settings.parish_name
-      : tenantHierarchy.tenant?.name
+      : tenantHierarchy.tenant?.name,
+    highlight_icon: tenantHierarchy.tenant?.highlight_icon || settings?.highlight_icon || 'candle'
   };
 
   const effectiveYhtyma = tenantHierarchy.yhtyma ? {

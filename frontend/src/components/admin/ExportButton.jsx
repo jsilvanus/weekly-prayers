@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../context/SettingsContext';
 import { withBasePath } from '../../services/api';
 
 function ExportButton({ week, year }) {
   const { t } = useTranslation();
+  const { highlightEmoji } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
 
   const openExport = (highlightsOnly = false) => {
@@ -52,7 +54,7 @@ function ExportButton({ week, year }) {
           className="btn-secondary text-xs rounded-l-none bg-amber-50 text-amber-800 hover:bg-amber-100 flex items-center gap-1 border-l border-amber-200"
           title="Tulosta vain nostetut rukousaiheet"
         >
-          <span>🕯️</span>
+          <span>{highlightEmoji}</span>
           <span>{t('admin.export.highlightsOnly', 'Vain nostot')}</span>
         </button>
       </div>

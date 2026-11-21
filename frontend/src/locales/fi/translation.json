@@ -147,6 +147,15 @@
     "startDate": "Alkupäivä",
     "endDate": "Loppupäivä"
   },
+  "settings": {
+    "title": "Asetukset",
+    "highlightIcon": "Nostokuvake",
+    "highlightIconDesc": "Valitse symboli, jolla esiin nostetut rukousaiheet merkitään rukouslistoissa ja tulosteissa.",
+    "highlightIconCandle": "Kynttilä (Candle)",
+    "highlightIconStar": "Tähti (Star)",
+    "highlightIconHands": "Rukoilevat kädet (Praying hands)",
+    "default": "Oletus"
+  },
   "footer": {
     "copyright": "© {{year}} Seurakunta"
   }

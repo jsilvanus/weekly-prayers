@@ -1,10 +1,41 @@
 import { Router } from 'express';
 import { getPrayersForWeek } from '../services/prayerService.js';
 import { getCurrentWeekInfo, getCurrentWeekInfoForTenant, getWeekDates, getWeekSettingsForTenant, formatDate } from '../utils/weekHelper.js';
+import { getTenantBySlugOrId } from '../services/tenantService.js';
+import { getSetting } from '../services/settingsService.js';
 import { requireAuth } from '../middleware/authenticate.js';
 import { requirePrayerListAccess } from '../middleware/authorize.js';
 
 const router = Router();
+
+const HIGHLIGHT_EMOJIS = {
+  candle: '🕯️',
+  star: '⭐',
+  hands: '🙏'
+};
+
+export function resolveHighlightEmoji(iconKey) {
+  return HIGHLIGHT_EMOJIS[iconKey] || '🕯️';
+}
+
+export async function getHighlightIconForTenant(targetTenant) {
+  if (targetTenant) {
+    try {
+      const tenantRecord = await getTenantBySlugOrId(targetTenant);
+      if (tenantRecord?.highlight_icon) {
+        return tenantRecord.highlight_icon;
+      }
+    } catch (err) {
+      // Fallback
+    }
+  }
+  try {
+    const val = await getSetting('highlight_icon', 'candle');
+    return val || 'candle';
+  } catch (err) {
+    return 'candle';
+  }
+}
 
 function deriveBasePath(rawUrl) {
   if (!rawUrl) return '';
@@ -49,6 +80,9 @@ router.get(['/intercession', '/esirukouslista'], requireAuth, requirePrayerListA
     });
     const basePath = deriveBasePath(process.env.BASE_URL);
 
+    const highlightIconKey = await getHighlightIconForTenant(targetTenant);
+    const highlightEmoji = resolveHighlightEmoji(highlightIconKey);
+
     const html = generateIntercessionHTML({
       week,
       year,
@@ -57,7 +91,8 @@ router.get(['/intercession', '/esirukouslista'], requireAuth, requirePrayerListA
       prayers,
       initialHighlightsOnly: isHighlightsOnly,
       initialMode,
-      basePath
+      basePath,
+      highlightEmoji
     });
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -67,7 +102,7 @@ router.get(['/intercession', '/esirukouslista'], requireAuth, requirePrayerListA
   }
 });
 
-function generateIntercessionHTML({ week, year, startDate, endDate, prayers, initialHighlightsOnly = false, initialMode = 'print', basePath = '' }) {
+function generateIntercessionHTML({ week, year, startDate, endDate, prayers, initialHighlightsOnly = false, initialMode = 'print', basePath = '', highlightEmoji = '🕯️' }) {
   const formatDateFi = (dateStr) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'numeric' });
@@ -441,7 +476,7 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
           Kaikki
         </button>
         <button id="btn-highlights" class="toggle-btn ${initialHighlightsOnly ? 'active' : ''}" onclick="setFilterMode('highlights')">
-          🕯️ Vain nostot
+          ${highlightEmoji} Vain nostot
         </button>
       </div>
     </div>
@@ -521,7 +556,7 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
             <div id="prayer-${pid}" class="prayer-item ${isHighlighted ? 'is-highlight' : 'is-regular'}" data-highlight="${isHighlighted ? '1' : '0'}" data-prayer-id="${pid}" onclick="togglePrayerCard('${pid}')">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  ${isHighlighted ? '<span class="highlight-badge">🕯️ Nosto</span>' : ''}
+                  ${isHighlighted ? `<span class="highlight-badge">${highlightEmoji} Nosto</span>` : ''}
                   ${p.ministryTag ? `<span class="ministry-tag">🏷️ ${escapeHtml(p.ministryTag)}</span>` : ''}
                 </div>
                 <span class="toggle-badge" id="badge-${pid}">⚪ Merkitse</span>
@@ -544,7 +579,7 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
             <div id="prayer-${pid}" class="prayer-item ${isHighlighted ? 'is-highlight' : 'is-regular'}" data-highlight="${isHighlighted ? '1' : '0'}" data-prayer-id="${pid}" onclick="togglePrayerCard('${pid}')">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                  ${isHighlighted ? '<span class="highlight-badge">🕯️ Nosto</span>' : ''}
+                  ${isHighlighted ? `<span class="highlight-badge">${highlightEmoji} Nosto</span>` : ''}
                 </div>
                 <span class="toggle-badge" id="badge-${pid}">⚪ Merkitse</span>
               </div>

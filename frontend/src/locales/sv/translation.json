@@ -147,6 +147,15 @@
     "startDate": "Startdatum",
     "endDate": "Slutdatum"
   },
+  "settings": {
+    "title": "Inställningar",
+    "highlightIcon": "Förböneikon",
+    "highlightIconDesc": "Välj symbolen som markerar lyfta förbönsämnen i förbönlistor och utskrifter.",
+    "highlightIconCandle": "Ljus (Candle)",
+    "highlightIconStar": "Stjärna (Star)",
+    "highlightIconHands": "Bedjande händer (Praying hands)",
+    "default": "Standard"
+  },
   "footer": {
     "copyright": "© {{year}} Församling"
   }

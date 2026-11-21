@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSettings } from '../../context/SettingsContext';
 import PrayerCard from './PrayerCard';
 
 function PublicPrayers({ prayers = [] }) {
   const { t } = useTranslation();
+  const { highlightEmoji } = useSettings();
   const [showAll, setShowAll] = useState(false);
 
   // Only approved prayers in public view
@@ -86,7 +88,7 @@ function PublicPrayers({ prayers = [] }) {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-800">
-                          🕯️ {t('prayers.highlighted')}
+                          {highlightEmoji} {t('prayers.highlighted')}
                         </span>
                         {prayer.isYhtymaWide && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-100 text-indigo-900 border border-indigo-200" title="Yhtymän laajuinen rukousaihe">

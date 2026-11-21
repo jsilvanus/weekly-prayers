@@ -119,6 +119,21 @@ function generateShadesFromHex(baseHex) {
   };
 }
 
+export const HIGHLIGHT_ICONS = [
+  { id: 'candle', emoji: '🕯️', labelKey: 'settings.highlightIconCandle', fallbackLabel: 'Kynttilä (Candle)' },
+  { id: 'star', emoji: '⭐', labelKey: 'settings.highlightIconStar', fallbackLabel: 'Tähti (Star)' },
+  { id: 'hands', emoji: '🙏', labelKey: 'settings.highlightIconHands', fallbackLabel: 'Rukoilevat kädet (Praying hands)' },
+];
+
+export function getHighlightEmoji(iconKey) {
+  const map = {
+    candle: '🕯️',
+    star: '⭐',
+    hands: '🙏',
+  };
+  return map[iconKey] || '🕯️';
+}
+
 const SettingsContext = createContext(null);
 
 export function SettingsProvider({ children }) {
@@ -142,7 +157,8 @@ export function SettingsProvider({ children }) {
     daily_word_content: 'Ylistä Herraa, minun sieluni, ja kaikki mitä minussa on, hänen pyhää nimeään. Ylistä Herraa, minun sieluni, äläkä unohda, mitä hyvää hän on sinulle tehnyt.',
     daily_word_reflection: 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan. Hän antaa anteeksi syntisi ja parantaa sairautesi.',
     week_rollover_day: 'thursday',
-    week_cycle_mode: 'thursday_cycle'
+    week_cycle_mode: 'thursday_cycle',
+    highlight_icon: 'candle'
   });
   const [loading, setLoading] = useState(true);
 
@@ -191,6 +207,9 @@ export function SettingsProvider({ children }) {
     return res;
   };
 
+  const highlightIcon = settings.highlight_icon || 'candle';
+  const highlightEmoji = getHighlightEmoji(highlightIcon);
+
   return (
     <SettingsContext.Provider
       value={{
@@ -198,7 +217,10 @@ export function SettingsProvider({ children }) {
         palettes: PALETTES,
         saveSettings,
         refetchSettings: fetchSettings,
-        loading
+        loading,
+        highlightIcon,
+        highlightEmoji,
+        getHighlightEmoji
       }}
     >
       {children}

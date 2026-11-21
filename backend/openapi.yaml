@@ -171,6 +171,11 @@ components:
           type: string
           enum: [thursday_cycle, rollover, calendar]
           default: thursday_cycle
+        highlightIcon:
+          type: string
+          enum: [candle, star, hands]
+          default: candle
+          example: candle
 
     SiteSettings:
       type: object
@@ -217,6 +222,11 @@ components:
         week_cycle_mode:
           type: string
           example: thursday_cycle
+        highlight_icon:
+          type: string
+          enum: [candle, star, hands]
+          default: candle
+          example: candle
 
 paths:
   /api/health:

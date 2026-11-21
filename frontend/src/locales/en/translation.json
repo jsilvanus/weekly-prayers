@@ -147,6 +147,15 @@
     "startDate": "Start date",
     "endDate": "End date"
   },
+  "settings": {
+    "title": "Settings",
+    "highlightIcon": "Highlight Icon",
+    "highlightIconDesc": "Choose the icon used to mark highlighted prayer requests in prayer lists and prints.",
+    "highlightIconCandle": "Candle",
+    "highlightIconStar": "Star",
+    "highlightIconHands": "Praying hands",
+    "default": "Default"
+  },
   "footer": {
     "copyright": "© {{year}} Parish"
   }

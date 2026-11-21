@@ -288,7 +288,8 @@ export function createMcpServer({ publicUrl, user }) {
             diocese: t.diocese,
             domain: t.domain,
             weekRolloverDay: t.week_rollover_day || 'thursday',
-            weekCycleMode: t.week_cycle_mode || 'thursday_cycle'
+            weekCycleMode: t.week_cycle_mode || 'thursday_cycle',
+            highlightIcon: t.highlight_icon || 'candle'
           }))
         });
       } catch (err) {
@@ -613,7 +614,7 @@ export function createMcpServer({ publicUrl, user }) {
   server.registerTool(
     'get_parish_settings',
     {
-      description: 'Hae seurakunnan ilme-, väripaletti-, viikkosykli- ja logoasetukset. (Admin only) Get parish settings and branding.',
+      description: 'Hae seurakunnan ilme-, väripaletti-, nostokuvake-, viikkosykli- ja logoasetukset. (Admin only) Get parish settings and branding.',
       inputSchema: {}
     },
     async () => {
@@ -631,10 +632,11 @@ export function createMcpServer({ publicUrl, user }) {
   server.registerTool(
     'update_parish_settings',
     {
-      description: 'Päivitä seurakunnan ilme- ja toiminta-asetuksia, kuten viikon vaihtumispäivä (week_rollover_day), viikkosykli (week_cycle_mode), seurakunnan nimi tai väripaletti. (Admin only) Update parish settings.',
+      description: 'Päivitä seurakunnan ilme- ja toiminta-asetuksia, kuten viikon vaihtumispäivä (week_rollover_day), viikkosykli (week_cycle_mode), nostokuvake (highlight_icon), seurakunnan nimi tai väripaletti. (Admin only) Update parish settings.',
       inputSchema: {
         week_rollover_day: z.enum(['thursday', 'wednesday', 'friday', 'monday']).optional().describe('Viikon vaihtumispäivä (oletus: "thursday")'),
         week_cycle_mode: z.enum(['thursday_cycle', 'rollover', 'calendar']).optional().describe('Rukousviikon sykli ("thursday_cycle" = To–Ke, "rollover" = ennakoiva, "calendar" = Ma–Su)'),
+        highlight_icon: z.enum(['candle', 'star', 'hands']).optional().describe('Nostokuvake rukousaiheille ("candle" = 🕯️, "star" = ⭐, "hands" = 🙏)'),
         parish_name: z.string().optional().describe('Seurakunnan nimi'),
         color_palette: z.string().optional().describe('Kirkon väripaletti')
       }

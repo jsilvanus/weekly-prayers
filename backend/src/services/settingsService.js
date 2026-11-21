@@ -20,7 +20,8 @@ const DEFAULT_SETTINGS = {
   daily_word_content: 'Ylistä Herraa, minun sieluni, ja kaikki mitä minussa on, hänen pyhää nimeään. Ylistä Herraa, minun sieluni, äläkä unohda, mitä hyvää hän on sinulle tehnyt.',
   daily_word_reflection: 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan. Hän antaa anteeksi syntisi ja parantaa sairautesi.',
   week_rollover_day: 'thursday',
-  week_cycle_mode: 'thursday_cycle'
+  week_cycle_mode: 'thursday_cycle',
+  highlight_icon: 'candle'
 };
 
 export async function getAllSettings() {
@@ -84,6 +85,12 @@ export async function updateSettings(newSettings = {}) {
       await query(
         `UPDATE tenants SET week_rollover_day = $1, week_cycle_mode = $2, updated_at = NOW()`,
         [rollover, cycle]
+      );
+    }
+    if (newSettings.highlight_icon) {
+      await query(
+        `UPDATE tenants SET highlight_icon = $1, updated_at = NOW()`,
+        [newSettings.highlight_icon]
       );
     }
   } catch (e) {

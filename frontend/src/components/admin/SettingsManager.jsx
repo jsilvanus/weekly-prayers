@@ -223,6 +223,46 @@ function SettingsManager() {
               </span>
             </div>
           )}
+
+          {/* Highlight Icon selector */}
+          <div className="mt-5 pt-4 border-t border-gray-200">
+            <label className="label text-xs font-semibold mb-1 flex items-center gap-1.5">
+              <span>✨</span> {t('settings.highlightIcon', 'Nostokuvake')}
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              {t('settings.highlightIconDesc', 'Valitse symboli, jolla esiin nostetut rukousaiheet merkitään rukouslistoissa ja tulosteissa.')}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { id: 'candle', emoji: '🕯️', name: t('settings.highlightIconCandle', 'Kynttilä (Candle)'), isDefault: true },
+                { id: 'star', emoji: '⭐', name: t('settings.highlightIconStar', 'Tähti (Star)') },
+                { id: 'hands', emoji: '🙏', name: t('settings.highlightIconHands', 'Rukoilevat kädet (Praying hands)') }
+              ].map((opt) => {
+                const isSelected = (formData.highlight_icon || 'candle') === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, highlight_icon: opt.id })}
+                    className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all ${
+                      isSelected
+                        ? 'border-primary-600 bg-primary-50/60 shadow-sm ring-2 ring-primary-500/20 font-semibold text-primary-950'
+                        : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+                    }`}
+                  >
+                    <span className="text-2xl shrink-0">{opt.emoji}</span>
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium text-gray-900">{opt.name}</div>
+                      {opt.isDefault && (
+                        <span className="text-[10px] text-gray-500">[{t('settings.default', 'Oletus')}]</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* 3. Logos and Crests */}
