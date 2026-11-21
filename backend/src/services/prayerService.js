@@ -118,7 +118,7 @@ export async function getPrayersForWeek(week, year, options = {}) {
       tenantName: row.tenant_name || null,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      authorName: row.author_name
+      authorName: row.type === 'staff' ? row.author_name : null
     };
 
     if (includeOriginal) {

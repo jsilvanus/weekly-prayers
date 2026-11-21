@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
+import { withBasePath } from '../../services/api';
 
 function BishopPrayer({ prayers = [] }) {
   const { t } = useTranslation();
@@ -14,7 +15,8 @@ function BishopPrayer({ prayers = [] }) {
   const prayer = prayers[0];
   const bishopTitle = t('prayers.bishop.pill') || 'Piispa';
   const bishopName = settings?.bishop_name || 'Matti Repo';
-  const crestUrl = settings?.bishop_crest_url || '/tampere_piispan_vaakuna.png';
+  const rawCrestUrl = settings?.bishop_crest_url || '/tampere_piispan_vaakuna.png';
+  const crestUrl = withBasePath(rawCrestUrl);
 
   return (
     <section className="mb-8" data-testid="bishop-prayer-section">
@@ -42,7 +44,7 @@ function BishopPrayer({ prayers = [] }) {
                   className="w-12 h-14 object-contain"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = '/tampere_piispan_vaakuna.png';
+                    e.target.src = withBasePath('/tampere_piispan_vaakuna.png');
                   }}
                 />
               </div>

@@ -99,15 +99,15 @@ function Header() {
               >
                 {settings.church_logo_url ? (
                   <img
-                    src={settings.church_logo_url}
+                    src={withBasePath(settings.church_logo_url)}
                     alt="Kirkon logo"
-                    className="h-9 w-9 md:h-10 md:w-10 object-contain rounded-full"
+                    className="h-[46px] w-[46px] md:h-[50px] md:w-[50px] object-contain rounded-full"
                   />
                 ) : (
                   <ChurchCircleLogo
                     variant={settings.church_logo_variant || currentTenant?.church_logo_variant || 'auto'}
                     userLocale={i18n?.language}
-                    className="w-9 h-9 md:w-10 md:h-10"
+                    className="w-[46px] h-[46px] md:w-[50px] md:h-[50px]"
                   />
                 )}
               </div>
@@ -121,7 +121,7 @@ function Header() {
               >
                 {settings.parish_logo_url ? (
                   <img
-                    src={settings.parish_logo_url}
+                    src={withBasePath(settings.parish_logo_url)}
                     alt="Seurakunnan logo"
                     className="h-8 w-8 md:h-9 md:w-9 object-contain"
                   />

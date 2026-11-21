@@ -65,9 +65,17 @@ export function resolveChurchLogoVariant(settingVariant, userLocale = 'fi') {
 }
 
 /**
+ * Gets the relative asset URL for a specific church logo variant by its ID.
+ */
+export function getChurchLogoVariantUrl(variantId) {
+  const variant = CHURCH_LOGO_VARIANTS[variantId];
+  return withBasePath(`/logos/${variant ? variant.fileName : 'evl_fi_se.svg'}`);
+}
+
+/**
  * Gets the relative asset URL for the given church logo variant and locale.
  */
 export function getChurchLogoUrl(settingVariant, userLocale = 'fi') {
   const resolved = resolveChurchLogoVariant(settingVariant, userLocale);
-  return withBasePath(`/logos/evl_${resolved}.svg`);
+  return getChurchLogoVariantUrl(resolved);
 }

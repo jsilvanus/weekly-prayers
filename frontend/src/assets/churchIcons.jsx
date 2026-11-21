@@ -4,6 +4,7 @@
  */
 
 import { getChurchLogoUrl } from '../utils/churchLogo';
+import { withBasePath } from '../services/api';
 
 // Official EVL Circle Logo with Cross (Suomen ev.lut. kirkon virallinen ympyrälogo)
 export function ChurchCircleLogo({
@@ -20,7 +21,7 @@ export function ChurchCircleLogo({
       className={`${className} object-contain`}
       onError={(e) => {
         e.target.onerror = null;
-        e.target.src = '/logos/evl_fi_se.svg';
+        e.target.src = withBasePath('/logos/evl_fi_se.svg');
       }}
     />
   );
@@ -30,7 +31,7 @@ export function ChurchCircleLogo({
 export function BishopCrestLogo({ className = "w-12 h-14" }) {
   return (
     <img
-      src="/tampere_piispan_vaakuna.png"
+      src={withBasePath("/tampere_piispan_vaakuna.png")}
       alt="Tampereen hiippakunnan piispan vaakuna"
       className={`${className} object-contain drop-shadow-sm`}
     />

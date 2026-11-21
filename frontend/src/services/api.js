@@ -151,6 +151,8 @@ export const api = {
     }),
 
   // Bible (Kirkkovuosikalenteri & Anno API)
+  getBibleToday: (date) =>
+    request(`/bible/today${date ? `?date=${date}` : ''}`),
   getLiturgicalDay: (date) =>
     request(`/bible/liturgical-day${date ? `?date=${date}` : ''}`),
   getSundayGospel: (date) =>
@@ -163,6 +165,24 @@ export const api = {
     request('/bible/test-connection', {
       method: 'POST',
       body: JSON.stringify({ customUrl }),
+    }),
+  testAnnoApiStatus: (url) =>
+    request(`/bible/anno-status${url ? `?url=${encodeURIComponent(url)}` : ''}`),
+  getBibleOverrides: () =>
+    request('/bible/overrides'),
+  createBibleOverride: (payload) =>
+    request('/bible/overrides', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateBibleOverride: (id, payload) =>
+    request(`/bible/overrides/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteBibleOverride: (id) =>
+    request(`/bible/overrides/${id}`, {
+      method: 'DELETE',
     }),
 
   // Tenants (Multi-Tenancy)

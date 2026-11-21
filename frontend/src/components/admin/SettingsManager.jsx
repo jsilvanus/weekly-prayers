@@ -8,6 +8,7 @@ import {
 } from '../../context/SettingsContext';
 import { ChurchCircleLogo, LocalParishLogo, PastorSealLogo } from '../../assets/churchIcons';
 import { CHURCH_LOGO_VARIANTS, resolveChurchLogoVariant } from '../../utils/churchLogo';
+import { withBasePath } from '../../services/api';
 
 function SettingsManager() {
   const { t, i18n } = useTranslation();
@@ -533,11 +534,11 @@ function SettingsManager() {
                           ) : null}
                         </div>
 
-                        <div className="w-full h-24 flex items-center justify-center p-2 my-2 bg-stone-50/70 rounded-lg border border-stone-100">
-                          <img
-                            src={`/logos/${variant.fileName}`}
+                        <div className="w-full h-28 flex items-center justify-center p-2 my-2 bg-stone-50/70 rounded-lg border border-stone-100">
+                          <ChurchCircleLogo
+                            variant={variant.id}
+                            className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-2xs"
                             alt={variant.subtitle}
-                            className="max-h-full max-w-full object-contain drop-shadow-2xs"
                           />
                         </div>
 
@@ -575,13 +576,20 @@ function SettingsManager() {
                   📁 {formData.church_logo_url ? 'Vaihda oma logo' : 'Lataa oma logo'}
                 </button>
                 {formData.church_logo_url && (
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, church_logo_url: '' })}
-                    className="text-xs text-red-600 underline"
-                  >
-                    Palauta virallinen kirkon SVG
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={withBasePath(formData.church_logo_url)}
+                      alt="Oma kirkon logo"
+                      className="w-7 h-7 object-contain rounded-full border border-emerald-300 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, church_logo_url: '' })}
+                      className="text-xs text-red-600 underline"
+                    >
+                      Palauta virallinen kirkon SVG
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -605,7 +613,7 @@ function SettingsManager() {
                 </div>
                 <div className="w-full h-20 bg-white rounded-lg border border-gray-200 p-2 flex items-center justify-center my-2">
                   {formData.parish_logo_url ? (
-                    <img src={formData.parish_logo_url} alt="Seurakunnan logo" className="max-h-full max-w-full object-contain" />
+                    <img src={withBasePath(formData.parish_logo_url)} alt="Seurakunnan logo" className="max-h-full max-w-full object-contain" />
                   ) : (
                     <LocalParishLogo className="w-10 h-10 text-amber-600" />
                   )}
@@ -650,7 +658,7 @@ function SettingsManager() {
                 </div>
                 <div className="w-full h-20 bg-white rounded-lg border border-purple-200 p-2 flex items-center justify-center my-2 shadow-2xs">
                   <img
-                    src={formData.bishop_crest_url || '/tampere_piispan_vaakuna.png'}
+                    src={withBasePath(formData.bishop_crest_url || '/tampere_piispan_vaakuna.png')}
                     alt="Piispan vaakuna"
                     className="max-h-full max-w-full object-contain"
                   />
@@ -696,7 +704,7 @@ function SettingsManager() {
                 <div className="w-full h-20 bg-white rounded-lg border border-amber-200 p-2 flex items-center justify-center my-2 shadow-2xs">
                   {formData.pastor_logo_url ? (
                     <img
-                      src={formData.pastor_logo_url}
+                      src={withBasePath(formData.pastor_logo_url)}
                       alt="Kirkkoherran sinetti"
                       className="max-h-full max-w-full object-contain"
                     />
@@ -869,76 +877,7 @@ function SettingsManager() {
           </div>
         </div>
 
-        {/* 5. Daily Word / Bible Stuff (Päivän sana) */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
-            <div>
-              <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide flex items-center gap-2">
-                <span>📖</span> Päivän sana (Word of the Day / Raamattu)
-              </h3>
-              <p className="text-xs text-gray-500">
-                Avattava palkki rukousaiheiden alussa.
-              </p>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <span className="text-xs font-medium text-gray-700">Näytä etusivulla:</span>
-              <input
-                type="checkbox"
-                checked={formData.daily_word_enabled !== 'false'}
-                onChange={(e) => setFormData({ ...formData, daily_word_enabled: String(e.target.checked) })}
-                className="rounded text-primary-600"
-              />
-            </label>
-          </div>
-
-          <div className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="label text-xs">Otsikko</label>
-                <input
-                  type="text"
-                  value={formData.daily_word_title || ''}
-                  onChange={(e) => setFormData({ ...formData, daily_word_title: e.target.value })}
-                  className="input text-xs"
-                  placeholder="Päivän sana"
-                />
-              </div>
-              <div>
-                <label className="label text-xs">Raamatunkohta / Viite</label>
-                <input
-                  type="text"
-                  value={formData.daily_word_verse || ''}
-                  onChange={(e) => setFormData({ ...formData, daily_word_verse: e.target.value })}
-                  className="input text-xs"
-                  placeholder="esim. Ps. 103:1–4"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="label text-xs">Raamatunteksti</label>
-              <textarea
-                value={formData.daily_word_content || ''}
-                onChange={(e) => setFormData({ ...formData, daily_word_content: e.target.value })}
-                className="textarea h-20 text-xs"
-                placeholder="Kirjoita päivän raamatunjae tähän..."
-              />
-            </div>
-
-            <div>
-              <label className="label text-xs">Mietiskely / Lyhyt rukous</label>
-              <input
-                type="text"
-                value={formData.daily_word_reflection || ''}
-                onChange={(e) => setFormData({ ...formData, daily_word_reflection: e.target.value })}
-                className="input text-xs"
-                placeholder="Lyhyt mietiskely tai saatesana..."
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 6. Prayer Week Cycle & Rollover */}
+        {/* 5. Prayer Week Cycle & Rollover */}
         <div className="card">
           <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-2">
             <span>📅</span> Rukousviikon kierto ja vaihtumispäivä

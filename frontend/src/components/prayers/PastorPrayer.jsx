@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../context/SettingsContext';
+import { withBasePath } from '../../services/api';
 
 function PastorPrayer({ prayers = [] }) {
   const { t } = useTranslation();
@@ -14,7 +15,7 @@ function PastorPrayer({ prayers = [] }) {
   const prayer = prayers[0];
   const pastorTitle = settings?.pastor_title || t('prayers.pastor.pill') || 'Kirkkoherra';
   const pastorName = settings?.pastor_name || 'Kirkkoherra';
-  const logoUrl = settings?.pastor_logo_url;
+  const logoUrl = settings?.pastor_logo_url ? withBasePath(settings.pastor_logo_url) : null;
 
   return (
     <section className="mb-8" data-testid="pastor-prayer-section">

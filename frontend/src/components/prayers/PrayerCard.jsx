@@ -12,7 +12,7 @@ function PrayerCard({ prayer, showMeta = false }) {
 
       {showMeta && (
         <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-          {prayer.authorName && (
+          {prayer.type === 'staff' && prayer.authorName && (
             <span>{prayer.authorName}</span>
           )}
           <span>

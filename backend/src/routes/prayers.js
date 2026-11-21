@@ -108,9 +108,9 @@ router.post('/', optionalAuth, async (req, res, next) => {
     // Run AI sanitization
     const aiResult = await sanitizePrayerContent(content.trim());
 
-    // Create the prayer with AI results
+    // Create the prayer with AI results (public prayers are always anonymous)
     const prayer = await createPrayer({
-      userId: req.user?.id || null,
+      userId: null,
       type: 'public',
       originalContent: content.trim(),
       sanitizedContent: aiResult.sanitizedContent,
