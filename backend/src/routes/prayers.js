@@ -488,11 +488,11 @@ router.post('/:id/approve', requireAuth, requireWorker, async (req, res, next) =
   }
 });
 
-// PUT /api/prayers/:id/highlight - Set prayer highlight priority / z-value (coordinator+)
-router.put('/:id/highlight', requireAuth, requireCoordinator, async (req, res, next) => {
+// PUT /api/prayers/:id/highlight (and /priority) - Set prayer highlight priority / z-value and dates (coordinator+)
+router.put(['/:id/highlight', '/:id/priority'], requireAuth, requireCoordinator, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { highlightPriority } = req.body;
+    const { highlightPriority, startDate, endDate, highlightStartDate, highlightEndDate } = req.body;
 
     const priorityValue = parseInt(highlightPriority, 10);
     if (isNaN(priorityValue) || priorityValue < 0) {
@@ -508,7 +508,29 @@ router.put('/:id/highlight', requireAuth, requireCoordinator, async (req, res, n
       });
     }
 
-    const updatedPrayer = await updatePrayerHighlight(id, priorityValue);
+    let finalStartDate = null;
+    let finalEndDate = null;
+
+    if (priorityValue > 0) {
+      const hlStart = highlightStartDate || startDate;
+      const hlEnd = highlightEndDate || endDate;
+
+      if (hlStart && hlEnd) {
+        finalStartDate = hlStart;
+        finalEndDate = hlEnd;
+      } else if (existingPrayer.highlight_start_date && existingPrayer.highlight_end_date) {
+        finalStartDate = existingPrayer.highlight_start_date;
+        finalEndDate = existingPrayer.highlight_end_date;
+      } else {
+        // Default to one week (today through today + 6 days)
+        const now = new Date();
+        const end = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
+        finalStartDate = formatDate(now);
+        finalEndDate = formatDate(end);
+      }
+    }
+
+    const updatedPrayer = await updatePrayerHighlight(id, priorityValue, finalStartDate, finalEndDate);
 
     res.json({
       message: priorityValue > 0 ? 'Prayer highlighted successfully.' : 'Prayer highlight removed.',
@@ -516,6 +538,8 @@ router.put('/:id/highlight', requireAuth, requireCoordinator, async (req, res, n
         id: updatedPrayer.id,
         type: updatedPrayer.type,
         highlightPriority: updatedPrayer.highlight_priority,
+        highlightStartDate: updatedPrayer.highlight_start_date ? formatDate(new Date(updatedPrayer.highlight_start_date)) : null,
+        highlightEndDate: updatedPrayer.highlight_end_date ? formatDate(new Date(updatedPrayer.highlight_end_date)) : null,
         content: updatedPrayer.sanitized_content || updatedPrayer.original_content,
         updatedAt: updatedPrayer.updated_at
       }

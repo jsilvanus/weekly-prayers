@@ -109,10 +109,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ isApproved }),
     }),
-  updatePrayerPriority: (id, highlightPriority) =>
-    request(`/prayers/${id}/priority`, {
+  updatePrayerHighlight: (id, highlightPriority, startDate, endDate) =>
+    request(`/prayers/${id}/highlight`, {
       method: 'PUT',
-      body: JSON.stringify({ highlightPriority }),
+      body: JSON.stringify({ highlightPriority, startDate, endDate }),
+    }),
+  updatePrayerPriority: (id, highlightPriority, startDate, endDate) =>
+    request(`/prayers/${id}/highlight`, {
+      method: 'PUT',
+      body: JSON.stringify({ highlightPriority, startDate, endDate }),
     }),
 
   // Counts

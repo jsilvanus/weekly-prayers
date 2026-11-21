@@ -36,6 +36,8 @@ export async function getPrayersForWeek(week, year, options = {}) {
       pr.end_date,
       pr.is_approved,
       pr.highlight_priority,
+      pr.highlight_start_date,
+      pr.highlight_end_date,
       pr.ministry_group,
       pr.ministry_tag,
       pr.logo_url,
@@ -48,7 +50,15 @@ export async function getPrayersForWeek(week, year, options = {}) {
     FROM prayer_requests pr
     LEFT JOIN users u ON pr.user_id = u.id
     LEFT JOIN tenants t ON pr.tenant_id = t.id
-    WHERE pr.start_date <= $1 AND pr.end_date >= $2
+    WHERE (
+      (pr.start_date <= $1 AND pr.end_date >= $2)
+      OR (
+        pr.highlight_priority > 0
+        AND pr.highlight_start_date IS NOT NULL
+        AND pr.highlight_start_date <= $1
+        AND pr.highlight_end_date >= $2
+      )
+    )
   `;
 
   const params = [formatDate(endDate), formatDate(startDate)];
@@ -93,6 +103,8 @@ export async function getPrayersForWeek(week, year, options = {}) {
       endDate: row.end_date,
       isApproved: row.is_approved,
       highlightPriority: row.highlight_priority || 0,
+      highlightStartDate: row.highlight_start_date || null,
+      highlightEndDate: row.highlight_end_date || null,
       ministryGroup: row.ministry_group || 'local',
       ministryTag: row.ministry_tag || null,
       logoUrl: row.logo_url || null,
@@ -175,6 +187,8 @@ export async function updatePrayer(id, {
   endDate,
   isApproved,
   highlightPriority,
+  highlightStartDate,
+  highlightEndDate,
   ministryGroup,
   ministryTag,
   logoUrl,
@@ -216,6 +230,14 @@ export async function updatePrayer(id, {
   if (highlightPriority !== undefined) {
     updates.push(`highlight_priority = $${paramIndex++}`);
     values.push(highlightPriority);
+  }
+  if (highlightStartDate !== undefined) {
+    updates.push(`highlight_start_date = $${paramIndex++}`);
+    values.push(highlightStartDate);
+  }
+  if (highlightEndDate !== undefined) {
+    updates.push(`highlight_end_date = $${paramIndex++}`);
+    values.push(highlightEndDate);
   }
   if (ministryGroup !== undefined) {
     updates.push(`ministry_group = $${paramIndex++}`);
@@ -274,8 +296,14 @@ export async function approvePrayer(id, approved) {
 }
 
 /**
- * Update prayer highlight priority (z-value)
+ * Update prayer highlight priority (z-value) and active date range
  */
-export async function updatePrayerHighlight(id, highlightPriority) {
-  return updatePrayer(id, { highlightPriority: parseInt(highlightPriority, 10) || 0 });
+export async function updatePrayerHighlight(id, highlightPriority, highlightStartDate = null, highlightEndDate = null) {
+  const priority = parseInt(highlightPriority, 10) || 0;
+  const updates = {
+    highlightPriority: priority,
+    highlightStartDate: priority > 0 ? (highlightStartDate || null) : null,
+    highlightEndDate: priority > 0 ? (highlightEndDate || null) : null,
+  };
+  return updatePrayer(id, updates);
 }

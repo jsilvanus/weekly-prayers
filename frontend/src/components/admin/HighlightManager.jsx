@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePrayers } from '../../hooks/usePrayers';
 import { api } from '../../services/api';
+import DateRangeCalendar from '../common/DateRangeCalendar';
 
 function HighlightManager() {
   const { t } = useTranslation();
@@ -10,6 +11,8 @@ function HighlightManager() {
   const [filterGroup, setFilterGroup] = useState('all');
   const [actionLoading, setActionLoading] = useState(null);
   const [customZInputs, setCustomZInputs] = useState({});
+  const [dateSelections, setDateSelections] = useState({});
+  const [openCalendarId, setOpenCalendarId] = useState(null);
 
   // Combine approved ministry and parishioner prayers
   const allEligiblePrayers = [
@@ -19,9 +22,36 @@ function HighlightManager() {
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Helper to check if a prayer is currently active by date range
-  const isCurrentlyActive = (p) => {
-    return (!p.startDate || p.startDate <= todayStr) && (!p.endDate || p.endDate >= todayStr);
+  // Default to 1 week (today through today + 6 days = 7 days)
+  const getDefaultDates = () => {
+    const now = new Date();
+    const end = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000);
+    return {
+      startDate: now.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0],
+    };
+  };
+
+  const getEffectiveHighlightStart = (p) => p.highlightStartDate || p.startDate || todayStr;
+  const getEffectiveHighlightEnd = (p) => p.highlightEndDate || p.endDate || todayStr;
+
+  const isHighlightActive = (p) => {
+    if ((p.highlightPriority || 0) <= 0) return false;
+    const start = getEffectiveHighlightStart(p);
+    const end = getEffectiveHighlightEnd(p);
+    return (!start || start <= todayStr) && (!end || end >= todayStr);
+  };
+
+  const isHighlightUpcoming = (p) => {
+    if ((p.highlightPriority || 0) <= 0) return false;
+    const start = getEffectiveHighlightStart(p);
+    return start && start > todayStr;
+  };
+
+  const isHighlightExpired = (p) => {
+    if ((p.highlightPriority || 0) <= 0) return false;
+    const end = getEffectiveHighlightEnd(p);
+    return end && end < todayStr;
   };
 
   // Sort prayers with positive z-values
@@ -30,17 +60,53 @@ function HighlightManager() {
     .sort((a, b) => (b.highlightPriority || 0) - (a.highlightPriority || 0));
 
   // Active top 4
-  const activeHighlights = highlightedQueue.filter(isCurrentlyActive).slice(0, 4);
+  const activeHighlights = highlightedQueue.filter(isHighlightActive).slice(0, 4);
   const activeIds = new Set(activeHighlights.map((p) => p.id));
 
   // In line (queue) for when active ones expire
-  const standbyQueue = highlightedQueue.filter((p) => !activeIds.has(p.id) && isCurrentlyActive(p));
-  const expiredHighlights = highlightedQueue.filter((p) => p.endDate && p.endDate < todayStr);
+  const standbyQueue = highlightedQueue.filter((p) => !activeIds.has(p.id) && isHighlightActive(p));
+  const upcomingHighlights = highlightedQueue.filter(isHighlightUpcoming);
+  const expiredHighlights = highlightedQueue.filter(isHighlightExpired);
 
-  const handleSetPriority = async (id, priority) => {
+  const getDatesForPrayer = (p) => {
+    if (dateSelections[p.id]) {
+      return dateSelections[p.id];
+    }
+    if (p.highlightStartDate && p.highlightEndDate) {
+      return {
+        startDate: p.highlightStartDate,
+        endDate: p.highlightEndDate,
+      };
+    }
+    return getDefaultDates();
+  };
+
+  const setDatesForPrayer = (id, startDate, endDate) => {
+    setDateSelections((prev) => ({
+      ...prev,
+      [id]: { startDate, endDate },
+    }));
+  };
+
+  const setPresetDuration = (id, days) => {
+    const now = new Date();
+    const end = new Date(now.getTime() + (days - 1) * 24 * 60 * 60 * 1000);
+    setDatesForPrayer(id, now.toISOString().split('T')[0], end.toISOString().split('T')[0]);
+  };
+
+  const handleSetPriority = async (id, priority, customStart = null, customEnd = null) => {
     setActionLoading(id);
     try {
-      await api.updatePrayerHighlight(id, priority);
+      let start = customStart;
+      let end = customEnd;
+      if (priority > 0 && (!start || !end)) {
+        const prayer = allEligiblePrayers.find((p) => p.id === id);
+        const dates = prayer ? getDatesForPrayer(prayer) : getDefaultDates();
+        start = dates.startDate;
+        end = dates.endDate;
+      }
+      await api.updatePrayerHighlight(id, priority, start, end);
+      setOpenCalendarId(null);
       refetch();
     } catch (error) {
       alert(error.message);
@@ -49,10 +115,11 @@ function HighlightManager() {
     }
   };
 
-  const handleCustomSubmit = (id) => {
-    const val = parseInt(customZInputs[id], 10);
+  const handleCustomSubmit = (prayer) => {
+    const val = parseInt(customZInputs[prayer.id], 10);
     if (!isNaN(val) && val >= 0) {
-      handleSetPriority(id, val);
+      const dates = getDatesForPrayer(prayer);
+      handleSetPriority(prayer.id, val, dates.startDate, dates.endDate);
     }
   };
 
@@ -100,7 +167,7 @@ function HighlightManager() {
 
           {activeHighlights.length === 0 ? (
             <p className="text-xs text-amber-800 italic py-2">
-              Ei aktiivisia nostoja. Aseta alta rukouksille Z-arvo nostaaksesi ne esiin.
+              Ei aktiivisia nostoja. Aseta alta rukouksille Z-arvo ja nostoaika nostaaksesi ne esiin.
             </p>
           ) : (
             <div className="space-y-2.5">
@@ -113,8 +180,8 @@ function HighlightManager() {
                     <span className="text-amber-800">
                       #{idx + 1} Z-arvo: {p.highlightPriority} ({p.categoryLabel === 'ministry' ? 'Työala' : 'Seurakuntalainen'})
                     </span>
-                    <span className="text-gray-500 font-normal">
-                      Päättyy: {p.endDate || 'Toistaiseksi'}
+                    <span className="text-gray-600 font-normal">
+                      📅 {p.highlightStartDate || p.startDate} – {p.highlightEndDate || p.endDate}
                     </span>
                   </div>
                   <p className="text-gray-700 line-clamp-2">
@@ -139,14 +206,14 @@ function HighlightManager() {
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
-              <span>⏱️</span> Seuraavana jonossa (Z-korvaajat)
+              <span>⏱️</span> Seuraavana jonossa (Z-korvaajat & tulevat)
             </h3>
             <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700">
-              {standbyQueue.length} jonossa
+              {standbyQueue.length + upcomingHighlights.length} jonossa
             </span>
           </div>
 
-          {standbyQueue.length === 0 ? (
+          {standbyQueue.length === 0 && upcomingHighlights.length === 0 ? (
             <div className="text-xs text-gray-500 italic py-2">
               <p>Ei rukouksia jonossa.</p>
               <p className="mt-1">
@@ -162,7 +229,20 @@ function HighlightManager() {
                 >
                   <div className="flex items-center justify-between font-medium text-slate-700 mb-1">
                     <span>Z={p.highlightPriority} &bull; {p.categoryLabel === 'ministry' ? 'Työala' : 'Seurakuntalainen'}</span>
-                    <span className="text-gray-500">{p.startDate} &rarr; {p.endDate}</span>
+                    <span className="text-gray-500">📅 {p.highlightStartDate || p.startDate} &rarr; {p.highlightEndDate || p.endDate}</span>
+                  </div>
+                  <p className="text-gray-600 line-clamp-1">{p.content}</p>
+                </div>
+              ))}
+
+              {upcomingHighlights.map((p) => (
+                <div
+                  key={p.id}
+                  className="bg-sky-50 rounded-lg p-2.5 border border-sky-200 text-xs"
+                >
+                  <div className="flex items-center justify-between font-medium text-sky-800 mb-1">
+                    <span>⏳ Tuleva &bull; Z={p.highlightPriority} &bull; {p.categoryLabel === 'ministry' ? 'Työala' : 'Seurakuntalainen'}</span>
+                    <span className="text-sky-600">Alkaa: {p.highlightStartDate || p.startDate}</span>
                   </div>
                   <p className="text-gray-600 line-clamp-1">{p.content}</p>
                 </div>
@@ -172,7 +252,7 @@ function HighlightManager() {
 
           {expiredHighlights.length > 0 && (
             <div className="mt-3 pt-2 border-t border-slate-200 text-xs text-gray-500">
-              <span className="text-red-500 font-medium">Vanhentuneet nostot ({expiredHighlights.length} kpl):</span> Nämä ovat ohittaneet loppupäivämääränsä ja väistyneet automaattisesti.
+              <span className="text-red-500 font-medium">Vanhentuneet nostot ({expiredHighlights.length} kpl):</span> Nämä ovat ohittaneet loppupäivämääränsä ({expiredHighlights.map((p) => p.highlightEndDate || p.endDate).join(', ')}) ja väistyneet automaattisesti.
             </div>
           )}
         </div>
@@ -228,7 +308,11 @@ function HighlightManager() {
         <div className="space-y-3">
           {displayList.map((prayer) => {
             const isHighlighted = (prayer.highlightPriority || 0) > 0;
-            const active = isCurrentlyActive(prayer);
+            const hlActive = isHighlightActive(prayer);
+            const hlUpcoming = isHighlightUpcoming(prayer);
+            const hlExpired = isHighlightExpired(prayer);
+            const dates = getDatesForPrayer(prayer);
+            const isCalendarOpen = openCalendarId === prayer.id;
 
             return (
               <div
@@ -263,25 +347,91 @@ function HighlightManager() {
                       </span>
                     )}
 
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        active
-                          ? 'bg-green-50 text-green-700 border border-green-200'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}
-                    >
-                      {active ? '● Aktiivinen aikavälillä' : '○ Ei aktiivinen nyt'}
-                    </span>
+                    {isHighlighted ? (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          hlActive
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                            : hlUpcoming
+                            ? 'bg-sky-100 text-sky-800 border border-sky-300'
+                            : 'bg-rose-100 text-rose-800 border border-rose-300'
+                        }`}
+                      >
+                        {hlActive
+                          ? `⭐ Aktiivinen nosto (Z=${prayer.highlightPriority})`
+                          : hlUpcoming
+                          ? `⏳ Tuleva nosto (Z=${prayer.highlightPriority})`
+                          : `⚠️ Päättynyt nosto (Z=${prayer.highlightPriority})`}
+                      </span>
+                    ) : (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                        Perusaihe (ei nostettu)
+                      </span>
+                    )}
                   </div>
 
                   <div className="text-xs text-gray-500">
-                    Aikaväli: <strong>{prayer.startDate}</strong> &rarr; <strong>{prayer.endDate}</strong>
+                    Alkuperäinen pyyntö: <strong>{prayer.startDate}</strong> &rarr; <strong>{prayer.endDate}</strong>
                   </div>
                 </div>
 
                 <p className="text-gray-800 text-sm mb-3 whitespace-pre-wrap">
                   {prayer.content}
                 </p>
+
+                {/* Highlight date range configuration */}
+                <div className="bg-amber-50/50 rounded-lg p-2.5 mb-3 border border-amber-200/60 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                    <span className="font-semibold text-amber-900 flex items-center gap-1">
+                      📅 Nostoaika: {dates.startDate} – {dates.endDate}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500 text-[11px] mr-1">Pikavalinta:</span>
+                      <button
+                        type="button"
+                        onClick={() => setPresetDuration(prayer.id, 7)}
+                        className="px-2 py-0.5 rounded bg-white hover:bg-amber-100 border border-amber-300 text-[11px] text-amber-900 font-medium"
+                      >
+                        1 vko (oletus)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPresetDuration(prayer.id, 14)}
+                        className="px-2 py-0.5 rounded bg-white hover:bg-amber-100 border border-amber-300 text-[11px] text-amber-900 font-medium"
+                      >
+                        2 vko
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPresetDuration(prayer.id, 30)}
+                        className="px-2 py-0.5 rounded bg-white hover:bg-amber-100 border border-amber-300 text-[11px] text-amber-900 font-medium"
+                      >
+                        1 kk
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOpenCalendarId(isCalendarOpen ? null : prayer.id)}
+                        className={`px-2 py-0.5 rounded border text-[11px] font-medium ${
+                          isCalendarOpen
+                            ? 'bg-amber-700 text-white border-amber-700'
+                            : 'bg-white hover:bg-amber-100 border-amber-300 text-amber-900'
+                        }`}
+                      >
+                        {isCalendarOpen ? 'Sulje kalenteri' : 'Valitse kalenterista'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {isCalendarOpen && (
+                    <div className="mt-2 pt-2 border-t border-amber-200">
+                      <DateRangeCalendar
+                        startDate={dates.startDate}
+                        endDate={dates.endDate}
+                        onChange={(s, e) => setDatesForPrayer(prayer.id, s, e)}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {/* Priority / Z-value controls */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100">
@@ -298,28 +448,43 @@ function HighlightManager() {
                     >
                       {prayer.highlightPriority || 0}
                     </span>
+                    {isHighlighted && (
+                      <span className="text-xs text-gray-500">
+                        (Aktiivinen: {prayer.highlightStartDate || prayer.startDate} – {prayer.highlightEndDate || prayer.endDate})
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5">
                     {isHighlighted ? (
-                      <button
-                        onClick={() => handleSetPriority(prayer.id, 0)}
-                        disabled={actionLoading === prayer.id}
-                        className="btn-danger text-xs py-1 px-2.5"
-                      >
-                        Poista nosto
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleSetPriority(prayer.id, prayer.highlightPriority, dates.startDate, dates.endDate)}
+                          disabled={actionLoading === prayer.id}
+                          className="btn bg-amber-600 hover:bg-amber-700 text-white text-xs py-1 px-2.5"
+                          title="Tallenna valittu nostoaika"
+                        >
+                          Päivitä aika
+                        </button>
+                        <button
+                          onClick={() => handleSetPriority(prayer.id, 0)}
+                          disabled={actionLoading === prayer.id}
+                          className="btn-danger text-xs py-1 px-2.5"
+                        >
+                          Poista nosto
+                        </button>
+                      </>
                     ) : (
                       <>
                         <button
-                          onClick={() => handleSetPriority(prayer.id, 10)}
+                          onClick={() => handleSetPriority(prayer.id, 10, dates.startDate, dates.endDate)}
                           disabled={actionLoading === prayer.id}
                           className="btn bg-amber-500 hover:bg-amber-600 text-white text-xs py-1 px-2.5"
                         >
                           ⭐ Nosta (Z=10)
                         </button>
                         <button
-                          onClick={() => handleSetPriority(prayer.id, 20)}
+                          onClick={() => handleSetPriority(prayer.id, 20, dates.startDate, dates.endDate)}
                           disabled={actionLoading === prayer.id}
                           className="btn bg-amber-600 hover:bg-amber-700 text-white text-xs py-1 px-2.5"
                         >
@@ -346,7 +511,7 @@ function HighlightManager() {
                       />
                       <button
                         type="button"
-                        onClick={() => handleCustomSubmit(prayer.id)}
+                        onClick={() => handleCustomSubmit(prayer)}
                         disabled={actionLoading === prayer.id}
                         className="btn-secondary text-xs py-1 px-2"
                       >
