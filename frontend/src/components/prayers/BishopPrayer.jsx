@@ -27,14 +27,9 @@ function BishopPrayer({ prayers = [] }) {
               <h2 className="font-martti text-xl font-bold text-purple-950 tracking-wide">
                 {t('prayers.bishop.title')}
               </h2>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-purple-700 font-medium">
-                <span>{bishopTitle} {bishopName}</span>
-                {prayer.authorName && (
-                  <span className="text-purple-600/80">
-                    • Lisännyt: {prayer.authorName}
-                  </span>
-                )}
-              </div>
+              <span className="text-xs text-purple-700 font-medium">
+                {bishopTitle} {bishopName}
+              </span>
             </div>
           </div>
 

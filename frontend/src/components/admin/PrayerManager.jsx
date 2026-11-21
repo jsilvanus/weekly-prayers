@@ -113,7 +113,7 @@ function PrayerItem({ prayer, onApprove, onReject, onDelete, loading, showApprov
           <span className={`px-2 py-1 rounded text-xs font-medium ${typeColors[prayer.typeLabel] || 'bg-gray-100 text-gray-800'}`}>
             {prayer.typeLabel}
           </span>
-          {prayer.authorName && (
+          {prayer.authorName && prayer.typeLabel !== 'bishop' && (
             <span className="text-xs text-gray-500 font-medium">
               Lisännyt: {prayer.authorName}
             </span>

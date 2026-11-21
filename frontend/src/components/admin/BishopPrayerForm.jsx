@@ -100,8 +100,7 @@ function BishopPrayerForm() {
                 <span>✓</span> Kuluvan viikon voimassaoleva piispan aihe
               </span>
               <div className="text-xs text-purple-700 mt-0.5">
-                Lisännyt: <strong className="font-semibold text-purple-900">{currentBishopPrayer.authorName || 'Käyttäjä'}</strong>
-                {currentBishopPrayer.createdAt && ` (${new Date(currentBishopPrayer.createdAt).toLocaleDateString('fi-FI')})`}
+                {currentBishopPrayer.createdAt && `Lisätty: ${new Date(currentBishopPrayer.createdAt).toLocaleDateString('fi-FI')}`}
               </div>
             </div>
           </div>
