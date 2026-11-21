@@ -1,6 +1,6 @@
 # .github/workflows/deploy.yml
 # ============================================================
-# Deployment workflow for jsilvanus/weekly-prayers -> riksunsrk/rukoukset
+# Deployment workflow for jsilvanus/weekly-prayers -> riksunsrk/rukous
 #
 # The Docker image is built and pushed to GHCR by publish-image.yml
 # in the source repo (jsilvanus/weekly-prayers). This workflow only

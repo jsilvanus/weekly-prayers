@@ -70,7 +70,7 @@ jobs:
         env:
           DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          git clone "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/riksunsrk/rukoukset.git" deploy-repo
+          git clone "https://x-access-token:${DEPLOY_REPO_TOKEN}@github.com/riksunsrk/rukous.git" deploy-repo
 
       - name: Sync deployment files
         run: |
