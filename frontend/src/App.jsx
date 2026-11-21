@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
@@ -7,6 +8,21 @@ import Footer from './components/layout/Footer';
 import HomePage from './components/prayers/HomePage';
 import AdminPanel from './components/admin/AdminPanel';
 import BiblePage from './components/bible/BiblePage';
+import { withBasePath } from './services/api';
+
+function IntercessionRedirect() {
+  useEffect(() => {
+    const token = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('token') : null;
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    window.location.replace(withBasePath(`/api/export/intercession${query}`));
+  }, []);
+
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="text-gray-500 text-sm">Avataan esirukouslistaa...</div>
+    </div>
+  );
+}
 
 function App() {
   return (
@@ -20,6 +36,9 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/bible" element={<BiblePage />} />
                 <Route path="/raamattu" element={<BiblePage />} />
+                <Route path="/esirukouslista" element={<IntercessionRedirect />} />
+                <Route path="/esirukous" element={<IntercessionRedirect />} />
+                <Route path="/intercession" element={<IntercessionRedirect />} />
                 <Route path="/admin/*" element={<AdminPanel />} />
               </Routes>
             </main>

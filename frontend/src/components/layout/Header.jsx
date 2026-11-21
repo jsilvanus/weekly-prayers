@@ -6,6 +6,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { useTenant } from '../../context/TenantContext';
 import LanguageSelector from './LanguageSelector';
 import { ChurchCircleLogo, LocalParishLogo } from '../../assets/churchIcons';
+import { withBasePath } from '../../services/api';
 
 const roleBadgeStyles = {
   admin: 'bg-purple-100 text-purple-900 border-purple-200',
@@ -65,6 +66,20 @@ function Header() {
   const getRoleBadgeLabel = (role) => {
     if (!role) return '';
     return t(`admin.users.roles.${role}`) || role;
+  };
+
+  const getIntercessionUrl = () => {
+    const token = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('token') : null;
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    return withBasePath(`/api/export/intercession${query}`);
+  };
+
+  const handleOpenIntercession = (e) => {
+    setIsMenuOpen(false);
+    if (e.button === 1 || e.metaKey || e.ctrlKey) return;
+    e.preventDefault();
+    const url = getIntercessionUrl();
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -142,7 +157,8 @@ function Header() {
 
             {canAccessPrayerList && (
               <a
-                href="/api/export/intercession"
+                href={getIntercessionUrl()}
+                onClick={handleOpenIntercession}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs md:text-sm font-medium text-gray-700 hover:text-primary-700 transition-colors flex items-center gap-1"
@@ -246,10 +262,10 @@ function Header() {
 
             {canAccessPrayerList && (
               <a
-                href="/api/export/intercession"
+                href={getIntercessionUrl()}
+                onClick={handleOpenIntercession}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => setIsMenuOpen(false)}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-primary-700 hover:bg-gray-50 transition-colors"
                 title="Avaa esirukouslista ja kuittausnäkymä"
               >

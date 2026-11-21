@@ -6,9 +6,20 @@ import { requirePrayerListAccess } from '../middleware/authorize.js';
 
 const router = Router();
 
-// GET /api/export/intercession - Get Sunday mass intercession / prayer list (HTML)
+function deriveBasePath(rawUrl) {
+  if (!rawUrl) return '';
+  try {
+    const url = new URL(rawUrl);
+    const pathname = url.pathname.replace(/\/+$/, '');
+    return pathname === '/' ? '' : pathname;
+  } catch (e) {
+    return '';
+  }
+}
+
+// GET /api/export/intercession (and /api/export/esirukouslista) - Get Sunday mass intercession / prayer list (HTML)
 // Accessible by admin, coordinator, worker, bishop, and prayer_group
-router.get('/intercession', requireAuth, requirePrayerListAccess, async (req, res, next) => {
+router.get(['/intercession', '/esirukouslista'], requireAuth, requirePrayerListAccess, async (req, res, next) => {
   try {
     let { week, year, highlightsOnly, mode } = req.query;
 
@@ -29,6 +40,7 @@ router.get('/intercession', requireAuth, requirePrayerListAccess, async (req, re
     });
 
     const { startDate, endDate } = getWeekDates(week, year);
+    const basePath = deriveBasePath(process.env.BASE_URL);
 
     const html = generateIntercessionHTML({
       week,
@@ -37,7 +49,8 @@ router.get('/intercession', requireAuth, requirePrayerListAccess, async (req, re
       endDate: formatDate(endDate),
       prayers,
       initialHighlightsOnly: isHighlightsOnly,
-      initialMode
+      initialMode,
+      basePath
     });
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -47,7 +60,7 @@ router.get('/intercession', requireAuth, requirePrayerListAccess, async (req, re
   }
 });
 
-function generateIntercessionHTML({ week, year, startDate, endDate, prayers, initialHighlightsOnly = false, initialMode = 'print' }) {
+function generateIntercessionHTML({ week, year, startDate, endDate, prayers, initialHighlightsOnly = false, initialMode = 'print', basePath = '' }) {
   const formatDateFi = (dateStr) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'numeric' });
@@ -64,6 +77,7 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Esirukous - Viikko ${week}/${year}</title>
+  ${basePath ? `<base href="${basePath}/" />` : ''}
   <style>
     @page { margin: 2cm; }
     @media print {
@@ -468,7 +482,7 @@ function generateIntercessionHTML({ week, year, startDate, endDate, prayers, ini
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span class="toggle-badge" id="badge-bishop-0">⚪ Merkitse</span>
-            <img src="/tampere_piispan_vaakuna.png" alt="Piispan vaakuna" style="max-height: 48px; max-width: 60px; object-fit: contain;" />
+            <img src="${basePath ? `${basePath}/tampere_piispan_vaakuna.png` : '/tampere_piispan_vaakuna.png'}" alt="Piispan vaakuna" style="max-height: 48px; max-width: 60px; object-fit: contain;" />
           </div>
         </div>
         ${prayers.bishop.map(p => `<p>${escapeHtml(p.content)}</p>`).join('')}

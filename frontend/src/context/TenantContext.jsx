@@ -20,7 +20,7 @@ function detectInitialTenant() {
     const rukousIdx = pathParts.indexOf('rukous');
     if (rukousIdx !== -1 && pathParts[rukousIdx + 1]) {
       const nextSeg = pathParts[rukousIdx + 1];
-      if (!['admin', 'bible', 'raamattu', 'api'].includes(nextSeg)) {
+      if (!['admin', 'bible', 'raamattu', 'api', 'esirukouslista', 'esirukous', 'intercession'].includes(nextSeg)) {
         return nextSeg;
       }
     }

@@ -6,10 +6,17 @@ export function authenticate(options = {}) {
 
   return async (req, res, next) => {
     try {
-      // Extract token from Authorization header
+      // Extract token from Authorization header or query parameter
       const authHeader = req.headers.authorization;
+      let token = null;
 
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      } else if (req.query && req.query.token) {
+        token = req.query.token;
+      }
+
+      if (!token) {
         if (required) {
           return res.status(401).json({
             error: { message: 'Authentication required' }
@@ -19,8 +26,6 @@ export function authenticate(options = {}) {
         req.user = null;
         return next();
       }
-
-      const token = authHeader.split(' ')[1];
 
       // Verify token
       const payload = verifyToken(token);

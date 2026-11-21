@@ -79,6 +79,13 @@ router.use('/api/settings', settingsRouter);
 router.use('/api/bible', bibleRouter);
 router.use('/api/tenants', tenantRouter);
 
+// Prayer list direct routes/redirects
+router.get(['/esirukouslista', '/esirukous', '/intercession'], (req, res) => {
+  const queryStr = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  const redirectTarget = `${basePath || ''}/api/export/intercession${queryStr}`;
+  res.redirect(302, redirectTarget);
+});
+
 // Serve frontend static build if present (single-container / production mode)
 const clientDistCandidates = [
   path.resolve(__dirname, '../../frontend/dist'),

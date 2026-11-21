@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { withBasePath } from '../../services/api';
 
 function ExportButton({ week, year }) {
   const { t } = useTranslation();
@@ -7,17 +8,23 @@ function ExportButton({ week, year }) {
 
   const openExport = (highlightsOnly = false) => {
     setIsOpen(false);
-    const token = sessionStorage.getItem('token');
-    const url = `/api/export/intercession?week=${week}&year=${year}${highlightsOnly ? '&highlightsOnly=true' : ''}`;
+    const token = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('token') : null;
+    const tokenQuery = token ? `&token=${encodeURIComponent(token)}` : '';
+    const url = withBasePath(
+      `/api/export/intercession?week=${week}&year=${year}${highlightsOnly ? '&highlightsOnly=true' : ''}${tokenQuery}`
+    );
 
     const exportWindow = window.open('', '_blank');
 
     fetch(url, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     })
-      .then((res) => res.text())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
       .then((html) => {
         exportWindow.document.write(html);
         exportWindow.document.close();
