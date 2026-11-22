@@ -13,9 +13,13 @@ The application is expanding from a prayer-list-focused layout into a modular, m
 1. **Prayer Intentions (*Esirukoukset*)**: The central space for parish intercessions, clergy prayers (Pastor & Bishop), ministry staff focus areas, and parishioners' community prayer requests.
 2. **Bible & Word of the Day (*Raamattu & Päivän sana*)**: Scripture readings, liturgical day context (theme, season, color, readings), with an immediate interactive dialogue for today's verse and meditation.
 3. **Moment of Prayer (*Hetkirukous / Liturgy of the Hours*)**: Authentic liturgies following the **Evangelical Lutheran Church in Finland's Manual of Rituals (*Kirkkokäsikirja*)** (*Laudes, Seksti, Vesper, Kompletorio*, plus the newly integrated ***Pieni rukoushetki***). Features a prominent **"Pray Now"** action and an **embedded prayer intentions dialogue** during intercessory prayers.
-4. **Curated Devotion (*Hartaus*)**: Complete, pre-prepared devotional services authored by pastors and parish workers (*"all texts and thoughts are ready for you"*). **Always presents exactly one devotion for today with zero user decision stress**, switching cleanly at midnight.
+4. **Curated Devotion (*Hartaus*)**: Complete, pre-prepared devotional services authored by pastors and parish workers (*"all texts and thoughts are ready for you"*). **Always presents exactly one devotion for today with zero user decision stress**, switching cleanly at midnight. **The writer's name is always visible, supporting three flexible attribution options** (the adding user, another user account from OIDC, or a freeform description such as *"an old parishioner"*).
 
 ### Key Architectural Capabilities
+- **Three-Way Author Attribution for Devotions**:
+  1. *The adding user* (default: current logged-in author).
+  2. *On behalf of another user* (designate another registered OIDC account from the parish).
+  3. *Freeform attribution* (a free text string such as *"Iäkäs seurakuntalainen"*, *"Kirkkoisä Augustinus"*, or *"Eräs rippikoululainen"*).
 - **Exact EVL Kirkkokäsikirja Liturgies**: All five prayer moments follow the official rubrics and texts of the Church of Finland (*Kirkkokäsikirja* / *Jumalanpalvelusten kirja* & *Kirkollisten toimitusten kirja*):
   - **Aamurukous (*Laudes*)** with Benedictus
   - **Päivärukous (*Ad sextam / Seksti*)**
@@ -60,9 +64,9 @@ Each active landing page follows a unified, recognizable layout consisting of:
 |   - Opening Invocation      - Liturgical Day Banner   - Official EVL Kirkkokäsi-  - EXACTLY ONE DEVOTION|
 |   - Bishop & Pastor Prayers - Liturgical Color Pill     kirja Liturgies (Laudes,  - Midnight Auto-Switch|
 |   - Ministry Requests       - Daily Lectionary          Seksti, Vesper, Komple-   - Zero User Choices   |
-|   - Public Prayer List      - Date Selector             torio, Pieni rukoushetki) - Author Attribution  |
-|   - Lord's Prayer & Counter - Future Bible Tools      - Embedded Intercessions    - Single or Structured|
-|                                                         Modal Dialog                                    |
+|   - Public Prayer List      - Date Selector             torio, Pieni rukoushetki) - Writer Attribution  |
+|   - Lord's Prayer & Counter - Future Bible Tools      - Embedded Intercessions      (Self/User/Freeform)|
+|                                                         Modal Dialog              - Single or Structured|
 |                                                                                                         |
 +---------------------------------------------------------------------------------------------------------+
 |                                             SHARED FOOTER                                               |
@@ -156,6 +160,11 @@ Each active landing page follows a unified, recognizable layout consisting of:
   - **Exactly one devotion** is shown: the devotion for today's calendar date.
   - Automatically transitions to the new devotion at **midnight (00:00)** local parish time.
   - If no custom devotion was authored for a specific day, a peaceful liturgical fallback (today's church lectionary scripture, collect prayer, and blessing) is automatically served.
+- **Writer Attribution Display**:
+  - The writer's name and title are prominently and respectfully displayed right under the title:
+    - *Lisääjä itse*: E.g. *"Kirjoittaja: Pastori Maria Korhonen"*
+    - *Toisen käyttäjätilin puolesta*: E.g. *"Kirjoittaja: Diakoni Pekka Mäkinen (lisännyt pastori Maria Korhonen)"*
+    - *Vapaamuotoinen kuvaus*: E.g. *"Kirjoittaja: Iäkäs seurakuntalainen"* tai *"Kirjoittaja: Kirkkoisä Augustinus"*
 - **Primary Hero Action**: `[🕯️ Hiljenny päivän hartauteen]` (*Meditate on Today's Devotion*) &rarr; smoothly scrolls/focuses the devotion text.
 - **Sibling Navigation**: Direct links to Esirukoukset, Raamattu & Sana, and Hetkirukous.
 - **Rendering Both Formats**:
@@ -190,7 +199,7 @@ Stored in the `tenants` table and `site_settings`:
 
 ---
 
-## 4. `Devotion` User Group & Authoring System
+## 4. `Devotion` User Group, Three-Way Author Attribution & Data Model
 
 ### 4.1 User Role: `devotion` (*Devotion / Hartauskirjoittaja*)
 - Named **`devotion`** so any designated author (pastor, deacon, youth worker, guest writer) can be granted access.
@@ -200,17 +209,52 @@ Stored in the `tenants` table and `site_settings`:
   ```
 - OIDC Group Mapping: Enterprise directory groups (e.g. `sg-devotions`, `sg-hartaus`, `sg-papisto`) automatically map to the `devotion` role.
 
-### 4.2 Data Model: `devotions` (Hartaudet)
+### 4.2 Three-Way Author Attribution Options
+When creating or editing a devotion in `DevotionManager`, the author chooses between three attribution modes:
+
+1. **Option 1: Lisääjä itse (*Current User*) [Default]**:
+   - The logged-in user who creates/publishes the devotion is credited as the main author.
+   - `author_type = 'self'`
+   - `author_user_id = authUser.id`
+   - `author_name = authUser.name`
+   - `author_title = authUser.title` (e.g. "Pastori")
+
+2. **Option 2: Toisen käyttäjän puolesta (*On Behalf of Another User / OIDC Account*)**:
+   - If an assistant, colleague, or team member enters a devotion written by another parish worker or priest:
+   - Selects another registered user account from the parish user list / OIDC directory.
+   - `author_type = 'other_user'`
+   - `created_by_user_id = authUser.id` (stored for auditability)
+   - `author_user_id = selectedUser.id`
+   - `author_name = selectedUser.name`
+   - `author_title = selectedUser.title`
+
+3. **Option 3: Vapaamuotoinen kirjoittajatieto (*Freeform Attribution Text*)**:
+   - A single free-text field allowing the creator to enter custom attribution without requiring an account in the system:
+   - E.g. *"Iäkäs seurakuntalainen"*, *"Kirkkoisä Augustinus"*, *"Eräs seurakuntalainen"*, or *"Tuntematon pyhiinvaeltaja"*.
+   - `author_type = 'custom_text'`
+   - `created_by_user_id = authUser.id`
+   - `author_user_id = NULL`
+   - `author_custom_text = 'Iäkäs seurakuntalainen'`
+   - `author_name = 'Iäkäs seurakuntalainen'`
+
+### 4.3 Data Model: `devotions` (Hartaudet)
 ```sql
 CREATE TYPE devotion_format AS ENUM ('single_block', 'structured');
+CREATE TYPE devotion_author_type AS ENUM ('self', 'other_user', 'custom_text');
 
 CREATE TABLE devotions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    
+    -- Creation and Attribution
+    created_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    author_type devotion_author_type NOT NULL DEFAULT 'self',
+    author_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     author_name VARCHAR(255) NOT NULL,
-    author_title VARCHAR(255) DEFAULT 'Pastori',
+    author_title VARCHAR(255),
+    author_custom_text VARCHAR(255),
     author_image_url TEXT,
+    
     title VARCHAR(255) NOT NULL,
     
     -- Format selector: single contiguous text block OR structured components
@@ -241,6 +285,7 @@ CREATE TABLE devotions (
 
 CREATE INDEX idx_devotions_tenant_date ON devotions(tenant_id, target_date);
 CREATE INDEX idx_devotions_published ON devotions(is_published) WHERE is_published = TRUE;
+CREATE INDEX idx_devotions_author_user ON devotions(author_user_id);
 ```
 
 ---
@@ -257,12 +302,12 @@ ADMINISTRATIVE PANEL (/admin)
 [TIER 1 DOMAINS]
   (🙏 Esirukoukset) | (📖 Raamattu & Sana) | (🕊️ Hetkirukous) | (🕯️ Hartaus) | (⚙️ Yleiset asetukset)
 -----------------------------------------------------------------------------------------------------------
-[TIER 2 SUB-TABS (when 'Hetkirukous' is active)]
-  [Hetkirukouskaavat]  [Aikataulurajat]  [Lectionaari & Psalmit]  [Esirukousintegraatio]
+[TIER 2 SUB-TABS (when 'Hartaus' is active)]
+  [Kirjoita hartaus]  [Kalenteriaikataulu]  [Omat kirjoitukset]  [Kirjoittajaprofiili]
 -----------------------------------------------------------------------------------------------------------
 
 [ACTIVE COMPONENT CONTAINER]
-  ... Liturgy customization, Devotion editor, or Domain manager ...
+  ... Rich editor (Single Text Box OR Structured + Author Attribution Selector), Calendar Scheduler ...
 ```
 
 ### 5.1 Domain Breakdown
@@ -281,7 +326,18 @@ ADMINISTRATIVE PANEL (/admin)
   - `intercessions-sync`: Configure how parish intentions appear in the embedded intercessions modal.
 
 #### 4. Devotions (*Hartaus*) &larr; *Devotion Authoring Hub*
-- Sub-tabs: `editor` (Single Text Block vs. Structured mode), `schedule` (Calendar grid overview), `my-devotions`, `author-profile`.
+- Sub-tabs:
+  - `editor`: **Devotion Composer**:
+    - **Author Attribution Control**:
+      - Radio 1: *"Minä itse"* (`self`)
+      - Radio 2: *"Toisen käyttäjän puolesta"* (`other_user`) &rarr; user picker dropdown
+      - Radio 3: *"Vapaa kirjoittajatieto"* (`custom_text`) &rarr; text input (e.g. "Iäkäs seurakuntalainen")
+    - **Format Toggle**: Single Text Block (Freeform contiguous text) vs. Structured fields.
+    - Target calendar date picker (`target_date`) with midnight activation.
+    - Title, scripture text, reflection, prayer, hymn, audio link.
+  - `schedule`: Calendar grid overview of scheduled dates.
+  - `my-devotions`: List of devotions created by current user.
+  - `author-profile`: Personal author signature, title, and optional seal/portrait.
 
 #### 5. General Settings (*Yleiset asetukset*)
 - Sub-tabs: `modules` (Tenant active modules manager), `parish` details, `appearance` & color theme, `logos` & crests, `users` management (supporting `devotion` role), `tenants` management.
@@ -294,12 +350,13 @@ ADMINISTRATIVE PANEL (/admin)
 1. Create migration `017_hartaus_and_tenant_modules.sql`:
    - Add `'devotion'` to `user_role` enum.
    - Create `devotion_format` enum (`'single_block'`, `'structured'`).
+   - Create `devotion_author_type` enum (`'self'`, `'other_user'`, `'custom_text'`).
    - Add `active_modules JSONB` column to `tenants` and `site_settings`.
-   - Create `devotions` table with unique constraint on `(tenant_id, target_date)`.
+   - Create `devotions` table with unique constraint on `(tenant_id, target_date)` and author attribution columns.
 2. Update `annoService.js`:
    - Add authentic Kirkkokäsikirja texts for **Laudes**, **Seksti**, **Vesper**, **Kompletorio**, and **Pieni rukoushetki**.
    - Include versicles, antiphons, *Gloria Patri*, canticles (*Benedictus, Magnificat, Nunc Dimittis*), and confession.
-3. Build `devotionService.js` and `devotions.js` routes.
+3. Build `devotionService.js` and `devotions.js` routes supporting author resolution.
 
 ### Phase 2: Frontend State & Context Architecture
 1. Update `TenantContext` & `SettingsContext` with module toggles.
@@ -315,15 +372,19 @@ ADMINISTRATIVE PANEL (/admin)
    - Integrates `EmbeddedIntercessionsModal` in the intercession section.
 5. Implement `DevotionPage.jsx` (*Hartaus*):
    - Strictly shows **one** devotion for today's calendar day with midnight switch and zero decision stress.
+   - Clearly displays author's name according to attribution mode.
    - Seamlessly renders single text block or structured format.
 
 ### Phase 4: Two-Tier Admin & Devotion Authoring UI
 1. Refactor `AdminPanel.jsx` to render Tier 1 domains and Tier 2 sub-tabs.
-2. Create `DevotionManager.jsx` with format toggles and calendar scheduler.
+2. Create `DevotionManager.jsx`:
+   - Three-way author attribution selector (Self, Other user, Custom text).
+   - Format toggle: Single Text Block vs. Structured fields.
+   - Calendar date scheduler.
 3. Add module toggle controls into `TenantManager.jsx` and `SettingsManager.jsx`.
 
 ### Phase 5: I18n & Quality Assurance
-1. Add translation keys across `fi.json`, `en.json`, and `sv.json` for all liturgies, Pieni rukoushetki, Hartaus terms, `devotion` role, and module settings.
+1. Add translation keys across `fi.json`, `en.json`, and `sv.json` for all liturgies, Pieni rukoushetki, Hartaus terms, author attribution options, `devotion` role, and module settings.
 2. Run backend tests and verify production frontend build.
 
 ---
@@ -331,6 +392,7 @@ ADMINISTRATIVE PANEL (/admin)
 ## 7. Definition of Done
 
 - [ ] Four dedicated landing pages exist: `/` (Prayer Intentions), `/bible` (Bible & Word), `/prayer-moment` (Moment of Prayer), and `/hartaus` (Curated Devotion).
+- [ ] Writer's name is always visible on `/hartaus`, supporting all three author options (adding user, designated user account, or freeform text).
 - [ ] Liturgy of the Hours follows the official Evangelical Lutheran Church in Finland's *Kirkkokäsikirja* exactly (Laudes, Seksti, Vesper, Kompletorio, and Pieni rukoushetki).
 - [ ] In all liturgies, the intercession section features an embedded dialog (`EmbeddedIntercessionsModal`) to view and pray for parish prayer intentions.
 - [ ] `/hartaus` strictly renders **only one devotion** for the current calendar day with zero selection choices or stress for the user, switching at midnight.
