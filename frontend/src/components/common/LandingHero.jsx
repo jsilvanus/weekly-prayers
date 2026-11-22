@@ -28,6 +28,12 @@ const MODULE_NAV_INFO = {
     labelKey: 'nav.hartaus',
     defaultLabel: 'Hartaus',
   },
+  meditations: {
+    path: '/meditations',
+    icon: '📿',
+    labelKey: 'nav.meditations',
+    defaultLabel: 'Meditaatiot',
+  },
 };
 
 export default function LandingHero({
@@ -44,7 +50,7 @@ export default function LandingHero({
   const parishName = currentTenant?.name || settings.parish_name || 'Tuomiokirkkoseurakunta';
 
   // Sibling modules that are active for this tenant
-  const siblingModules = ['prayers', 'bible', 'hours', 'hartaus']
+  const siblingModules = ['prayers', 'bible', 'hours', 'hartaus', 'meditations']
     .filter((mod) => mod !== currentModule && isModuleEnabled(mod))
     .map((mod) => MODULE_NAV_INFO[mod]);
 

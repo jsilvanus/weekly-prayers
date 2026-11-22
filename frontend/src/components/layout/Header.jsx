@@ -201,6 +201,20 @@ function Header() {
               </Link>
             )}
 
+            {isModuleEnabled('meditations') && (
+              <Link
+                to="/meditations"
+                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
+                  location.pathname === '/meditations' || location.pathname === '/meditaatiot' || location.pathname === '/hiljaisuus'
+                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>📿</span>
+                <span>{t('nav.meditations') || 'Meditaatiot'}</span>
+              </Link>
+            )}
+
             {canAccessPrayerList && (
               <a
                 href={getIntercessionUrl()}
@@ -349,6 +363,21 @@ function Header() {
               >
                 <span className="text-base">✍️</span>
                 <span>{t('nav.hartaus') || 'Hartaus'}</span>
+              </Link>
+            )}
+
+            {isModuleEnabled('meditations') && (
+              <Link
+                to="/meditations"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === '/meditations' || location.pathname === '/meditaatiot' || location.pathname === '/hiljaisuus'
+                    ? 'bg-primary-50 text-primary-800 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-base">📿</span>
+                <span>{t('nav.meditations') || 'Meditaatiot'}</span>
               </Link>
             )}
 

@@ -13,6 +13,7 @@ import TenantManager from './TenantManager';
 import BibleManager from './BibleManager';
 import HoursManager from './HoursManager';
 import DevotionManager from './DevotionManager';
+import MeditationPage from '../prayers/MeditationPage';
 
 export default function AdminPanel() {
   const { t } = useTranslation();
@@ -72,7 +73,19 @@ export default function AdminPanel() {
       });
     }
 
-    // 4. Hartaus (Devotions)
+    // 4. Meditaatiot (Meditations)
+    if (!isBishop || isAdmin) {
+      domains.push({
+        id: 'meditations',
+        label: t('nav.meditations') || 'Meditaatiot',
+        icon: '📿',
+        subTabs: [
+          { id: 'meditations_hub', label: 'Meditaatiot & Hiljaisuus', component: MeditationPage },
+        ],
+      });
+    }
+
+    // 5. Hartaus (Devotions)
     if (isDevotionAuthor) {
       domains.push({
         id: 'hartaus',

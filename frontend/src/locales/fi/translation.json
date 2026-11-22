@@ -9,6 +9,7 @@
     "bible": "Raamattu & Sana",
     "hours": "Hetkirukous",
     "hartaus": "Hartaus",
+    "meditations": "Meditaatiot",
     "admin": "Hallinta",
     "intercessionList": "Esirukouslista",
     "login": "Kirjaudu",
@@ -84,6 +85,7 @@
       "prayers": "Esirukoukset",
       "bible": "Raamattu & Sana",
       "hours": "Hetkirukous",
+      "meditations": "Meditaatiot",
       "hartaus": "Hartaus",
       "general": "Yleiset asetukset"
     },

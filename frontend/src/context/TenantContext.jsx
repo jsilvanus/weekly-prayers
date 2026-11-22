@@ -144,13 +144,13 @@ export function TenantProvider({ children }) {
 
   const activeModules = (() => {
     const raw = effectiveTenant?.active_modules || settings?.active_modules;
-    if (!raw) return ['prayers', 'bible', 'hours', 'hartaus'];
+    if (!raw) return ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
     if (Array.isArray(raw)) return raw;
     try {
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      return Array.isArray(parsed) ? parsed : ['prayers', 'bible', 'hours', 'hartaus'];
+      return Array.isArray(parsed) ? parsed : ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
     } catch (e) {
-      return ['prayers', 'bible', 'hours', 'hartaus'];
+      return ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
     }
   })();
 

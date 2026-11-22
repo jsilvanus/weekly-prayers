@@ -8,6 +8,7 @@ import Footer from './components/layout/Footer';
 import HomePage from './components/prayers/HomePage';
 import PrayerMomentPage from './components/prayers/PrayerMomentPage';
 import DevotionPage from './components/prayers/DevotionPage';
+import MeditationPage from './components/prayers/MeditationPage';
 import AdminPanel from './components/admin/AdminPanel';
 import BiblePage from './components/bible/BiblePage';
 import { withBasePath } from './services/api';
@@ -44,6 +45,9 @@ function App() {
                 <Route path="/hetkirukous" element={<PrayerMomentPage />} />
                 <Route path="/hartaus" element={<DevotionPage />} />
                 <Route path="/devotion" element={<DevotionPage />} />
+                <Route path="/meditations" element={<MeditationPage />} />
+                <Route path="/meditaatiot" element={<MeditationPage />} />
+                <Route path="/hiljaisuus" element={<MeditationPage />} />
                 <Route path="/esirukouslista" element={<IntercessionRedirect />} />
                 <Route path="/esirukous" element={<IntercessionRedirect />} />
                 <Route path="/intercession" element={<IntercessionRedirect />} />

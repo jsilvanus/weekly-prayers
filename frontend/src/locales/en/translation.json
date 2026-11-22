@@ -9,6 +9,7 @@
     "bible": "Bible & Word",
     "hours": "Prayer of the Hours",
     "hartaus": "Devotion",
+    "meditations": "Meditations",
     "admin": "Admin",
     "intercessionList": "Prayer List",
     "login": "Login",
@@ -84,6 +85,7 @@
       "prayers": "Prayer Intentions",
       "bible": "Bible & Word",
       "hours": "Liturgy of the Hours",
+      "meditations": "Meditations",
       "hartaus": "Devotion",
       "general": "General Settings"
     },

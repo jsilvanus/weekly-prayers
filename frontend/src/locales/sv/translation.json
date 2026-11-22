@@ -9,6 +9,7 @@
     "bible": "Bibeln & Ordet",
     "hours": "Tidebön",
     "hartaus": "Andakt",
+    "meditations": "Meditationer",
     "admin": "Admin",
     "intercessionList": "Förbönslista",
     "login": "Logga in",
@@ -84,6 +85,7 @@
       "prayers": "Förböner",
       "bible": "Bibeln & Ordet",
       "hours": "Tidebön",
+      "meditations": "Meditationer",
       "hartaus": "Andakt",
       "general": "Allmänna inställningar"
     },

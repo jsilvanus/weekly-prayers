@@ -212,7 +212,7 @@ export async function createTenant(data = {}) {
     week_cycle_mode = 'thursday_cycle',
     highlight_icon = 'candle',
     church_logo_variant = 'auto',
-    active_modules = ['prayers', 'bible', 'hours', 'hartaus'],
+    active_modules = ['prayers', 'bible', 'hours', 'hartaus', 'meditations'],
   } = data;
 
   if (!name || !name.trim()) {

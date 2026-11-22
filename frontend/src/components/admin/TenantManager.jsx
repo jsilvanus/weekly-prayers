@@ -20,7 +20,7 @@ export default function TenantManager() {
     parent_id: '',
     domain: '',
     diocese: 'Tampereen hiippakunta',
-    active_modules: ['prayers', 'bible', 'hours', 'hartaus'],
+    active_modules: ['prayers', 'bible', 'hours', 'hartaus', 'meditations'],
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -49,7 +49,7 @@ export default function TenantManager() {
 
   const openEditModal = (t) => {
     setEditingTenant(t);
-    let mods = ['prayers', 'bible', 'hours', 'hartaus'];
+    let mods = ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
     if (t.active_modules) {
       if (Array.isArray(t.active_modules)) {
         mods = t.active_modules;
@@ -408,6 +408,7 @@ export default function TenantManager() {
                     { id: 'bible', label: '📖 Raamattu & Sana' },
                     { id: 'hours', label: '⏰ Hetkirukous' },
                     { id: 'hartaus', label: '✍️ Hartaus' },
+                    { id: 'meditations', label: '📿 Meditaatiot' },
                   ].map((m) => {
                     const isChecked = (formData.active_modules || []).includes(m.id);
                     return (

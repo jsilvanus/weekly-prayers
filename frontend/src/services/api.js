@@ -240,6 +240,8 @@ export const api = {
     request(`/devotions/${id}`, {
       method: 'DELETE',
     }),
+  getMeditations: () => request('/meditations'),
+  getMeditationById: (id) => request(`/meditations/${id}`),
 };
 
 export default api;

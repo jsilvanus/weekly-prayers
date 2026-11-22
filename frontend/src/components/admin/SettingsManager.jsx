@@ -142,14 +142,15 @@ function SettingsManager() {
             Valitse mitkä neljästä pääsivusta ovat seurakuntasi käytössä. Sivuston ylänavigaatio, mobiilivalikko ja ristiinnavigointi mukautuvat automaattisesti aktiivisiin osioihin.
           </p>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {[
               { id: 'prayers', title: 'Esirukoukset', icon: '🙏', desc: 'Seurakunnan esirukousaiheet ja jättolomake' },
               { id: 'bible', title: 'Raamattu & Sana', icon: '📖', desc: 'Päivän sana, lukukappaleet ja kirkkovuosi' },
               { id: 'hours', title: 'Hetkirukous', icon: '⏰', desc: 'Kirkkokäsikirja III:n mukaiset rukoushetket' },
               { id: 'hartaus', title: 'Hartaus', icon: '✍️', desc: 'Valmiiksi kirjoitettu päivän hartaus' },
+              { id: 'meditations', title: 'Meditaatiot', icon: '📿', desc: 'Rukoushelmet, katekismus ja sydämen rukous' },
             ].map((m) => {
-              const activeList = parseSettingsList(formData.active_modules, ['prayers', 'bible', 'hours', 'hartaus']);
+              const activeList = parseSettingsList(formData.active_modules, ['prayers', 'bible', 'hours', 'hartaus', 'meditations']);
               const isChecked = activeList.includes(m.id);
 
               return (
