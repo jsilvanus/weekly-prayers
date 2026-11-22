@@ -367,20 +367,23 @@ Upotusmahdollisuudet, tuloste, Docker-kontitus ja dokumentaatio.
 | 3 | Rukousaihe-API ja AI-moderointi | 10 |
 | 4 | Frontend ja käyttöliittymä | 10 |
 | 5 | Viimeistely ja julkaisu | 10 |
-| 6 | Kolmen päälaskeutumissivun rakenne ja kaksiportainen ylläpito | 10 |
+| 6 | Neljän päälaskeutumissivun rakenne, Hartaus, kaksiportainen ylläpito ja seurakuntakohtaiset moduulit | 10 |
 | **Yhteensä** | | **60** |
 
 ---
 
-## Milestone 6: Kolmen päälaskeutumissivun rakenne ja kaksiportainen ylläpito
+## Milestone 6: Neljän päälaskeutumissivun rakenne, Hartaus, kaksiportainen ylläpito ja seurakuntakohtaiset moduulit
 
 Tarkempi arkkitehtuuri- ja toteutussuunnitelma dokumentoitu tiedostossa:
 👉 [`docs/plans/three-page-split-and-two-tier-admin.md`](docs/plans/three-page-split-and-two-tier-admin.md)
 
-1. **Esirukoukset (Prayer Intentions)**: Päälaskeutumissivu `/` toiminnolla "Jätä esirukouspyyntö" (avaa modaalin) sekä rinnakkaisnavigaatio Raamattuun ja Hetkirukoukseen.
-2. **Raamattu & Päivän sana (Bible & Word of the Day)**: Päälaskeutumissivu `/bible` toiminnolla "Näytä päivän sana" (avaa päivän jae -dialogin) sekä rinnakkaisnavigaatio Esirukouksiin ja Hetkirukoukseen.
+1. **Esirukoukset (Prayer Intentions)**: Päälaskeutumissivu `/` toiminnolla "Jätä esirukouspyyntö" (avaa modaalin) sekä dynaaminen rinnakkaisnavigaatio aktiivisiin moduuleihin.
+2. **Raamattu & Päivän sana (Bible & Word of the Day)**: Päälaskeutumissivu `/bible` toiminnolla "Näytä päivän sana" (avaa päivän jae -dialogin) sekä rinnakkaisnavigaatio muihin moduuleihin.
 3. **Rukoushetki (Moment of Prayer / Liturgy of Hours)**: Päälaskeutumissivu `/prayer-moment` toiminnolla "Rukoile nyt" (avaa ja lataa suoraan vuorokaudenaikaa vastaavan hetkirukouksen teksteineen).
-4. **Kaksiportainen ylläpito (/admin)**:
-   - Taso 1: Esirukoukset, Raamattu & Sana, Hetkirukoukset, Yleiset asetukset.
-   - Taso 2: Toimialakohtaiset alisivut ja asetukset (esim. piispa, kirkkoherra, työalat, ryhmät, käännökset, hetkiaikataulut, logot, tunnukset).
+4. **Hartaus (Curated Priest Devotions)**: Päälaskeutumissivu `/hartaus` toiminnolla "Hiljenny hartauteen" (papin tai työntekijän valmiiksi kokoama kokonaisuus: aihe, tekstit, puhe/mietiskely, esirukous, virsisuositus ja siunaus).
+5. **Seurakuntakohtainen moduulivalinta (Tenant Module Toggles)**: Mahdollisuus ottaa käyttöön tai poistaa käytöstä mikä tahansa neljästä moduulista seurakunnan asetuksista (`active_modules`). Navigaatio, ristiinlinkit ja reititys mukautuvat automaattisesti.
+6. **Uusi käyttäjärooli: `priest` (Pappi)**: Papiston käyttöoikeus hartauskirjoitusten luomiseen, aikatauluttamiseen ja julkaisemiseen.
+7. **Kaksiportainen ylläpito (/admin)**:
+   - Taso 1: Esirukoukset, Raamattu & Sana, Hetkirukoukset, Hartaus, Yleiset asetukset.
+   - Taso 2: Toimialakohtaiset alisivut ja asetukset (esim. hartaus-editori, piispa, kirkkoherra, työalat, ryhmät, moduuliasetukset, logot, tunnukset).
 
