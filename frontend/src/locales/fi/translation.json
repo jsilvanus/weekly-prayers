@@ -158,7 +158,9 @@
     "confirm": "Vahvista",
     "week": "Viikko",
     "startDate": "Alkupäivä",
-    "endDate": "Loppupäivä"
+    "endDate": "Loppupäivä",
+    "language": "Kieli",
+    "Language": "Kieli"
   },
   "settings": {
     "title": "Asetukset",

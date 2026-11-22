@@ -158,7 +158,9 @@
     "confirm": "Confirm",
     "week": "Week",
     "startDate": "Start date",
-    "endDate": "End date"
+    "endDate": "End date",
+    "language": "Language",
+    "Language": "Language"
   },
   "settings": {
     "title": "Settings",
