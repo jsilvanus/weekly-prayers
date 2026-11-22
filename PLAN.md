@@ -380,10 +380,10 @@ Tarkempi arkkitehtuuri- ja toteutussuunnitelma dokumentoitu tiedostossa:
 1. **Esirukoukset (Prayer Intentions)**: Päälaskeutumissivu `/` toiminnolla "Jätä esirukouspyyntö" (avaa modaalin) sekä dynaaminen rinnakkaisnavigaatio aktiivisiin moduuleihin.
 2. **Raamattu & Päivän sana (Bible & Word of the Day)**: Päälaskeutumissivu `/bible` toiminnolla "Näytä päivän sana" (avaa päivän jae -dialogin) sekä rinnakkaisnavigaatio muihin moduuleihin.
 3. **Rukoushetki (Moment of Prayer / Liturgy of Hours)**: Päälaskeutumissivu `/prayer-moment` toiminnolla "Rukoile nyt" (avaa ja lataa suoraan vuorokaudenaikaa vastaavan hetkirukouksen teksteineen).
-4. **Hartaus (Curated Priest Devotions)**: Päälaskeutumissivu `/hartaus` toiminnolla "Hiljenny hartauteen" (papin tai työntekijän valmiiksi kokoama kokonaisuus: aihe, tekstit, puhe/mietiskely, esirukous, virsisuositus ja siunaus).
+4. **Hartaus (Curated Devotions)**: Päälaskeutumissivu `/hartaus` toiminnolla "Hiljenny hartauteen". Sivulla näytetään **aina vain yksi hartaus kerrallaan** ilman valintastressiä, ja se vaihtuu kalenterivuorokauden mukaan keskiyöllä (00:00). Tukee sekä yhtenäistä tekstikenttää että moniosaista rakenteista sisältöä.
 5. **Seurakuntakohtainen moduulivalinta (Tenant Module Toggles)**: Mahdollisuus ottaa käyttöön tai poistaa käytöstä mikä tahansa neljästä moduulista seurakunnan asetuksista (`active_modules`). Navigaatio, ristiinlinkit ja reititys mukautuvat automaattisesti.
-6. **Uusi käyttäjärooli: `priest` (Pappi)**: Papiston käyttöoikeus hartauskirjoitusten luomiseen, aikatauluttamiseen ja julkaisemiseen.
+6. **Uusi käyttäjäryhmä ja -rooli: `devotion` (Hartauskirjoittaja)**: Käyttöoikeus hartauskirjoitusten luomiseen, aikatauluttamiseen ja julkaisemiseen (papit, diakonit, työntekijät ja vierailevat kirjoittajat).
 7. **Kaksiportainen ylläpito (/admin)**:
    - Taso 1: Esirukoukset, Raamattu & Sana, Hetkirukoukset, Hartaus, Yleiset asetukset.
-   - Taso 2: Toimialakohtaiset alisivut ja asetukset (esim. hartaus-editori, piispa, kirkkoherra, työalat, ryhmät, moduuliasetukset, logot, tunnukset).
+   - Taso 2: Toimialakohtaiset alisivut ja asetukset (esim. hartaus-editori yhtenäisellä tekstillä tai rakenteisilla kentillä, piispa, kirkkoherra, työalat, ryhmät, moduuliasetukset, logot, tunnukset).
 
