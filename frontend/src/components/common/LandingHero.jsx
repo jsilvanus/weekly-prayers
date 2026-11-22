@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTenant } from '../../context/TenantContext';
 import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 
 const MODULE_NAV_INFO = {
   prayers: {
@@ -44,15 +45,24 @@ export default function LandingHero({
   className = '',
 }) {
   const { t } = useTranslation();
+  const { user, isWorkerOrAbove } = useAuth();
   const { currentTenant, yhtyma, isPartOfYhtyma, allParishesInYhtyma, switchParish, isModuleEnabled } = useTenant();
-  const { settings } = useSettings();
+  const { settings, getModuleTitle } = useSettings();
 
+  const canSeeDisabled = isWorkerOrAbove || user?.role === 'admin';
   const parishName = currentTenant?.name || settings.parish_name || 'Tuomiokirkkoseurakunta';
+  const displayTitle = title || (currentModule ? getModuleTitle(currentModule) : '');
 
-  // Sibling modules that are active for this tenant
-  const siblingModules = ['prayers', 'bible', 'hours', 'hartaus', 'meditations']
-    .filter((mod) => mod !== currentModule && isModuleEnabled(mod))
-    .map((mod) => MODULE_NAV_INFO[mod]);
+  // Sibling modules that are active for this tenant (or all if admin/worker)
+  const allModules = ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+  const siblingModules = allModules
+    .filter((mod) => mod !== currentModule && (isModuleEnabled(mod) || canSeeDisabled))
+    .map((mod) => ({
+      ...MODULE_NAV_INFO[mod],
+      id: mod,
+      enabled: isModuleEnabled(mod),
+      title: getModuleTitle ? getModuleTitle(mod, MODULE_NAV_INFO[mod].defaultLabel) : MODULE_NAV_INFO[mod].defaultLabel,
+    }));
 
   return (
     <div className={`text-center mb-8 ${className}`} data-testid="landing-hero">
@@ -89,7 +99,7 @@ export default function LandingHero({
 
       {/* Main Title */}
       <h1 className="text-3xl md:text-4xl font-bold text-primary-900 mb-1 font-martti tracking-tight">
-        {parishName} &mdash; {title}
+        {parishName} &mdash; {displayTitle}
       </h1>
       {subtitle && (
         <p className="text-gray-600 mb-5 font-aptos text-sm sm:text-base max-w-2xl mx-auto">
@@ -123,10 +133,19 @@ export default function LandingHero({
               <Link
                 key={sibling.path}
                 to={sibling.path}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-300 bg-white/90 text-gray-700 hover:text-primary-800 hover:border-primary-400 hover:bg-primary-50 transition-all shadow-2xs font-medium"
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border transition-all shadow-2xs font-medium ${
+                  sibling.enabled
+                    ? 'border-gray-300 bg-white/90 text-gray-700 hover:text-primary-800 hover:border-primary-400 hover:bg-primary-50'
+                    : 'border-amber-300 bg-amber-50/80 text-amber-900 hover:bg-amber-100'
+                }`}
               >
                 <span>{sibling.icon}</span>
-                <span>{t(sibling.labelKey, sibling.defaultLabel)}</span>
+                <span>{sibling.title}</span>
+                {!sibling.enabled && (
+                  <span className="text-[10px] font-semibold text-amber-800 bg-amber-200/90 px-1.5 py-0.2 rounded-full">
+                    Ei julkinen
+                  </span>
+                )}
               </Link>
             ))}
           </div>

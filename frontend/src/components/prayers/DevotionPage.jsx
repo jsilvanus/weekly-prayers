@@ -1,13 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useTenant } from '../../context/TenantContext';
+import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 import LandingHero from '../common/LandingHero';
 import LoadingSpinner from '../common/LoadingSpinner';
 
+export function getYouTubeEmbedId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+}
+
 export default function DevotionPage() {
   const { t } = useTranslation();
-  const { currentTenant } = useTenant();
+  const { currentTenant, isModuleEnabled } = useTenant();
+  const { getModuleTitle } = useSettings();
+  const { user, isWorkerOrAbove } = useAuth();
+  const canSeeDisabled = isWorkerOrAbove || user?.role === 'admin';
+  const isEnabled = isModuleEnabled('hartaus');
+
   const [devotion, setDevotion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -50,12 +65,95 @@ export default function DevotionPage() {
     return name || 'Seurakunta';
   };
 
+  const youtubeId = devotion?.youtube_url ? getYouTubeEmbedId(devotion.youtube_url) : null;
+  const moduleTitle = getModuleTitle ? getModuleTitle('hartaus', 'Päivän hartaus') : 'Päivän hartaus';
+
+  if (!isEnabled && !canSeeDisabled) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 text-center space-y-4">
+        <div className="text-4xl">🕯️</div>
+        <h2 className="font-martti text-2xl font-bold text-stone-900">
+          {moduleTitle} ei ole käytössä
+        </h2>
+        <p className="text-sm text-stone-600">
+          Tämä osio ei ole tällä hetkellä aktivoitu seurakunnan sivustolla.
+        </p>
+        <Link to="/" className="inline-flex items-center gap-2 btn-primary text-xs py-2 px-4 rounded-full">
+          &larr; Siirry esirukouksiin
+        </Link>
+      </div>
+    );
+  }
+
+  const renderStructuredPiece = (pieceKey) => {
+    switch (pieceKey) {
+      case 'scripture':
+        if (!devotion.scripture_text) return null;
+        return (
+          <div key="scripture" className="bg-stone-50 border-l-4 border-teal-600 p-5 rounded-r-2xl">
+            {devotion.scripture_reference && (
+              <p className="text-xs font-bold uppercase tracking-wider text-teal-900 mb-2">
+                {devotion.scripture_reference}
+              </p>
+            )}
+            <blockquote className="text-stone-900 font-serif text-base sm:text-lg italic leading-relaxed whitespace-pre-wrap">
+              &rdquo;{devotion.scripture_text}&rdquo;
+            </blockquote>
+          </div>
+        );
+      case 'meditation':
+        if (!devotion.meditation_content && !devotion.content) return null;
+        return (
+          <div key="meditation" className="text-stone-900 font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+            {devotion.meditation_content || devotion.content}
+          </div>
+        );
+      case 'prayer':
+        if (!devotion.closing_prayer) return null;
+        return (
+          <div key="prayer" className="bg-teal-50/60 border border-teal-200 p-5 rounded-2xl space-y-2">
+            <h3 className="font-martti text-xs font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
+              <span>🙏</span>
+              <span>Rukous</span>
+            </h3>
+            <p className="text-stone-900 font-serif text-sm sm:text-base leading-relaxed italic whitespace-pre-wrap">
+              {devotion.closing_prayer}
+            </p>
+          </div>
+        );
+      case 'hymn':
+        if (!devotion.hymn_suggestion) return null;
+        return (
+          <div key="hymn" className="flex items-center gap-3 p-4 rounded-xl bg-stone-50 border border-stone-200 text-xs sm:text-sm text-stone-700">
+            <span className="text-lg">🎵</span>
+            <div>
+              <span className="font-bold text-stone-900">Virsi tai musiikki: </span>
+              <span>{devotion.hymn_suggestion}</span>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const structuredOrder = Array.isArray(devotion?.pieces_order) && devotion.pieces_order.length > 0
+    ? devotion.pieces_order
+    : ['scripture', 'meditation', 'prayer', 'hymn'];
+
   return (
     <div className="max-w-3xl mx-auto space-y-8" data-testid="devotion-page">
+      {!isEnabled && canSeeDisabled && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-2.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2 font-medium">
+          <span>⚠️</span>
+          <span>Hartaus on poissa käytöstä julkisilta kävijöiltä. Ylläpitäjänä ja työntekijänä näet sivun normaalisti.</span>
+        </div>
+      )}
+
       {/* Unified Landing Hero */}
       <LandingHero
         currentModule="hartaus"
-        title="Päivän hartaus"
+        title={moduleTitle}
         subtitle="Valmiiksi valmisteltu rukous- ja hiljentymishetki tälle päivälle"
         primaryAction={{
           label: 'Hiljenny päivän hartauteen',
@@ -113,6 +211,19 @@ export default function DevotionPage() {
             </div>
           </div>
 
+          {/* Optional YouTube Video Embed (Responsive Iframe) */}
+          {youtubeId && (
+            <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-sm border border-stone-200 bg-black">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${youtubeId}`}
+                title={devotion.title || 'Hartausvideo'}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            </div>
+          )}
+
           {/* Optional Audio Link / Player */}
           {devotion.audio_url && (
             <div className="bg-teal-50/70 border border-teal-200 rounded-2xl p-4 flex items-center gap-3">
@@ -129,58 +240,26 @@ export default function DevotionPage() {
 
           {/* FORMAT A: Single Clear Text Block */}
           {devotion.format === 'single_block' && devotion.content && (
-            <div className="prose prose-stone max-w-none text-stone-900 font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
-              {devotion.content}
+            <div className="space-y-6">
+              <div className="prose prose-stone max-w-none text-stone-900 font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
+                {devotion.content}
+              </div>
+              {devotion.hymn_suggestion && (
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-stone-50 border border-stone-200 text-xs sm:text-sm text-stone-700">
+                  <span className="text-lg">🎵</span>
+                  <div>
+                    <span className="font-bold text-stone-900">Virsi tai musiikki: </span>
+                    <span>{devotion.hymn_suggestion}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* FORMAT B: Structured Devotion */}
+          {/* FORMAT B: Structured Devotion with Custom Piece Ordering */}
           {devotion.format === 'structured' && (
             <div className="space-y-7">
-              {/* Scripture Reading */}
-              {devotion.scripture_text && (
-                <div className="bg-stone-50 border-l-4 border-teal-600 p-5 rounded-r-2xl">
-                  {devotion.scripture_reference && (
-                    <p className="text-xs font-bold uppercase tracking-wider text-teal-900 mb-2">
-                      {devotion.scripture_reference}
-                    </p>
-                  )}
-                  <blockquote className="text-stone-900 font-serif text-base sm:text-lg italic leading-relaxed whitespace-pre-wrap">
-                    &rdquo;{devotion.scripture_text}&rdquo;
-                  </blockquote>
-                </div>
-              )}
-
-              {/* Priest's Meditation */}
-              {devotion.meditation_content && (
-                <div className="text-stone-900 font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap">
-                  {devotion.meditation_content}
-                </div>
-              )}
-
-              {/* Closing Prayer */}
-              {devotion.closing_prayer && (
-                <div className="bg-teal-50/60 border border-teal-200 p-5 rounded-2xl space-y-2">
-                  <h3 className="font-martti text-xs font-bold text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>🙏</span>
-                    <span>Rukous</span>
-                  </h3>
-                  <p className="text-stone-900 font-serif text-sm sm:text-base leading-relaxed italic whitespace-pre-wrap">
-                    {devotion.closing_prayer}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Hymn Suggestion (if present) */}
-          {devotion.hymn_suggestion && (
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-stone-50 border border-stone-200 text-xs sm:text-sm text-stone-700">
-              <span className="text-lg">🎵</span>
-              <div>
-                <span className="font-bold text-stone-900">Virsi tai musiikki: </span>
-                <span>{devotion.hymn_suggestion}</span>
-              </div>
+              {structuredOrder.map(renderStructuredPiece)}
             </div>
           )}
 

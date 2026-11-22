@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useSettings,
@@ -17,6 +17,12 @@ function SettingsManager() {
   const [formData, setFormData] = useState({ ...settings });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    if (settings && Object.keys(settings).length > 0) {
+      setFormData((prev) => ({ ...settings, ...prev }));
+    }
+  }, [settings]);
 
   // File upload refs
   const parishLogoRef = useRef(null);
@@ -201,6 +207,138 @@ function SettingsManager() {
           </div>
         </div>
 
+        {/* Mukautetut moduulien otsikot */}
+        <div className="card">
+          <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-2 flex items-center gap-2">
+            <span>🏷️</span> Osioiden mukautetut nimet
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">
+            Voit halutessasi nimetä pääosioiden sivut ja navigointipainikkeet seurakuntasi toiveiden mukaisesti. Jos jätät kentän tyhjäksi, käytetään oletusnimeä.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className="label text-xs">Esirukoukset (oletus: Esirukoukset)</label>
+              <input
+                type="text"
+                value={formData.module_title_prayers || ''}
+                onChange={(e) => setFormData({ ...formData, module_title_prayers: e.target.value })}
+                className="input text-sm"
+                placeholder="Esirukoukset"
+              />
+            </div>
+            <div>
+              <label className="label text-xs">Raamattu & Sana (oletus: Raamattu & Sana)</label>
+              <input
+                type="text"
+                value={formData.module_title_bible || ''}
+                onChange={(e) => setFormData({ ...formData, module_title_bible: e.target.value })}
+                className="input text-sm"
+                placeholder="Raamattu & Sana"
+              />
+            </div>
+            <div>
+              <label className="label text-xs">Hetkirukous (oletus: Hetkirukous)</label>
+              <input
+                type="text"
+                value={formData.module_title_hours || ''}
+                onChange={(e) => setFormData({ ...formData, module_title_hours: e.target.value })}
+                className="input text-sm"
+                placeholder="Hetkirukous"
+              />
+            </div>
+            <div>
+              <label className="label text-xs">Hartaus (oletus: Hartaus)</label>
+              <input
+                type="text"
+                value={formData.module_title_hartaus || ''}
+                onChange={(e) => setFormData({ ...formData, module_title_hartaus: e.target.value })}
+                className="input text-sm"
+                placeholder="Hartaus"
+              />
+            </div>
+            <div>
+              <label className="label text-xs">Meditaatiot (oletus: Meditaatiot)</label>
+              <input
+                type="text"
+                value={formData.module_title_meditations || ''}
+                onChange={(e) => setFormData({ ...formData, module_title_meditations: e.target.value })}
+                className="input text-sm"
+                placeholder="Meditaatiot"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Aktiiviset meditaatiot */}
+        <div className="card">
+          <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-2 flex items-center gap-2">
+            <span>📿</span> Aktiiviset meditaatiot ja rukousperinteet
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">
+            Valitse mitkä meditaatiomuodot ovat käytettävissä seurakuntalaisille Meditaatiot-osiossa. Ylläpitäjät näkevät aina kaikki meditaatiot.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { id: 'lonnebo_beads', title: 'Pelastuksen rengas (Lönnebo)', icon: '📿', desc: 'Martti Lönnebon rukoushelmet (18 helmeä)' },
+              { id: 'luther_wreath', title: 'Lutherin rukousseppele', icon: '🌹', desc: 'Vähän katekismuksen mukainen rukous ja uskontunnustus' },
+              { id: 'jesus_prayer', title: 'Jeesuksen rukous (Sydämen rukous)', icon: '🕊️', desc: 'Itäisen kirkon ikiaikainen kontemplatiivinen rukous' },
+              { id: 'lectio_divina', title: 'Lectio Divina (Hengellinen lukeminen)', icon: '📜', desc: 'Klassinen nelivaiheinen Raamatun mietiskely' },
+              { id: 'examen', title: 'Ignatiaaninen tutkistelu (Examen)', icon: '🕯️', desc: 'Päivän läpikäynti ja Jumalan läsnäolon tunnistaminen' },
+            ].map((med) => {
+              const activeMeds = parseSettingsList(
+                formData.active_meditations,
+                ['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen']
+              );
+              const isChecked = activeMeds.includes(med.id);
+
+              return (
+                <div
+                  key={med.id}
+                  onClick={() => {
+                    let next;
+                    if (isChecked) {
+                      if (activeMeds.length === 1) {
+                        alert('Vähintään yhden meditaation on oltava aktiivinen.');
+                        return;
+                      }
+                      next = activeMeds.filter((x) => x !== med.id);
+                    } else {
+                      next = [...activeMeds, med.id];
+                    }
+                    setFormData((prev) => ({ ...prev, active_meditations: JSON.stringify(next) }));
+                  }}
+                  className={`p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                    isChecked
+                      ? 'border-teal-600 bg-teal-50/50 shadow-sm ring-1 ring-teal-500/30'
+                      : 'border-gray-200 bg-gray-50/60 opacity-60 hover:opacity-90'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xl">{med.icon}</span>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {}}
+                        className="rounded text-teal-600 focus:ring-teal-500 pointer-events-none"
+                      />
+                    </div>
+                    <h4 className="font-semibold text-xs text-gray-900">{med.title}</h4>
+                    <p className="text-[11px] text-gray-500 mt-1 leading-snug">{med.desc}</p>
+                  </div>
+                  <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-right">
+                    {isChecked ? (
+                      <span className="text-teal-700">Käytössä</span>
+                    ) : (
+                      <span className="text-gray-400">Pois päältä</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* 1. Parish Details & Clergy */}
         <div className="card">
           <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
@@ -243,6 +381,34 @@ function SettingsManager() {
                 className="input text-sm"
                 placeholder="esim. Viikon rukousaiheet"
               />
+            </div>
+
+            <div>
+              <label className="label">Palvelun brändinimi (Brand Name)</label>
+              <input
+                type="text"
+                value={formData.brand_name || ''}
+                onChange={(e) => setFormData({ ...formData, brand_name: e.target.value })}
+                className="input text-sm"
+                placeholder="Rukoushetki"
+              />
+              <p className="text-[11px] text-gray-500 mt-1">
+                Palvelun yleisnimi (oletus: Rukoushetki).
+              </p>
+            </div>
+            <div>
+              <label className="label">Yläpalkin korostus (Header Prominence)</label>
+              <select
+                value={formData.header_prominence || 'parish'}
+                onChange={(e) => setFormData({ ...formData, header_prominence: e.target.value })}
+                className="input text-sm"
+              >
+                <option value="parish">Seurakunta ensisijaisena (Seurakunnan nimi suurella, brändi pienenä)</option>
+                <option value="brand">Brändinimi ensisijaisena (Brändinimi suurella, seurakunta pienenä)</option>
+              </select>
+              <p className="text-[11px] text-gray-500 mt-1">
+                Määrittää kumpi näkyy sivun yläpalkissa ensisijaisena otsikkona.
+              </p>
             </div>
 
             {/* Kirkkoherran perustiedot */}

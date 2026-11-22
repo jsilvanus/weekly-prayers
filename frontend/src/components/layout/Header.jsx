@@ -21,7 +21,7 @@ const roleBadgeStyles = {
 function Header() {
   const { t, i18n } = useTranslation();
   const { user, isAuthenticated, login, logout, isWorkerOrAbove, isBishop, isDevotionAuthor, canAccessPrayerList } = useAuth();
-  const { settings } = useSettings();
+  const { settings, getModuleTitle } = useSettings();
   const { currentTenant, isModuleEnabled } = useTenant();
   const location = useLocation();
 
@@ -29,8 +29,19 @@ function Header() {
   const headerRef = useRef(null);
 
   const parishName = currentTenant?.name || settings.parish_name || 'Tuomiokirkkoseurakunta';
+  const brandName = settings.brand_name || t('app.title') || 'Rukoushetki';
+  const headerProminence = settings.header_prominence || 'parish';
   const showChurchLogo = settings.show_church_logo !== 'false';
   const showParishLogo = settings.show_parish_logo !== 'false';
+  const canSeeDisabled = isWorkerOrAbove || user?.role === 'admin';
+
+  const navModules = [
+    { id: 'prayers', to: '/', activePaths: ['/', '/prayers', '/esirukoukset'], icon: '🙏', defaultTitle: 'Esirukoukset' },
+    { id: 'bible', to: '/bible', activePaths: ['/bible', '/raamattu'], icon: '📖', defaultTitle: 'Raamattu & Sana' },
+    { id: 'hours', to: '/prayer-moment', activePaths: ['/prayer-moment', '/hetkirukous'], icon: '⏰', defaultTitle: 'Hetkirukous' },
+    { id: 'hartaus', to: '/hartaus', activePaths: ['/hartaus', '/devotion'], icon: '✍️', defaultTitle: 'Hartaus' },
+    { id: 'meditations', to: '/meditations', activePaths: ['/meditations', '/meditaatiot', '/hiljaisuus'], icon: '📿', defaultTitle: 'Meditaatiot' },
+  ];
 
   // Automatically close mobile menu on route change
   useEffect(() => {
@@ -102,32 +113,32 @@ function Header() {
                   <img
                     src={withBasePath(settings.church_logo_url)}
                     alt="Kirkon logo"
-                    className="h-[46px] w-[46px] md:h-[50px] md:w-[50px] object-contain rounded-full"
+                    className="h-9 w-9 sm:h-[46px] sm:w-[46px] md:h-[50px] md:w-[50px] object-contain rounded-full"
                   />
                 ) : (
                   <ChurchCircleLogo
                     variant={settings.church_logo_variant || currentTenant?.church_logo_variant || 'auto'}
                     userLocale={i18n?.language}
-                    className="w-[46px] h-[46px] md:w-[50px] md:h-[50px]"
+                    className="w-9 h-9 sm:w-[46px] sm:h-[46px] md:w-[50px] md:h-[50px]"
                   />
                 )}
               </div>
             )}
 
-            {/* Local Parish Logo (hidden on small mobile screens to save space) */}
+            {/* Local Parish Logo (visible on mobile and desktop) */}
             {showParishLogo && (
               <div
-                className="text-amber-600 transition-colors hidden sm:block border-l border-gray-200 pl-2.5 sm:pl-3 shrink-0"
+                className="text-amber-600 transition-colors border-l border-gray-200 pl-2 sm:pl-2.5 shrink-0"
                 title={parishName}
               >
                 {settings.parish_logo_url ? (
                   <img
                     src={withBasePath(settings.parish_logo_url)}
                     alt="Seurakunnan logo"
-                    className="h-8 w-8 md:h-9 md:w-9 object-contain"
+                    className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 object-contain"
                   />
                 ) : (
-                  <LocalParishLogo className="w-8 h-8 md:w-9 md:h-9 text-amber-600" />
+                  <LocalParishLogo className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 text-amber-600" />
                 )}
               </div>
             )}
@@ -135,85 +146,42 @@ function Header() {
             {/* Parish & App Title with Martti Font */}
             <div className="flex flex-col min-w-0">
               <span className="font-martti text-sm sm:text-base md:text-lg font-bold text-primary-900 group-hover:text-primary-700 transition-colors leading-tight truncate">
-                {parishName}
+                {headerProminence === 'brand' ? brandName : parishName}
               </span>
               <span className="text-[11px] sm:text-xs text-gray-500 font-aptos font-normal truncate">
-                {t('app.title')}
+                {headerProminence === 'brand' ? parishName : brandName}
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation & User Section (md and above) */}
-          <nav className="hidden md:flex items-center gap-2.5 lg:gap-4">
-            {isModuleEnabled('prayers') && (
-              <Link
-                to="/"
-                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
-                  location.pathname === '/' || location.pathname === '/prayers' || location.pathname === '/esirukoukset'
-                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span>🙏</span>
-                <span>{t('nav.prayers') || 'Esirukoukset'}</span>
-              </Link>
-            )}
+          <nav className="hidden md:flex items-center gap-2 lg:gap-3.5">
+            {navModules.map((m) => {
+              const enabled = isModuleEnabled(m.id);
+              if (!enabled && !canSeeDisabled) return null;
+              const isActive = m.activePaths.includes(location.pathname);
+              const title = getModuleTitle(m.id, m.defaultTitle);
 
-            {isModuleEnabled('bible') && (
-              <Link
-                to="/bible"
-                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
-                  location.pathname === '/bible' || location.pathname === '/raamattu'
-                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span>📖</span>
-                <span>{t('nav.bible') || 'Raamattu & Sana'}</span>
-              </Link>
-            )}
-
-            {isModuleEnabled('hours') && (
-              <Link
-                to="/prayer-moment"
-                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
-                  location.pathname === '/prayer-moment' || location.pathname === '/hetkirukous'
-                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span>⏰</span>
-                <span>{t('nav.hours') || 'Hetkirukous'}</span>
-              </Link>
-            )}
-
-            {isModuleEnabled('hartaus') && (
-              <Link
-                to="/hartaus"
-                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
-                  location.pathname === '/hartaus' || location.pathname === '/devotion'
-                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span>✍️</span>
-                <span>{t('nav.hartaus') || 'Hartaus'}</span>
-              </Link>
-            )}
-
-            {isModuleEnabled('meditations') && (
-              <Link
-                to="/meditations"
-                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
-                  location.pathname === '/meditations' || location.pathname === '/meditaatiot' || location.pathname === '/hiljaisuus'
-                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span>📿</span>
-                <span>{t('nav.meditations') || 'Meditaatiot'}</span>
-              </Link>
-            )}
+              return (
+                <Link
+                  key={m.id}
+                  to={m.to}
+                  className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
+                    isActive
+                      ? 'text-primary-800 bg-primary-50/80 font-semibold'
+                      : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>{m.icon}</span>
+                  <span>{title}</span>
+                  {!enabled && (
+                    <span className="ml-1 text-[10px] font-semibold text-amber-800 bg-amber-100/90 px-1.5 py-0.2 rounded-full border border-amber-300">
+                      Ei julkinen
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
 
             {canAccessPrayerList && (
               <a
@@ -306,80 +274,35 @@ function Header() {
         <div className="md:hidden border-t border-gray-200 bg-white/98 backdrop-blur-md px-4 pt-3 pb-5 space-y-4 shadow-lg animate-fadeIn">
           {/* Navigation links */}
           <nav className="flex flex-col space-y-1">
-            {isModuleEnabled('prayers') && (
-              <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === '/' || location.pathname === '/prayers' || location.pathname === '/esirukoukset'
-                    ? 'bg-primary-50 text-primary-800 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-base">🙏</span>
-                <span>{t('nav.prayers') || 'Esirukoukset'}</span>
-              </Link>
-            )}
+            {navModules.map((m) => {
+              const enabled = isModuleEnabled(m.id);
+              if (!enabled && !canSeeDisabled) return null;
+              const isActive = m.activePaths.includes(location.pathname);
+              const title = getModuleTitle(m.id, m.defaultTitle);
 
-            {isModuleEnabled('bible') && (
-              <Link
-                to="/bible"
-                onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === '/bible' || location.pathname === '/raamattu'
-                    ? 'bg-primary-50 text-primary-800 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-base">📖</span>
-                <span>{t('nav.bible') || 'Raamattu & Sana'}</span>
-              </Link>
-            )}
-
-            {isModuleEnabled('hours') && (
-              <Link
-                to="/prayer-moment"
-                onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === '/prayer-moment' || location.pathname === '/hetkirukous'
-                    ? 'bg-primary-50 text-primary-800 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-base">⏰</span>
-                <span>{t('nav.hours') || 'Hetkirukous'}</span>
-              </Link>
-            )}
-
-            {isModuleEnabled('hartaus') && (
-              <Link
-                to="/hartaus"
-                onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === '/hartaus' || location.pathname === '/devotion'
-                    ? 'bg-primary-50 text-primary-800 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-base">✍️</span>
-                <span>{t('nav.hartaus') || 'Hartaus'}</span>
-              </Link>
-            )}
-
-            {isModuleEnabled('meditations') && (
-              <Link
-                to="/meditations"
-                onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  location.pathname === '/meditations' || location.pathname === '/meditaatiot' || location.pathname === '/hiljaisuus'
-                    ? 'bg-primary-50 text-primary-800 font-semibold'
-                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
-                }`}
-              >
-                <span className="text-base">📿</span>
-                <span>{t('nav.meditations') || 'Meditaatiot'}</span>
-              </Link>
-            )}
+              return (
+                <Link
+                  key={m.id}
+                  to={m.to}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary-50 text-primary-800 font-semibold'
+                      : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base">{m.icon}</span>
+                    <span>{title}</span>
+                  </div>
+                  {!enabled && (
+                    <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-300">
+                      Ei julkinen
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
 
             {canAccessPrayerList && (
               <a

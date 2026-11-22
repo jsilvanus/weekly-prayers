@@ -1,9 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
+import { useTenant } from '../../context/TenantContext';
+import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 import LandingHero from '../common/LandingHero';
 import EmbeddedIntercessionsModal from './EmbeddedIntercessionsModal';
+import NotationViewer from '../common/NotationViewer';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { FALLBACK_LITURGY_HOURS } from './liturgyFallback';
 
 const liturgicalColorsMap = {
   vihreä: { bg: 'bg-emerald-100', text: 'text-emerald-900', border: 'border-emerald-300', dot: 'bg-emerald-600', name: 'Vihreä' },
@@ -16,6 +22,12 @@ const liturgicalColorsMap = {
 
 export default function PrayerMomentPage() {
   const { t } = useTranslation();
+  const { isModuleEnabled } = useTenant();
+  const { getModuleTitle } = useSettings();
+  const { user, isWorkerOrAbove } = useAuth();
+  const canSeeDisabled = isWorkerOrAbove || user?.role === 'admin';
+  const isEnabled = isModuleEnabled('hours');
+
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
     const y = now.getFullYear();
@@ -27,6 +39,7 @@ export default function PrayerMomentPage() {
   const [bibleData, setBibleData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedHour, setSelectedHour] = useState('morning');
+  const [viewMode, setViewMode] = useState('text'); // 'text' | 'notation'
   const [isIntercessionsModalOpen, setIsIntercessionsModalOpen] = useState(false);
   const prayerTextRef = useRef(null);
 
@@ -37,14 +50,40 @@ export default function PrayerMomentPage() {
       try {
         const data = await api.getBibleToday(selectedDate);
         if (mounted) {
-          setBibleData(data);
-          if (data.nearestHourKey) {
+          const mergedHours = {
+            ...FALLBACK_LITURGY_HOURS,
+            ...(data?.liturgyOfTheHours || {})
+          };
+          setBibleData({
+            ...data,
+            liturgyOfTheHours: mergedHours,
+            nearestHourKey: data?.nearestHourKey || 'morning',
+            liturgicalInfo: data?.liturgicalInfo || {
+              dayName: 'Hetkirukous',
+              theme: 'Kirkkokäsikirja III:n mukaiset rukoushetket',
+              color: { color: 'vihreä', english: 'green' }
+            }
+          });
+          if (data?.nearestHourKey) {
             setSelectedHour(data.nearestHourKey);
           }
           setLoading(false);
         }
       } catch (err) {
-        if (mounted) setLoading(false);
+        console.warn('Falling back to built-in Kirkkokäsikirja III liturgy data:', err);
+        if (mounted) {
+          setBibleData({
+            date: selectedDate,
+            liturgyOfTheHours: FALLBACK_LITURGY_HOURS,
+            nearestHourKey: 'morning',
+            liturgicalInfo: {
+              dayName: 'Hetkirukous',
+              theme: 'Kirkkokäsikirja III:n mukaiset rukoushetket',
+              color: { color: 'vihreä', english: 'green' }
+            }
+          });
+          setLoading(false);
+        }
       }
     }
     loadData();
@@ -67,16 +106,48 @@ export default function PrayerMomentPage() {
     { key: 'small', icon: '🕊️', label: 'Pieni rukoushetki', latin: 'Kirkkokäsikirja III', slot: 'Milloin vain' },
   ];
 
-  const currentHourData = bibleData?.liturgyOfTheHours?.[selectedHour];
+  const fallbackHour = FALLBACK_LITURGY_HOURS[selectedHour] || FALLBACK_LITURGY_HOURS.morning;
+  const currentHourData = {
+    ...fallbackHour,
+    ...(bibleData?.liturgyOfTheHours?.[selectedHour] || {}),
+    canticle: fallbackHour.canticle ? {
+      ...fallbackHour.canticle,
+      ...(bibleData?.liturgyOfTheHours?.[selectedHour]?.canticle || {})
+    } : null
+  };
   const currentColorKey = bibleData?.liturgicalInfo?.color?.color || 'vihreä';
   const colorTheme = liturgicalColorsMap[currentColorKey] || liturgicalColorsMap.vihreä;
 
+  if (!isEnabled && !canSeeDisabled) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 text-center space-y-4">
+        <div className="text-4xl">⏰</div>
+        <h2 className="font-martti text-2xl font-bold text-stone-900">
+          {getModuleTitle ? getModuleTitle('hours', 'Hetkirukous') : 'Hetkirukous'} ei ole käytössä
+        </h2>
+        <p className="text-sm text-stone-600">
+          Tämä osio ei ole tällä hetkellä aktivoitu seurakunnan sivustolla.
+        </p>
+        <Link to="/" className="inline-flex items-center gap-2 btn-primary text-xs py-2 px-4 rounded-full">
+          &larr; Siirry esirukouksiin
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8" data-testid="prayer-moment-page">
+      {!isEnabled && canSeeDisabled && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-2.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2 font-medium">
+          <span>⚠️</span>
+          <span>Hetkirukous on poissa käytöstä julkisilta kävijöiltä. Ylläpitäjänä ja työntekijänä näet sivun normaalisti.</span>
+        </div>
+      )}
+
       {/* Unified Landing Hero */}
       <LandingHero
         currentModule="hours"
-        title="Hetkirukous"
+        title={getModuleTitle ? getModuleTitle('hours', 'Hetkirukous') : 'Hetkirukous'}
         subtitle="Suomen evankelis-luterilaisen kirkon viralliset rukoushetket (Kirkkokäsikirja)"
         primaryAction={{
           label: 'Rukoile nyt',
@@ -171,17 +242,46 @@ export default function PrayerMomentPage() {
           >
             {/* Liturgy Header */}
             <div className="border-b border-stone-200 pb-4">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                 <span className="text-xs uppercase tracking-wider font-bold text-emerald-800 bg-emerald-100/90 px-3 py-1 rounded-full border border-emerald-300">
                   {currentHourData?.timeSlot} &bull; {currentHourData?.latinTitle}
                 </span>
-                <span className="text-xs text-stone-500 italic">
+
+                {/* Musical Notation vs Pure Text Toggle */}
+                <div className="inline-flex items-center gap-1 bg-stone-100 p-1 rounded-xl border border-stone-200">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('text')}
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                      viewMode === 'text'
+                        ? 'bg-white text-stone-900 shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    📝 Teksti
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('notation')}
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                      viewMode === 'notation'
+                        ? 'bg-emerald-700 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900'
+                    }`}
+                  >
+                    🎵 Nuotit
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <h3 className="font-martti text-2xl sm:text-3xl font-bold text-stone-900 mt-1">
+                  {currentHourData?.name}
+                </h3>
+                <span className="text-xs text-stone-500 italic hidden sm:inline">
                   Kirkkokäsikirjan virallinen kaava
                 </span>
               </div>
-              <h3 className="font-martti text-2xl sm:text-3xl font-bold text-stone-900 mt-2">
-                {currentHourData?.name}
-              </h3>
             </div>
 
             {/* 1. Johdanto & Alkusanat */}
@@ -243,8 +343,17 @@ export default function PrayerMomentPage() {
                 </h4>
 
                 {currentHourData.antiphon && (
-                  <div className="bg-emerald-50/60 border border-emerald-200 p-3.5 rounded-xl text-xs sm:text-sm text-emerald-950 italic">
-                    <strong>Antifoni:</strong> &rdquo;{currentHourData.antiphon}&rdquo;
+                  <div className="space-y-2">
+                    {viewMode === 'notation' && (currentHourData.antiphon_abc || currentHourData.antiphon_image_url) && (
+                      <NotationViewer
+                        notation_abc={currentHourData.antiphon_abc}
+                        notation_image_url={currentHourData.antiphon_image_url}
+                        title="Antifonin sävelmä"
+                      />
+                    )}
+                    <div className="bg-emerald-50/60 border border-emerald-200 p-3.5 rounded-xl text-xs sm:text-sm text-emerald-950 italic">
+                      <strong>Antifoni:</strong> &rdquo;{currentHourData.antiphon}&rdquo;
+                    </div>
                   </div>
                 )}
 
@@ -289,6 +398,13 @@ export default function PrayerMomentPage() {
                   <span>💬</span>
                   <span>4. Responsorio</span>
                 </h4>
+                {viewMode === 'notation' && (currentHourData.responsory_abc || currentHourData.responsory_image_url) && (
+                  <NotationViewer
+                    notation_abc={currentHourData.responsory_abc}
+                    notation_image_url={currentHourData.responsory_image_url}
+                    title="Responsorion sävelmä"
+                  />
+                )}
                 <div className="bg-stone-50 border border-stone-200 p-4 rounded-xl text-stone-800 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap italic">
                   {currentHourData.responsory}
                 </div>
@@ -302,10 +418,17 @@ export default function PrayerMomentPage() {
                   <span>🌟</span>
                   <span>5. {currentHourData.canticle.name}</span>
                 </h4>
-                <div className="bg-gradient-to-r from-emerald-50/70 to-teal-50/50 border border-emerald-200 p-5 rounded-xl space-y-2">
+                <div className="bg-gradient-to-r from-emerald-50/70 to-teal-50/50 border border-emerald-200 p-5 rounded-xl space-y-3">
                   <span className="font-martti font-bold text-xs text-emerald-900 uppercase tracking-wider">
                     {currentHourData.canticle.reference}
                   </span>
+                  {viewMode === 'notation' && (currentHourData.canticle.notation_abc || currentHourData.canticle.notation_image_url) && (
+                    <NotationViewer
+                      notation_abc={currentHourData.canticle.notation_abc}
+                      notation_image_url={currentHourData.canticle.notation_image_url}
+                      title={`${currentHourData.canticle.name} – Sävelmä`}
+                    />
+                  )}
                   <p className="text-stone-900 font-serif text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
                     {currentHourData.canticle.text}
                   </p>

@@ -6,7 +6,7 @@ import {
   updateOverride, 
   deleteOverride 
 } from '../services/bibleService.js';
-import { testAnnoApi } from '../services/annoService.js';
+import { testAnnoApi, fetchLectionaryFromAnno, getNearestHourName } from '../services/annoService.js';
 import { requireAuth } from '../middleware/authenticate.js';
 import { requireWorker } from '../middleware/authorize.js';
 
@@ -19,6 +19,26 @@ router.get('/today', async (req, res, next) => {
     const { date } = req.query;
     const data = await getBibleForDate(date);
     res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/bible/hours - Get EVL Kirkkokäsikirja III hours with all sections, canticles, and rubrics
+router.get(['/hours', '/liturgical-hours', '/daily-hours'], async (req, res, next) => {
+  try {
+    const { date } = req.query;
+    const targetDate = date || new Date().toISOString().split('T')[0];
+    const { lectionary, source } = await fetchLectionaryFromAnno(targetDate);
+    const nearestHourKey = getNearestHourName();
+    res.json({
+      date: targetDate,
+      hours: lectionary,
+      liturgyOfTheHours: lectionary,
+      nearestHourKey,
+      nearestHour: lectionary[nearestHourKey] || lectionary.morning,
+      source
+    });
   } catch (err) {
     next(err);
   }

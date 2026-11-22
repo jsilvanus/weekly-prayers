@@ -29,7 +29,15 @@ const DEFAULT_SETTINGS = {
   week_cycle_mode: 'thursday_cycle',
   highlight_icon: 'candle',
   church_logo_variant: 'auto',
-  active_modules: JSON.stringify(['prayers', 'bible', 'hours', 'hartaus', 'meditations'])
+  active_modules: JSON.stringify(['prayers', 'bible', 'hours', 'hartaus', 'meditations']),
+  active_meditations: JSON.stringify(['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen']),
+  brand_name: 'Rukoushetki',
+  header_prominence: 'parish',
+  module_title_prayers: 'Esirukoukset',
+  module_title_bible: 'Raamattu & Sana',
+  module_title_hours: 'Hetkirukous',
+  module_title_hartaus: 'Hartaus',
+  module_title_meditations: 'Meditaatiot'
 };
 
 export async function getAllSettings() {

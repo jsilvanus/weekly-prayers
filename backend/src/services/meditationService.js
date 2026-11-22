@@ -9,6 +9,8 @@
  * 5. Prayer of the Day / Examen (Päivän katselmus)
  */
 
+import { getSetting } from './settingsService.js';
+
 export const MEDITATIONS = [
   {
     id: 'lonnebo_beads',
@@ -333,6 +335,28 @@ export const MEDITATIONS = [
 
 export function getMeditationsList() {
   return MEDITATIONS;
+}
+
+export async function getActiveMeditationsList(options = {}) {
+  const { includeInactive = false } = options;
+  const rawActive = await getSetting(
+    'active_meditations',
+    JSON.stringify(['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen'])
+  );
+  let activeIds = ['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen'];
+  try {
+    activeIds = typeof rawActive === 'string' ? JSON.parse(rawActive) : rawActive;
+    if (!Array.isArray(activeIds)) {
+      activeIds = ['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen'];
+    }
+  } catch (e) {
+    activeIds = ['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen'];
+  }
+
+  return MEDITATIONS.map((m) => ({
+    ...m,
+    isActive: activeIds.includes(m.id),
+  })).filter((m) => includeInactive || m.isActive);
 }
 
 export function getMeditationById(id) {

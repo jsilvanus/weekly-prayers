@@ -68,6 +68,8 @@ export async function getDevotionForDate(tenantSlugOrId, dateStr = null, options
         closing_prayer: row.closing_prayer,
         hymn_suggestion: row.hymn_suggestion,
         audio_url: row.audio_url,
+        youtube_url: row.youtube_url,
+        pieces_order: row.pieces_order ? (typeof row.pieces_order === 'string' ? JSON.parse(row.pieces_order) : row.pieces_order) : ['scripture', 'meditation', 'prayer', 'hymn'],
         is_published: row.is_published,
         created_at: row.created_at,
         updated_at: row.updated_at,
@@ -108,6 +110,8 @@ export async function getDevotionForDate(tenantSlugOrId, dateStr = null, options
     closing_prayer: 'Kaikkivaltias, iankaikkinen Jumala, sinä olet johdattanut meidät tähän päivään. Anna sanasi olla lamppuna jaloillemme ja valona teillämme. Siunaa meidän työmme, lepomme ja lähimmäisemme. Tätä pyydämme Herramme Jeesuksen Kristuksen kautta. Aamen.',
     hymn_suggestion: 'Virsi 341 (Kiitos sulle, Jumalani) tai kirkkovuoden päivän virsi',
     audio_url: null,
+    youtube_url: null,
+    pieces_order: ['scripture', 'meditation', 'prayer', 'hymn'],
     is_published: true,
     author: {
       type: 'custom_text',
@@ -189,7 +193,10 @@ export async function saveDevotion(data, user) {
     closing_prayer,
     hymn_suggestion,
     audio_url,
-    is_published = true,
+    youtube_url = null,
+    pieces_order = null,
+    status = null,
+    is_published,
     author_type = 'self',
     author_user_id = null,
     author_custom_text = null,
@@ -238,19 +245,23 @@ export async function saveDevotion(data, user) {
     resolvedAuthorTitle = author_title ? author_title.trim() : (user.role === 'priest' ? 'Pastori' : 'Seurakunnan työntekijä');
   }
 
+  const resolvedPiecesOrder = pieces_order
+    ? (typeof pieces_order === 'string' ? pieces_order : JSON.stringify(pieces_order))
+    : JSON.stringify(['scripture', 'meditation', 'prayer', 'hymn']);
+
   const sql = `
     INSERT INTO devotions (
       id, tenant_id, created_by_user_id, author_type, author_user_id,
       author_name, author_title, author_custom_text, author_image_url,
       title, format, content, liturgical_day, scripture_reference,
       scripture_text, meditation_content, closing_prayer, hymn_suggestion,
-      audio_url, target_date, is_published, created_at, updated_at
+      audio_url, youtube_url, pieces_order, target_date, is_published, created_at, updated_at
     ) VALUES (
       COALESCE($1, gen_random_uuid()), $2, $3, $4, $5,
       $6, $7, $8, $9,
       $10, $11, $12, $13, $14,
       $15, $16, $17, $18,
-      $19, $20, $21, NOW(), NOW()
+      $19, $20, $21, $22, $23, NOW(), NOW()
     )
     ON CONFLICT (tenant_id, target_date) DO UPDATE SET
       author_type = EXCLUDED.author_type,
@@ -269,6 +280,8 @@ export async function saveDevotion(data, user) {
       closing_prayer = EXCLUDED.closing_prayer,
       hymn_suggestion = EXCLUDED.hymn_suggestion,
       audio_url = EXCLUDED.audio_url,
+      youtube_url = EXCLUDED.youtube_url,
+      pieces_order = EXCLUDED.pieces_order,
       is_published = EXCLUDED.is_published,
       updated_at = NOW()
     RETURNING *
@@ -294,8 +307,10 @@ export async function saveDevotion(data, user) {
     closing_prayer || null,
     hymn_suggestion ? hymn_suggestion.trim() : null,
     audio_url ? audio_url.trim() : null,
+    youtube_url ? youtube_url.trim() : null,
+    resolvedPiecesOrder,
     target_date,
-    is_published !== false
+    status !== null && status !== undefined ? status === 'published' : (is_published !== false)
   ];
 
   const result = await query(sql, values);

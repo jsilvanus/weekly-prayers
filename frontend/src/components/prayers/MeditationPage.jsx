@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import LandingHero from '../common/LandingHero';
 import { api } from '../../services/api';
+import { useTenant } from '../../context/TenantContext';
+import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 
 const BEAD_COLORS = {
   gold: 'bg-amber-400 text-amber-950 border-amber-300 ring-amber-400',
@@ -18,6 +22,12 @@ const BEAD_COLORS = {
 
 export default function MeditationPage() {
   const { t } = useTranslation();
+  const { isModuleEnabled } = useTenant();
+  const { getModuleTitle } = useSettings();
+  const { user, isWorkerOrAbove } = useAuth();
+  const canSeeDisabled = isWorkerOrAbove || user?.role === 'admin';
+  const isEnabled = isModuleEnabled('meditations');
+
   const [meditations, setMeditations] = useState([]);
   const [activeTab, setActiveTab] = useState('lonnebo_beads');
   const [selectedBeadIndex, setSelectedBeadIndex] = useState(0);
@@ -29,9 +39,13 @@ export default function MeditationPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await api.getMeditations();
+        const res = await api.getMeditations(canSeeDisabled);
         if (res?.meditations) {
           setMeditations(res.meditations);
+          // If active tab is not in list or not active for public
+          if (res.meditations.length > 0 && !res.meditations.some((m) => m.id === activeTab)) {
+            setActiveTab(res.meditations[0].id);
+          }
         }
       } catch (err) {
         console.error('Failed to load meditations from backend:', err);
@@ -40,7 +54,7 @@ export default function MeditationPage() {
       }
     }
     loadData();
-  }, []);
+  }, [canSeeDisabled]);
 
   // Breathing rhythm timer
   useEffect(() => {
@@ -67,12 +81,38 @@ export default function MeditationPage() {
     }
   };
 
+  const moduleTitle = getModuleTitle ? getModuleTitle('meditations', 'Kristilliset meditaatiot & Hiljaisuus') : 'Kristilliset meditaatiot & Hiljaisuus';
+
+  if (!isEnabled && !canSeeDisabled) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 text-center space-y-4">
+        <div className="text-4xl">📿</div>
+        <h2 className="font-martti text-2xl font-bold text-stone-900">
+          {moduleTitle} ei ole käytössä
+        </h2>
+        <p className="text-sm text-stone-600">
+          Tämä osio ei ole tällä hetkellä aktivoitu seurakunnan sivustolla.
+        </p>
+        <Link to="/" className="inline-flex items-center gap-2 btn-primary text-xs py-2 px-4 rounded-full">
+          &larr; Siirry esirukouksiin
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
+      {!isEnabled && canSeeDisabled && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-2.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2 font-medium">
+          <span>⚠️</span>
+          <span>Meditaatiot on poissa käytöstä julkisilta kävijöiltä. Ylläpitäjänä ja työntekijänä näet sivun normaalisti.</span>
+        </div>
+      )}
+
       {/* Landing Hero with Sibling cross-navigation */}
       <LandingHero
         currentModule="meditations"
-        title="Kristilliset meditaatiot &amp; Hiljaisuus"
+        title={moduleTitle}
         subtitle="Rukoushelmien, katekismuksen ja sydämen rukouksen perinne johdattaa hiljentymään, rauhoittumaan ja kohtaamaan Jumalan arjen keskellä."
         primaryAction={{
           label: 'Aloita hiljentyminen',
@@ -104,6 +144,11 @@ export default function MeditationPage() {
               >
                 <span className="text-base">{med.icon}</span>
                 <span>{med.title.split('(')[0].trim()}</span>
+                {med.isActive === false && (
+                  <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/90 px-1.5 py-0.2 rounded-full border border-amber-300">
+                    Ei julkinen
+                  </span>
+                )}
               </button>
             );
           })}

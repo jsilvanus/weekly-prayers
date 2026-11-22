@@ -154,7 +154,27 @@ export function TenantProvider({ children }) {
     }
   })();
 
-  const isModuleEnabled = (moduleKey) => activeModules.includes(moduleKey);
+  const isModuleEnabled = (moduleKey, isPrivileged = false) => {
+    if (isPrivileged) return true;
+    return activeModules.includes(moduleKey);
+  };
+
+  const getModuleTitle = (moduleKey, fallback = '') => {
+    switch (moduleKey) {
+      case 'prayers':
+        return settings?.module_title_prayers || fallback || 'Esirukoukset';
+      case 'bible':
+        return settings?.module_title_bible || fallback || 'Raamattu & Sana';
+      case 'hours':
+        return settings?.module_title_hours || fallback || 'Hetkirukous';
+      case 'hartaus':
+        return settings?.module_title_hartaus || fallback || 'Hartaus';
+      case 'meditations':
+        return settings?.module_title_meditations || fallback || 'Meditaatiot';
+      default:
+        return fallback || moduleKey;
+    }
+  };
 
   const value = {
     currentTenant: effectiveTenant,
@@ -166,6 +186,7 @@ export function TenantProvider({ children }) {
     selectedSlug,
     activeModules,
     isModuleEnabled,
+    getModuleTitle,
     switchParish,
     refetchTenant: () => {
       fetchHierarchy(selectedSlug);

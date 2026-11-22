@@ -192,7 +192,15 @@ export function SettingsProvider({ children }) {
     daily_word_reflection: 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan. Hän antaa anteeksi syntisi ja parantaa sairautesi.',
     week_rollover_day: 'thursday',
     week_cycle_mode: 'thursday_cycle',
-    highlight_icon: 'candle'
+    highlight_icon: 'candle',
+    brand_name: 'Rukoushetki',
+    header_prominence: 'parish',
+    active_meditations: JSON.stringify(['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen']),
+    module_title_prayers: 'Esirukoukset',
+    module_title_bible: 'Raamattu & Sana',
+    module_title_hours: 'Hetkirukous',
+    module_title_hartaus: 'Hartaus',
+    module_title_meditations: 'Meditaatiot'
   });
   const [loading, setLoading] = useState(true);
 
@@ -246,6 +254,23 @@ export function SettingsProvider({ children }) {
   const ministryGroups = parseSettingsList(settings.ministry_groups, DEFAULT_MINISTRY_GROUPS);
   const ministryTags = parseSettingsList(settings.ministry_tags, DEFAULT_MINISTRY_TAGS);
 
+  const getModuleTitle = (key, fallback = '') => {
+    switch (key) {
+      case 'prayers':
+        return settings.module_title_prayers || fallback || 'Esirukoukset';
+      case 'bible':
+        return settings.module_title_bible || fallback || 'Raamattu & Sana';
+      case 'hours':
+        return settings.module_title_hours || fallback || 'Hetkirukous';
+      case 'hartaus':
+        return settings.module_title_hartaus || fallback || 'Hartaus';
+      case 'meditations':
+        return settings.module_title_meditations || fallback || 'Meditaatiot';
+      default:
+        return fallback || key;
+    }
+  };
+
   return (
     <SettingsContext.Provider
       value={{
@@ -258,7 +283,8 @@ export function SettingsProvider({ children }) {
         highlightEmoji,
         getHighlightEmoji,
         ministryGroups,
-        ministryTags
+        ministryTags,
+        getModuleTitle
       }}
     >
       {children}

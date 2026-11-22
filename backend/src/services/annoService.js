@@ -24,6 +24,7 @@ const FALLBACK_LITURGICAL_DATA = {
       opening: 'Herra, avaa minun huuleni, niin suuni julistaa sinun kunniaasi.\nJumala, riennä minua auttamaan. Herra, kiirehdi minun avukseni.\nKunnia Isälle ja Pojalle ja Pyhälle Hengelle, niin kuin oli alussa, nyt on ja aina, iankaikkisesta iankaikkiseen. Aamen. Halleluja.',
       hymnSuggestion: 'Aamuvirsi (esim. Virsi 538 / 547)',
       antiphon: 'Ylistetty olkoon Herra, Israelin Jumala, sillä hän on katsonut kansansa puoleen ja valmistanut sille lunastuksen.',
+      antiphon_abc: 'X:1\nT:Laudes - Antifoni\nM:C\nL:1/8\nK:C\nG2 A2 B2 c2 | B2 A2 G4 ||\nw:Y-lis-tet-ty ol-koon Her-ra, Is-ra-e-lin Ju-ma-la!',
       psalms: [
         {
           reference: 'Ps. 63:2–9',
@@ -41,7 +42,8 @@ const FALLBACK_LITURGICAL_DATA = {
       canticle: {
         name: 'Sakariaan kiitosvirsi (Benedictus)',
         reference: 'Luuk. 1:68–79',
-        text: 'Kiitetty olkoon Herra, Israelin Jumala!\nHän on katsonut kansansa puoleen ja valmistanut sille lunastuksen.\nHän on kohottanut meille pelastuksen sarven palvelijansa Daavidin suvusta,\nniin kuin hän on muinoin luvannut pyhien profeettojensa suulla,\npelastukseksi vihollisistamme ja kaikkien niiden kädestä, jotka meitä vihaavat,\ntehdäkseen laupeuden meidän isillemme ja muistaakseen pyhän liittonsa.'
+        text: 'Kiitetty olkoon Herra, Israelin Jumala!\nHän on katsonut kansansa puoleen ja valmistanut sille lunastuksen.\nHän on kohottanut meille pelastuksen sarven palvelijansa Daavidin suvusta,\nniin kuin hän on muinoin luvannut pyhien profeettojensa suulla,\npelastukseksi vihollisistamme ja kaikkien niiden kädestä, jotka meitä vihaavat,\ntehdäkseen laupeuden meidän isillemme ja muistaakseen pyhän liittonsa.',
+        notation_abc: 'X:2\nT:Sakariaan kiitosvirsi (Benedictus)\nM:C\nL:1/8\nK:F\nF2 G2 A2 A2 | G2 A2 B2 A2 | A2 G2 F2 E2 | F4 ||\nw:Kii-tet-ty ol-koon Her-ra, Is-ra-e-lin Ju-ma-la!'
       },
       intercessions: {
         title: 'Yhteinen esirukous',
@@ -66,6 +68,7 @@ const FALLBACK_LITURGICAL_DATA = {
       opening: 'Jumala, riennä minua auttamaan. Herra, kiirehdi minun avukseni.\nKunnia Isälle ja Pojalle ja Pyhälle Hengelle, niin kuin oli alussa, nyt on ja aina, iankaikkisesta iankaikkiseen. Aamen.',
       hymnSuggestion: 'Päivävirsi (esim. Virsi 501 / 503)',
       antiphon: 'Herra on minun valoni ja apuni, ketä minä pelkäisin?',
+      antiphon_abc: 'X:3\nT:Seksti - Antifoni\nM:C\nL:1/8\nK:G\nG2 B2 d2 d2 | c2 B2 A2 G2 ||\nw:Her-ra on mi-nun va-lo-ni ja a-pu-ni.',
       psalms: [
         {
           reference: 'Ps. 121:1–8',
@@ -121,7 +124,8 @@ const FALLBACK_LITURGICAL_DATA = {
       canticle: {
         name: 'Marian kiitosvirsi (Magnificat)',
         reference: 'Luuk. 1:46–55',
-        text: 'Minun sieluni ylistää Herran suuruutta,\nminun henkeni riemuitsee Jumalasta, Vapahtajastani.\nHän on katsonut vähäisen palvelijattarensa puoleen.\nTästä lähtien kaikki sukupolvet ylistävät minua autuaaksi,\nsillä Voimallinen on tehnyt minulle suuria tekoja.\nHänen nimensä on pyhä, hänen laupeutensa pysyy polvesta polveen niille, jotka häntä pelkäävät.'
+        text: 'Minun sieluni ylistää Herran suuruutta,\nminun henkeni riemuitsee Jumalasta, Vapahtajastani.\nHän on katsonut vähäisen palvelijattarensa puoleen.\nTästä lähtien kaikki sukupolvet ylistävät minua autuaaksi,\nsillä Voimallinen on tehnyt minulle suuria tekoja.\nHänen nimensä on pyhä, hänen laupeutensa pysyy polvesta polveen niille, jotka häntä pelkäävät.',
+        notation_abc: 'X:4\nT:Marian kiitosvirsi (Magnificat)\nM:C\nL:1/8\nK:F\nF2 G2 A2 A2 | A2 G2 A2 F2 | G2 E2 F4 ||\nw:Mi-nun sie-lu-ni y-lis-tää Her-ran suu-ruut-ta.'
       },
       intercessions: {
         title: 'Yhteinen esirukous',
@@ -168,7 +172,8 @@ const FALLBACK_LITURGICAL_DATA = {
       canticle: {
         name: 'Simeonin kiitosvirsi (Nunc Dimittis)',
         reference: 'Luuk. 2:29–32',
-        text: 'Herra, nyt sinä sallit palvelijasi lähteä rauhassa, sanasi mukaan.\nMinun silmäni ovat nähneet sinun pelastuksesi,\njonka olet valmistanut kaikkien kansojen nähdä:\nvalon, joka koittaa pakanakansoille,\nja kirkkauden kansallesi Israelille.'
+        text: 'Herra, nyt sinä sallit palvelijasi lähteä rauhassa, sanasi mukaan.\nMinun silmäni ovat nähneet sinun pelastuksesi,\njonka olet valmistanut kaikkien kansojen nähdä:\nvalon, joka koittaa pakanakansoille,\nja kirkkauden kansallesi Israelille.',
+        notation_abc: 'X:5\nT:Simeonin kiitosvirsi (Nunc Dimittis)\nM:C\nL:1/8\nK:C\nG2 A2 B2 B2 | c2 B2 A2 G2 | A2 B2 G4 ||\nw:Her-ra, nyt si-nä sal-lit pal-ve-li-ja-si läh-te-ä rau-has-sa.'
       },
       intercessions: null,
       prayer: 'Vieraile, Herra, tässä asunnossa ja aja kauas pois kaikki vihollisen juonet. Sinun pyhät enkelisi asukoot täällä varjellen meitä rauhassa, ja sinun siunauksesi olkoon aina meidän yllämme. Tätä pyydämme Herramme Jeesuksen Kristuksen kautta.',
@@ -197,6 +202,7 @@ const FALLBACK_LITURGICAL_DATA = {
         }
       ],
       responsory: 'Herra, sinun armosi on ikuinen.\n– Älä hylkää kättesi tekoa.',
+      responsory_abc: 'X:6\nT:Pieni rukoushetki - Vastauslaulu\nM:C\nL:1/8\nK:G\nG2 G2 A2 B2 | A2 G2 G4 ||\nw:Her-ra, si-nun ar-mo-si on i-kui-nen.',
       canticle: null,
       intercessions: {
         title: 'Päivän rukousjakso ja yhteinen esirukous',

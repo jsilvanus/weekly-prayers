@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
+import { useTenant } from '../../context/TenantContext';
+import { useSettings } from '../../context/SettingsContext';
+import { useAuth } from '../../context/AuthContext';
 import LandingHero from '../common/LandingHero';
 import DailyVerseModal from './DailyVerseModal';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -16,6 +20,12 @@ const liturgicalColorsMap = {
 
 function BiblePage() {
   const { t } = useTranslation();
+  const { isModuleEnabled } = useTenant();
+  const { getModuleTitle } = useSettings();
+  const { user, isWorkerOrAbove } = useAuth();
+  const canSeeDisabled = isWorkerOrAbove || user?.role === 'admin';
+  const isEnabled = isModuleEnabled('bible');
+
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
     const y = now.getFullYear();
@@ -58,12 +68,36 @@ function BiblePage() {
     ...(bibleData?.liturgyOfTheHours?.noon?.psalms || []),
   ];
 
+  if (!isEnabled && !canSeeDisabled) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 text-center space-y-4">
+        <div className="text-4xl">📖</div>
+        <h2 className="font-martti text-2xl font-bold text-stone-900">
+          {getModuleTitle ? getModuleTitle('bible', 'Raamattu & Sana') : 'Raamattu & Sana'} ei ole käytössä
+        </h2>
+        <p className="text-sm text-stone-600">
+          Tämä osio ei ole tällä hetkellä aktivoitu seurakunnan sivustolla.
+        </p>
+        <Link to="/" className="inline-flex items-center gap-2 btn-primary text-xs py-2 px-4 rounded-full">
+          &larr; Siirry esirukouksiin
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8" data-testid="bible-page">
+      {!isEnabled && canSeeDisabled && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-2.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2 font-medium">
+          <span>⚠️</span>
+          <span>Raamattu & Sana on poissa käytöstä julkisilta kävijöiltä. Ylläpitäjänä ja työntekijänä näet sivun normaalisti.</span>
+        </div>
+      )}
+
       {/* Unified Landing Hero */}
       <LandingHero
         currentModule="bible"
-        title={t('nav.bible') || 'Raamattu & Päivän sana'}
+        title={getModuleTitle ? getModuleTitle('bible', 'Raamattu & Sana') : 'Raamattu & Sana'}
         subtitle="Kirkkovuoden pyhät tekstit, päivän lukukappaleet ja mietiskely"
         primaryAction={{
           label: 'Näytä päivän sana',

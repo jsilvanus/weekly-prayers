@@ -3,6 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 
+function getYouTubeEmbedId(url) {
+  if (!url || typeof url !== 'string') return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+}
+
 export default function DevotionManager() {
   const { t } = useTranslation();
   const { user, isAdmin, isCoordinator } = useAuth();
@@ -31,6 +38,8 @@ export default function DevotionManager() {
     prayer: '',
     hymn: '',
     blessing: '',
+    youtube_url: '',
+    pieces_order: ['scripture', 'meditation', 'prayer', 'hymn'],
     status: 'published',
   };
 
@@ -70,6 +79,17 @@ export default function DevotionManager() {
   };
 
   const handleStartEdit = (item) => {
+    let order = ['scripture', 'meditation', 'prayer', 'hymn'];
+    if (item.pieces_order) {
+      try {
+        order = typeof item.pieces_order === 'string' ? JSON.parse(item.pieces_order) : item.pieces_order;
+        if (!Array.isArray(order) || order.length === 0) {
+          order = ['scripture', 'meditation', 'prayer', 'hymn'];
+        }
+      } catch (e) {
+        order = ['scripture', 'meditation', 'prayer', 'hymn'];
+      }
+    }
     setFormData({
       id: item.id,
       target_date: item.target_date ? item.target_date.split('T')[0] : getTodayDate(),
@@ -81,11 +101,13 @@ export default function DevotionManager() {
       content: item.content || '',
       scripture_reference: item.scripture_reference || '',
       scripture_text: item.scripture_text || '',
-      meditation: item.meditation || '',
-      prayer: item.prayer || '',
-      hymn: item.hymn || '',
+      meditation: item.meditation || item.meditation_content || '',
+      prayer: item.prayer || item.closing_prayer || '',
+      hymn: item.hymn || item.hymn_suggestion || '',
       blessing: item.blessing || '',
-      status: item.status || 'published',
+      youtube_url: item.youtube_url || '',
+      pieces_order: order,
+      status: item.is_published === false || item.status === 'draft' ? 'draft' : 'published',
     });
     setIsEditing(true);
     setFeedback(null);
@@ -98,6 +120,35 @@ export default function DevotionManager() {
     setFeedback(null);
   };
 
+  const handleMovePiece = (index, direction) => {
+    const newOrder = [...formData.pieces_order];
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= newOrder.length) return;
+    const temp = newOrder[index];
+    newOrder[index] = newOrder[targetIdx];
+    newOrder[targetIdx] = temp;
+    setFormData((prev) => ({ ...prev, pieces_order: newOrder }));
+  };
+
+  const handleToggleStatus = async (item) => {
+    const isCurrentlyPublished = item.status === 'published' || item.is_published === true;
+    const newStatus = isCurrentlyPublished ? 'draft' : 'published';
+    try {
+      await api.saveDevotion({
+        ...item,
+        status: newStatus,
+        is_published: !isCurrentlyPublished,
+      });
+      setFeedback({
+        type: 'success',
+        text: `Hartauden (${item.target_date?.split('T')[0]}) tila vaihdettu: ${newStatus === 'published' ? 'Julkaistu' : 'Luonnos'}`,
+      });
+      await loadData();
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message || 'Tilan vaihto epäonnistui' });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -105,6 +156,7 @@ export default function DevotionManager() {
 
     try {
       const payload = {
+        id: formData.id,
         target_date: formData.target_date,
         title: formData.title.trim(),
         format: formData.format,
@@ -112,6 +164,8 @@ export default function DevotionManager() {
         author_user_id: formData.author_type === 'other_user' ? formData.author_user_id : null,
         author_custom_name: formData.author_type === 'custom_text' ? formData.author_custom_name.trim() : null,
         status: formData.status,
+        is_published: formData.status === 'published',
+        youtube_url: formData.youtube_url ? formData.youtube_url.trim() : null,
       };
 
       if (formData.format === 'single_block') {
@@ -120,12 +174,16 @@ export default function DevotionManager() {
         payload.scripture_reference = formData.scripture_reference;
         payload.scripture_text = formData.scripture_text;
         payload.meditation = formData.meditation;
+        payload.meditation_content = formData.meditation;
         payload.prayer = formData.prayer;
+        payload.closing_prayer = formData.prayer;
         payload.hymn = formData.hymn;
+        payload.hymn_suggestion = formData.hymn;
         payload.blessing = formData.blessing;
+        payload.pieces_order = formData.pieces_order;
       }
 
-      const res = await api.saveDevotion(payload);
+      await api.saveDevotion(payload);
       setFeedback({
         type: 'success',
         text: formData.id ? 'Hartaus päivitetty onnistuneesti!' : 'Uusi hartaus tallennettu onnistuneesti!',
@@ -351,6 +409,46 @@ export default function DevotionManager() {
             )}
           </div>
 
+          {/* YouTube Video URL Input with Live Preview */}
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+            <label className="label text-xs font-bold text-gray-900 uppercase tracking-wide flex items-center gap-1.5 mb-0">
+              <span>▶️</span> YouTube-video (valinnainen)
+            </label>
+            <p className="text-[11px] text-gray-500">
+              Liitä tähän YouTube-videon tai Shorts-videon linkki. Video näytetään responsiivisena soittimena hartauden alussa.
+            </p>
+            <input
+              type="url"
+              value={formData.youtube_url}
+              onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+              className="input text-sm"
+              placeholder="esim. https://www.youtube.com/watch?v=... tai https://youtu.be/..."
+            />
+            {formData.youtube_url && (
+              <div className="pt-2">
+                {getYouTubeEmbedId(formData.youtube_url) ? (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-semibold text-emerald-800 flex items-center gap-1">
+                      <span>✓</span> Videon esikatselu:
+                    </span>
+                    <div className="max-w-md aspect-video rounded-xl overflow-hidden border border-gray-300 bg-black shadow-2xs">
+                      <iframe
+                        src={`https://www.youtube-nocookie.com/embed/${getYouTubeEmbedId(formData.youtube_url)}`}
+                        title="Videon esikatselu"
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-rose-600 font-medium">
+                    ⚠️ Linkki ei vaikuta kelvolliselta YouTube-osoitteelta.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Format selection: Single Text Block vs Structured */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -400,91 +498,137 @@ export default function DevotionManager() {
               </div>
             ) : (
               <div className="space-y-4 p-4 bg-teal-50/40 rounded-xl border border-teal-200/60">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="label text-xs font-semibold">Raamatunkohta (viite)</label>
-                    <input
-                      type="text"
-                      value={formData.scripture_reference}
-                      onChange={(e) => setFormData({ ...formData, scripture_reference: e.target.value })}
-                      className="input text-sm"
-                      placeholder="esim. Matt. 5:14-16 tai Ps. 23"
-                    />
-                  </div>
-                  <div>
-                    <label className="label text-xs font-semibold">Ehdotettu virsi</label>
-                    <input
-                      type="text"
-                      value={formData.hymn}
-                      onChange={(e) => setFormData({ ...formData, hymn: e.target.value })}
-                      className="input text-sm"
-                      placeholder="esim. Virsi 338: Päivä vain ja hetki kerrallansa"
-                    />
-                  </div>
+                <div className="flex items-center justify-between pb-2 border-b border-teal-200/60">
+                  <span className="text-xs font-bold text-teal-950 uppercase tracking-wide">
+                    Hartauden osiot (Järjestä ja muokkaa)
+                  </span>
+                  <span className="text-[11px] text-teal-800">
+                    Käytä ▲/▼ -painikkeita osioiden järjestyksen vaihtamiseen
+                  </span>
                 </div>
 
-                <div>
-                  <label className="label text-xs font-semibold">Raamatunteksti</label>
-                  <textarea
-                    rows={3}
-                    value={formData.scripture_text}
-                    onChange={(e) => setFormData({ ...formData, scripture_text: e.target.value })}
-                    className="input text-sm italic"
-                    placeholder="Lainaus luettavasta raamatunkohdasta..."
-                  />
-                </div>
+                <div className="space-y-3">
+                  {formData.pieces_order.map((pieceKey, index) => {
+                    const isFirst = index === 0;
+                    const isLast = index === formData.pieces_order.length - 1;
 
-                <div>
-                  <label className="label text-xs font-semibold">Meditaatio / Hartauspuhe</label>
-                  <textarea
-                    rows={6}
-                    value={formData.meditation}
-                    onChange={(e) => setFormData({ ...formData, meditation: e.target.value })}
-                    className="input font-serif text-sm leading-relaxed"
-                    placeholder="Pappi tai kirjoittajan ajatukset, pohdinta ja rohkaisun sanat..."
-                  />
-                </div>
+                    return (
+                      <div
+                        key={pieceKey}
+                        className="p-3.5 bg-white rounded-xl border border-teal-200/80 shadow-2xs space-y-2.5 transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-900 flex items-center justify-center text-[11px] font-mono">
+                              {index + 1}
+                            </span>
+                            <span>
+                              {pieceKey === 'scripture' && '📖 Raamatunkohta ja lukuteksti'}
+                              {pieceKey === 'meditation' && '✍️ Meditaatio / Hartauspuhe'}
+                              {pieceKey === 'prayer' && '🙏 Päivän rukous'}
+                              {pieceKey === 'hymn' && '🎵 Ehdotettu virsi tai musiikki'}
+                            </span>
+                          </span>
 
-                <div>
-                  <label className="label text-xs font-semibold">Päivän rukous</label>
-                  <textarea
-                    rows={3}
-                    value={formData.prayer}
-                    onChange={(e) => setFormData({ ...formData, prayer: e.target.value })}
-                    className="input text-sm italic"
-                    placeholder="Yhteinen rukous tälle päivälle..."
-                  />
-                </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              disabled={isFirst}
+                              onClick={() => handleMovePiece(index, -1)}
+                              className="px-2 py-0.5 text-xs font-bold rounded border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none"
+                              title="Siirrä ylöspäin"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              type="button"
+                              disabled={isLast}
+                              onClick={() => handleMovePiece(index, 1)}
+                              className="px-2 py-0.5 text-xs font-bold rounded border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none"
+                              title="Siirrä alaspäin"
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        </div>
 
-                <div>
-                  <label className="label text-xs font-semibold">Siunaus</label>
-                  <input
-                    type="text"
-                    value={formData.blessing}
-                    onChange={(e) => setFormData({ ...formData, blessing: e.target.value })}
-                    className="input text-sm"
-                    placeholder="esim. Herran siunaus tai karkea siunauksen toivotus"
-                  />
+                        {pieceKey === 'scripture' && (
+                          <div className="space-y-2 pt-1">
+                            <input
+                              type="text"
+                              value={formData.scripture_reference}
+                              onChange={(e) => setFormData({ ...formData, scripture_reference: e.target.value })}
+                              className="input text-xs"
+                              placeholder="Raamatunkohta (viite, esim. Matt. 5:14-16 tai Ps. 23) - jätä tyhjäksi ohittaaksesi"
+                            />
+                            <textarea
+                              rows={3}
+                              value={formData.scripture_text}
+                              onChange={(e) => setFormData({ ...formData, scripture_text: e.target.value })}
+                              className="input text-xs italic"
+                              placeholder="Lainaus raamatunkohdasta..."
+                            />
+                          </div>
+                        )}
+
+                        {pieceKey === 'meditation' && (
+                          <div className="pt-1">
+                            <textarea
+                              rows={5}
+                              value={formData.meditation}
+                              onChange={(e) => setFormData({ ...formData, meditation: e.target.value })}
+                              className="input font-serif text-xs leading-relaxed"
+                              placeholder="Kirjoittajan pohdinta ja rohkaisun sanat..."
+                            />
+                          </div>
+                        )}
+
+                        {pieceKey === 'prayer' && (
+                          <div className="pt-1">
+                            <textarea
+                              rows={3}
+                              value={formData.prayer}
+                              onChange={(e) => setFormData({ ...formData, prayer: e.target.value })}
+                              className="input text-xs italic"
+                              placeholder="Yhteinen rukous tälle päivälle..."
+                            />
+                          </div>
+                        )}
+
+                        {pieceKey === 'hymn' && (
+                          <div className="pt-1">
+                            <input
+                              type="text"
+                              value={formData.hymn}
+                              onChange={(e) => setFormData({ ...formData, hymn: e.target.value })}
+                              className="input text-xs"
+                              placeholder="esim. Virsi 338: Päivä vain ja hetki kerrallansa"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Form Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          {/* Form Actions (Responsive without overflow) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100 flex-wrap">
             <div className="flex items-center gap-2">
-              <label className="label text-xs font-semibold mb-0">Tila:</label>
+              <label className="label text-xs font-semibold mb-0 whitespace-nowrap">Tila:</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="input py-1 text-xs w-auto"
+                className="input py-1.5 text-xs w-auto"
               >
                 <option value="published">Julkaistu (näkyy kalenteripäivänään)</option>
                 <option value="draft">Luonnos (vain ylläpidolle)</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 self-end sm:self-auto flex-wrap">
               <button
                 type="button"
                 onClick={handleCancel}
@@ -495,7 +639,7 @@ export default function DevotionManager() {
               <button
                 type="submit"
                 disabled={saving}
-                className="btn-primary text-xs sm:text-sm py-2 px-5 flex items-center gap-2"
+                className="btn-primary text-xs sm:text-sm py-2 px-5 flex items-center gap-2 whitespace-nowrap"
               >
                 {saving ? 'Tallennetaan...' : formData.id ? 'Tallenna muutokset' : 'Julkaise hartaus'}
               </button>
@@ -584,15 +728,19 @@ export default function DevotionManager() {
                         )}
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                            dev.status === 'published'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-amber-100 text-amber-800'
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(dev)}
+                          title="Klikkaa vaihtaaksesi tilan (Julkaistu / Luonnos)"
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 ${
+                            dev.status === 'published' || dev.is_published === true
+                              ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300'
+                              : 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300'
                           }`}
                         >
-                          {dev.status === 'published' ? 'Julkaistu' : 'Luonnos'}
-                        </span>
+                          <span>{dev.status === 'published' || dev.is_published === true ? '✓' : '⏸'}</span>
+                          <span>{dev.status === 'published' || dev.is_published === true ? 'Julkaistu' : 'Luonnos'}</span>
+                        </button>
                       </td>
                       <td className="py-3 px-3 text-right whitespace-nowrap space-x-2">
                         <button

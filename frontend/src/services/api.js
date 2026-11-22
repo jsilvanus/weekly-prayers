@@ -153,12 +153,14 @@ export const api = {
   // Bible (Kirkkovuosikalenteri & Anno API)
   getBibleToday: (date) =>
     request(`/bible/today${date ? `?date=${date}` : ''}`),
+  getLiturgicalHours: (date) =>
+    request(`/bible/hours${date ? `?date=${date}` : ''}`),
   getLiturgicalDay: (date) =>
     request(`/bible/liturgical-day${date ? `?date=${date}` : ''}`),
   getSundayGospel: (date) =>
     request(`/bible/sunday-gospel${date ? `?date=${date}` : ''}`),
   getDailyPrayerHours: (date) =>
-    request(`/bible/daily-hours${date ? `?date=${date}` : ''}`),
+    request(`/bible/hours${date ? `?date=${date}` : ''}`),
   getAnnoStatus: () =>
     request('/bible/status'),
   testAnnoConnection: (customUrl) =>
@@ -240,7 +242,8 @@ export const api = {
     request(`/devotions/${id}`, {
       method: 'DELETE',
     }),
-  getMeditations: () => request('/meditations'),
+  getMeditations: (includeInactive = false) =>
+    request(`/meditations${includeInactive ? '?includeInactive=true' : ''}`),
   getMeditationById: (id) => request(`/meditations/${id}`),
 };
 

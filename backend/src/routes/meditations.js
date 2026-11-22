@@ -1,15 +1,16 @@
 import express from 'express';
-import { getMeditationsList, getMeditationById } from '../services/meditationService.js';
+import { getMeditationsList, getActiveMeditationsList, getMeditationById } from '../services/meditationService.js';
 
 const router = express.Router();
 
 /**
  * GET /api/meditations
- * List all curated classical Christian & Lutheran meditations
+ * List curated classical Christian & Lutheran meditations respecting active_meditations
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const list = getMeditationsList();
+    const includeInactive = req.query.includeInactive === 'true' || req.query.all === 'true';
+    const list = await getActiveMeditationsList({ includeInactive });
     res.json({
       success: true,
       meditations: list,

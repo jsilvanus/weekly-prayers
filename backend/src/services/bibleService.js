@@ -117,12 +117,18 @@ export async function getBibleForDate(targetDate) {
   const isToday = dateStr === todayStr;
 
   // 1. Check for an active manual override matching dateStr
-  const overridesResult = await pool.query(
-    'SELECT * FROM bible_overrides WHERE is_active = TRUE ORDER BY updated_at DESC'
-  );
+  let overridesRows = [];
+  try {
+    const overridesResult = await pool.query(
+      'SELECT * FROM bible_overrides WHERE is_active = TRUE ORDER BY updated_at DESC'
+    );
+    overridesRows = overridesResult.rows || [];
+  } catch (err) {
+    // If DB is offline or table does not exist, continue gracefully
+  }
 
   let manualMatch = null;
-  for (const row of overridesResult.rows) {
+  for (const row of overridesRows) {
     const sched = typeof row.schedule === 'string' ? JSON.parse(row.schedule) : row.schedule;
     if (matchesSchedule(sched, dateStr)) {
       manualMatch = row;
@@ -131,8 +137,12 @@ export async function getBibleForDate(targetDate) {
   }
 
   // 2. Fetch liturgical day and lectionary from Anno API (or fallback)
-  const { data: dayData, source: daySource } = await fetchDayFromAnno(dateStr);
-  const { lectionary: hoursData, source: lectionarySource } = await fetchLectionaryFromAnno(dateStr);
+  const annoDayResult = await fetchDayFromAnno(dateStr);
+  const dayData = annoDayResult || {};
+  const daySource = annoDayResult?.source || 'fallback';
+  const annoHoursResult = await fetchLectionaryFromAnno(dateStr);
+  const hoursData = annoHoursResult?.lectionary || {};
+  const lectionarySource = annoHoursResult?.source || 'fallback';
 
   // 3. Resolve Daily Verse
   let dailyVerse = null;
@@ -149,18 +159,19 @@ export async function getBibleForDate(targetDate) {
     };
   } else {
     // Extract from Anno API / liturgical day
-    const holyDay = dayData.holyDay || dayData.weekdayMaterial || dayData;
+    const holyDay = dayData.holyDay || dayData.weekdayMaterial || dayData || {};
     const texts = holyDay.texts || {};
     const gospel = texts.gospel;
     const firstReading = texts.firstReading;
     const psalm = holyDay.psalm;
+    const verseObj = dayData.dailyVerse;
 
-    const reference = gospel?.reference || firstReading?.reference || psalm?.reference || 'Ps. 103:1–4';
-    const text = gospel?.text || firstReading?.text || psalm?.text || 
+    const reference = verseObj?.reference || gospel?.reference || firstReading?.reference || psalm?.reference || 'Ps. 103:1–4';
+    const text = verseObj?.text || gospel?.text || firstReading?.text || psalm?.text || 
       'Ylistä Herraa, minun sieluni, ja kaikki mitä minussa on, hänen pyhää nimeään. Ylistä Herraa, minun sieluni, äläkä unohda, mitä hyvää hän on sinulle tehnyt.';
-    const meditation = holyDay.theme 
+    const meditation = verseObj?.meditation || (holyDay.theme 
       ? `Päivän aihe: ${holyDay.theme}. ${holyDay.description || ''}`
-      : 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan.';
+      : 'Herra on laupias ja armahtavainen, pitkämielinen ja suuri armossaan.');
 
     dailyVerse = {
       isManual: false,
@@ -174,14 +185,14 @@ export async function getBibleForDate(targetDate) {
 
   // 4. Liturgy of the Hours & nearest hour
   const nearestHourKey = getNearestHourName();
-  const nearestHour = hoursData[nearestHourKey] || hoursData.morning;
+  const nearestHour = hoursData[nearestHourKey] || hoursData.morning || null;
 
   const liturgicalInfo = {
     date: dateStr,
     dayName: dayData.holyDay?.name || dayData.weekdayMaterial?.name || 'Kirkkovuosi',
     theme: dayData.holyDay?.theme || dayData.weekdayMaterial?.theme || '',
-    season: dayData.season || dayData.period || '',
-    color: dayData.liturgicalColor || { color: 'vihreä', english: 'green' }
+    season: dayData.holyDay?.season || dayData.season || dayData.period || 'Kirkkovuosi',
+    color: dayData.holyDay?.liturgicalColor || dayData.liturgicalColor || { color: 'vihreä', english: 'green' }
   };
 
   return {
