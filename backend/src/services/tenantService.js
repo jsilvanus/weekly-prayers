@@ -7,6 +7,7 @@ export async function getAllTenants() {
   const result = await query(
     `SELECT t.id, t.name, t.slug, t.type, t.parent_id, t.diocese, t.logo_url, 
             t.color_palette, t.custom_color, t.domain, t.week_rollover_day, t.week_cycle_mode, t.highlight_icon, t.church_logo_variant,
+            t.active_modules,
             t.created_at, t.updated_at,
             p.name as parent_name,
             (SELECT COUNT(*) FROM prayer_requests pr WHERE pr.tenant_id = t.id) as prayer_count,
@@ -211,6 +212,7 @@ export async function createTenant(data = {}) {
     week_cycle_mode = 'thursday_cycle',
     highlight_icon = 'candle',
     church_logo_variant = 'auto',
+    active_modules = ['prayers', 'bible', 'hours', 'hartaus'],
   } = data;
 
   if (!name || !name.trim()) {
@@ -226,10 +228,14 @@ export async function createTenant(data = {}) {
     throw new Error(`Tenant slug '${cleanSlug}' is already in use`);
   }
 
+  const modulesJson = active_modules
+    ? (typeof active_modules === 'string' ? active_modules : JSON.stringify(active_modules))
+    : JSON.stringify(['prayers', 'bible', 'hours', 'hartaus']);
+
   const sql = `
     INSERT INTO tenants (
-      name, slug, type, parent_id, diocese, logo_url, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, highlight_icon, church_logo_variant, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+      name, slug, type, parent_id, diocese, logo_url, color_palette, custom_color, domain, week_rollover_day, week_cycle_mode, highlight_icon, church_logo_variant, active_modules, created_at, updated_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
     RETURNING *
   `;
 
@@ -247,6 +253,7 @@ export async function createTenant(data = {}) {
     week_cycle_mode || 'thursday_cycle',
     highlight_icon || 'candle',
     church_logo_variant || 'auto',
+    modulesJson
   ];
 
   const result = await query(sql, values);
@@ -322,6 +329,13 @@ export async function updateTenant(identifier, updates = {}) {
   if (updates.church_logo_variant !== undefined) {
     fields.push(`church_logo_variant = $${idx++}`);
     values.push(updates.church_logo_variant || 'auto');
+  }
+  if (updates.active_modules !== undefined) {
+    const modulesJson = typeof updates.active_modules === 'string'
+      ? updates.active_modules
+      : JSON.stringify(updates.active_modules);
+    fields.push(`active_modules = $${idx++}`);
+    values.push(modulesJson);
   }
 
   if (fields.length === 0) return tenant;

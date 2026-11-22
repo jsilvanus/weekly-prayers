@@ -7,6 +7,7 @@ export const ROLE_RANK = {
   prayer_group: 1.5,
   bishop: 2,
   worker: 2,
+  devotion: 2,
   coordinator: 3,
   admin: 4,
 };
