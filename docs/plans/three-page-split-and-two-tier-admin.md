@@ -163,7 +163,7 @@ Each active landing page follows a unified, recognizable layout consisting of:
 - **Writer Attribution Display**:
   - The writer's name and title are prominently and respectfully displayed right under the title:
     - *Lisääjä itse*: E.g. *"Kirjoittaja: Pastori Maria Korhonen"*
-    - *Toisen käyttäjätilin puolesta*: E.g. *"Kirjoittaja: Diakoni Pekka Mäkinen (lisännyt pastori Maria Korhonen)"*
+    - *Toisen käyttäjätilin puolesta*: E.g. *"Kirjoittaja: Diakoni Pekka Mäkinen"*. **Note on privacy**: The fact that it was added on behalf of another user is **strictly internal administrative information** and is never displayed publicly. To the reader, only the designated author's name appears.
     - *Vapaamuotoinen kuvaus*: E.g. *"Kirjoittaja: Iäkäs seurakuntalainen"* tai *"Kirjoittaja: Kirkkoisä Augustinus"*
 - **Primary Hero Action**: `[🕯️ Hiljenny päivän hartauteen]` (*Meditate on Today's Devotion*) &rarr; smoothly scrolls/focuses the devotion text.
 - **Sibling Navigation**: Direct links to Esirukoukset, Raamattu & Sana, and Hetkirukous.
@@ -220,10 +220,12 @@ When creating or editing a devotion in `DevotionManager`, the author chooses bet
    - `author_title = authUser.title` (e.g. "Pastori")
 
 2. **Option 2: Toisen käyttäjän puolesta (*On Behalf of Another User / OIDC Account*)**:
-   - If an assistant, colleague, or team member enters a devotion written by another parish worker or priest:
+   - If an assistant, colleague, or team member enters a devotion written by another parish worker or pastor:
    - Selects another registered user account from the parish user list / OIDC directory.
+   - **Internal Administrative Metadata Only**: The fact that the devotion was entered on someone else's behalf is **strictly administrative information and is never shown to the public**. To the public reader, the devotion appears cleanly and solely under the designated author's name.
+   - In the administrative management UI (`DevotionManager`), administrators and staff see the entry submitter (`created_by_user_id`) alongside the credited author (e.g. *"Kirjoittaja: Pekka Mäkinen • Lisännyt: Maria Korhonen"*) for auditability, accountability, and workflow clarity.
    - `author_type = 'other_user'`
-   - `created_by_user_id = authUser.id` (stored for auditability)
+   - `created_by_user_id = authUser.id` (stored for internal admin audit only)
    - `author_user_id = selectedUser.id`
    - `author_name = selectedUser.name`
    - `author_title = selectedUser.title`
