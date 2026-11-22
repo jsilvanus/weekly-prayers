@@ -5,7 +5,10 @@
   },
   "nav": {
     "home": "Etusivu",
-    "bible": "Raamattu",
+    "prayers": "Esirukoukset",
+    "bible": "Raamattu & Sana",
+    "hours": "Hetkirukous",
+    "hartaus": "Hartaus",
     "admin": "Hallinta",
     "intercessionList": "Esirukouslista",
     "login": "Kirjaudu",
@@ -77,6 +80,13 @@
   },
   "admin": {
     "title": "Hallintapaneeli",
+    "domains": {
+      "prayers": "Esirukoukset",
+      "bible": "Raamattu & Sana",
+      "hours": "Hetkirukous",
+      "hartaus": "Hartaus",
+      "general": "Yleiset asetukset"
+    },
     "prayers": {
       "title": "Rukouspyyntöjen hallinta",
       "pending": "Odottaa hyväksyntää",
@@ -106,6 +116,7 @@
         "bishop": "Piispa",
         "coordinator": "Koordinaattori",
         "worker": "Työntekijä",
+        "devotion": "Hartauskirjoittaja",
         "prayer_group": "Rukousryhmä",
         "user": "Käyttäjä"
       }
