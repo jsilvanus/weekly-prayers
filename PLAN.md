@@ -367,4 +367,23 @@ Upotusmahdollisuudet, tuloste, Docker-kontitus ja dokumentaatio.
 | 3 | Rukousaihe-API ja AI-moderointi | 10 |
 | 4 | Frontend ja käyttöliittymä | 10 |
 | 5 | Viimeistely ja julkaisu | 10 |
-| **Yhteensä** | | **50** |
+| 6 | Neljän päälaskeutumissivun rakenne, Hartaus, kaksiportainen ylläpito ja seurakuntakohtaiset moduulit | 10 |
+| **Yhteensä** | | **60** |
+
+---
+
+## Milestone 6: Neljän päälaskeutumissivun rakenne, Hartaus, kaksiportainen ylläpito ja seurakuntakohtaiset moduulit
+
+Tarkempi arkkitehtuuri- ja toteutussuunnitelma dokumentoitu tiedostossa:
+👉 [`docs/plans/three-page-split-and-two-tier-admin.md`](docs/plans/three-page-split-and-two-tier-admin.md)
+
+1. **Esirukoukset (Prayer Intentions)**: Päälaskeutumissivu `/` toiminnolla "Jätä esirukouspyyntö" (avaa modaalin) sekä dynaaminen rinnakkaisnavigaatio aktiivisiin moduuleihin.
+2. **Raamattu & Päivän sana (Bible & Word of the Day)**: Päälaskeutumissivu `/bible` toiminnolla "Näytä päivän sana" (avaa päivän jae -dialogin) sekä rinnakkaisnavigaatio muihin moduuleihin.
+3. **Rukoushetki (Moment of Prayer / Liturgy of Hours)**: Päälaskeutumissivu `/prayer-moment` toiminnolla "Rukoile nyt". Noudattaa tarkasti Suomen ev.lut. kirkon Kirkkokäsikirjan kaavoja (Laudes, Seksti, Vesper, Kompletorio sekä Pieni rukoushetki). Sisältää esirukousjaksossa upotetun dialogin (`EmbeddedIntercessionsModal`), josta käyttäjä voi rukoilla suoraan seurakunnan aktiivisten esirukouspyyntöjen puolesta poistumatta rukoushetkestä.
+4. **Hartaus (Curated Devotions)**: Päälaskeutumissivu `/hartaus` toiminnolla "Hiljenny hartauteen". Sivulla näytetään **aina vain yksi hartaus kerrallaan** ilman valintastressiä, ja se vaihtuu kalenterivuorokauden mukaan keskiyöllä (00:00). Tukee sekä yhtenäistä tekstikenttää että moniosaista rakenteista sisältöä. Kirjoittajatieto on aina näkyvissä kolmella joustavalla valinnalla: (1) lisääjä itse, (2) toinen rekisteröity käyttäjätili/OIDC toisen puolesta lisättäessä, tai (3) vapaamuotoinen tekstikenttä (esim. "Iäkäs seurakuntalainen").
+5. **Seurakuntakohtainen moduulivalinta (Tenant Module Toggles)**: Mahdollisuus ottaa käyttöön tai poistaa käytöstä mikä tahansa neljästä moduulista seurakunnan asetuksista (`active_modules`). Navigaatio, ristiinlinkit ja reititys mukautuvat automaattisesti.
+6. **Uusi käyttäjäryhmä ja -rooli: `devotion` (Hartauskirjoittaja)**: Käyttöoikeus hartauskirjoitusten luomiseen, aikatauluttamiseen ja julkaisemiseen (papit, diakonit, työntekijät ja vierailevat kirjoittajat).
+7. **Kaksiportainen ylläpito (/admin)**:
+   - Taso 1: Esirukoukset, Raamattu & Sana, Hetkirukoukset, Hartaus, Yleiset asetukset.
+   - Taso 2: Toimialakohtaiset alisivut ja asetukset (esim. hartaus-editori yhtenäisellä tekstillä tai rakenteisilla kentillä, piispa, kirkkoherra, työalat, ryhmät, moduuliasetukset, logot, tunnukset).
+

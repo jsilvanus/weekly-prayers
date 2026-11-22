@@ -142,6 +142,20 @@ export function TenantProvider({ children }) {
 
   const effectiveSisterParishes = effectiveAllParishes.filter(p => p.id !== effectiveTenant?.id);
 
+  const activeModules = (() => {
+    const raw = effectiveTenant?.active_modules || settings?.active_modules;
+    if (!raw) return ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+    if (Array.isArray(raw)) return raw;
+    try {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return Array.isArray(parsed) ? parsed : ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+    } catch (e) {
+      return ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+    }
+  })();
+
+  const isModuleEnabled = (moduleKey) => activeModules.includes(moduleKey);
+
   const value = {
     currentTenant: effectiveTenant,
     yhtyma: effectiveYhtyma,
@@ -150,6 +164,8 @@ export function TenantProvider({ children }) {
     allParishesInYhtyma: effectiveAllParishes,
     allTenants: allTenantsList,
     selectedSlug,
+    activeModules,
+    isModuleEnabled,
     switchParish,
     refetchTenant: () => {
       fetchHierarchy(selectedSlug);

@@ -202,7 +202,7 @@ export async function getAllUsers() {
 }
 
 export async function updateUserRole(id, role) {
-  const validRoles = ['admin', 'bishop', 'coordinator', 'worker', 'prayer_group', 'user'];
+  const validRoles = ['admin', 'bishop', 'coordinator', 'worker', 'devotion', 'prayer_group', 'user'];
   if (!validRoles.includes(role)) {
     throw new Error(`Invalid role: ${role}. Must be one of: ${validRoles.join(', ')}`);
   }

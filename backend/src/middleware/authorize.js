@@ -1,9 +1,10 @@
-// Role hierarchy: admin > coordinator > worker = bishop > prayer_group > user
+// Role hierarchy: admin > coordinator > worker = bishop = devotion > prayer_group > user
 const roleHierarchy = {
   admin: 4,
   coordinator: 3,
   worker: 2,
   bishop: 2,
+  devotion: 2,
   prayer_group: 1.5,
   user: 1,
 };
@@ -64,6 +65,7 @@ export function requireMinRole(minRole) {
 // Shorthand middlewares
 export const requireAdmin = requireRole('admin');
 export const requireBishopOrAdmin = requireRole('admin', 'bishop');
+export const requireDevotionAuthor = requireRole('admin', 'coordinator', 'worker', 'devotion');
 export const requireCoordinator = requireMinRole('coordinator');
 export const requireWorker = requireMinRole('worker');
 export const requirePrayerListAccess = requireRole('admin', 'coordinator', 'worker', 'prayer_group', 'bishop');

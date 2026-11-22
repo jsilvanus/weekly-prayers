@@ -68,8 +68,10 @@ export function AuthProvider({ children }) {
   const isBishop = user?.role === 'bishop';
   const isPrayerGroup = user?.role === 'prayer_group';
   const isCoordinator = user?.role === 'coordinator';
+  const isDevotion = user?.role === 'devotion';
   const isCoordinatorOrAbove = user?.role === 'admin' || user?.role === 'coordinator';
-  const isWorkerOrAbove = user?.role === 'admin' || user?.role === 'coordinator' || user?.role === 'worker';
+  const isWorkerOrAbove = user?.role === 'admin' || user?.role === 'coordinator' || user?.role === 'worker' || user?.role === 'devotion';
+  const isDevotionAuthor = user?.role === 'admin' || user?.role === 'coordinator' || user?.role === 'worker' || user?.role === 'devotion';
   const canAccessPrayerList = isWorkerOrAbove || isBishop || isPrayerGroup;
 
   return (
@@ -82,6 +84,8 @@ export function AuthProvider({ children }) {
         isBishop,
         isPrayerGroup,
         isCoordinator,
+        isDevotion,
+        isDevotionAuthor,
         isCoordinatorOrAbove,
         isWorkerOrAbove,
         canAccessPrayerList,

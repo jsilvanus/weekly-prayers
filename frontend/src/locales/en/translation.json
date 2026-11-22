@@ -5,7 +5,11 @@
   },
   "nav": {
     "home": "Home",
-    "bible": "Bible",
+    "prayers": "Prayer Intentions",
+    "bible": "Bible & Word",
+    "hours": "Prayer of the Hours",
+    "hartaus": "Devotion",
+    "meditations": "Meditations",
     "admin": "Admin",
     "intercessionList": "Prayer List",
     "login": "Login",
@@ -77,6 +81,14 @@
   },
   "admin": {
     "title": "Admin Panel",
+    "domains": {
+      "prayers": "Prayer Intentions",
+      "bible": "Bible & Word",
+      "hours": "Liturgy of the Hours",
+      "meditations": "Meditations",
+      "hartaus": "Devotion",
+      "general": "General Settings"
+    },
     "prayers": {
       "title": "Prayer Request Management",
       "pending": "Pending approval",
@@ -106,6 +118,7 @@
         "bishop": "Bishop",
         "coordinator": "Coordinator",
         "worker": "Staff",
+        "devotion": "Devotion Writer",
         "prayer_group": "Prayer Group",
         "user": "User"
       }
@@ -145,7 +158,9 @@
     "confirm": "Confirm",
     "week": "Week",
     "startDate": "Start date",
-    "endDate": "End date"
+    "endDate": "End date",
+    "language": "Language",
+    "Language": "Language"
   },
   "settings": {
     "title": "Settings",

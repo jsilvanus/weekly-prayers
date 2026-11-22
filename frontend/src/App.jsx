@@ -6,6 +6,9 @@ import { TenantProvider } from './context/TenantContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import HomePage from './components/prayers/HomePage';
+import PrayerMomentPage from './components/prayers/PrayerMomentPage';
+import DevotionPage from './components/prayers/DevotionPage';
+import MeditationPage from './components/prayers/MeditationPage';
 import AdminPanel from './components/admin/AdminPanel';
 import BiblePage from './components/bible/BiblePage';
 import { withBasePath } from './services/api';
@@ -34,8 +37,17 @@ function App() {
             <main className="flex-grow container mx-auto px-4 py-8">
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/prayers" element={<HomePage />} />
+                <Route path="/esirukoukset" element={<HomePage />} />
                 <Route path="/bible" element={<BiblePage />} />
                 <Route path="/raamattu" element={<BiblePage />} />
+                <Route path="/prayer-moment" element={<PrayerMomentPage />} />
+                <Route path="/hetkirukous" element={<PrayerMomentPage />} />
+                <Route path="/hartaus" element={<DevotionPage />} />
+                <Route path="/devotion" element={<DevotionPage />} />
+                <Route path="/meditations" element={<MeditationPage />} />
+                <Route path="/meditaatiot" element={<MeditationPage />} />
+                <Route path="/hiljaisuus" element={<MeditationPage />} />
                 <Route path="/esirukouslista" element={<IntercessionRedirect />} />
                 <Route path="/esirukous" element={<IntercessionRedirect />} />
                 <Route path="/intercession" element={<IntercessionRedirect />} />

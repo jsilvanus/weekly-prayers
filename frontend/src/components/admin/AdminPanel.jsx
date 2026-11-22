@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import PrayerManager from './PrayerManager';
@@ -11,76 +11,231 @@ import HighlightManager from './HighlightManager';
 import SettingsManager from './SettingsManager';
 import TenantManager from './TenantManager';
 import BibleManager from './BibleManager';
+import HoursManager from './HoursManager';
+import DevotionManager from './DevotionManager';
+import MeditationPage from '../prayers/MeditationPage';
 
-function AdminPanel() {
+export default function AdminPanel() {
   const { t } = useTranslation();
-  const { isWorkerOrAbove, isCoordinatorOrAbove, isAdmin, isBishop, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState(isBishop ? 'bishop' : 'prayers');
+  const { isWorkerOrAbove, isCoordinatorOrAbove, isAdmin, isBishop, isDevotionAuthor, isDevotion, loading } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Tier 1 and Tier 2 domain definition
+  const allDomains = useMemo(() => {
+    const domains = [];
+
+    // 1. Esirukoukset (Prayer Intentions)
+    const prayerSubTabs = [];
+    if (!isBishop || isAdmin) {
+      prayerSubTabs.push({ id: 'prayers', label: t('admin.prayers.title') || 'Yleiset esirukoukset', component: PrayerManager });
+      prayerSubTabs.push({ id: 'staff', label: t('admin.staff.title') || 'Työntekijän aihe', component: StaffPrayerForm });
+    }
+    if (isAdmin) {
+      prayerSubTabs.push({ id: 'pastor', label: t('admin.pastor.title') || 'Kirkkoherran aihe', component: PastorPrayerForm });
+    }
+    if (isBishop || isAdmin) {
+      prayerSubTabs.push({ id: 'bishop', label: t('admin.bishop.title') || 'Piispan aihe', component: BishopPrayerForm });
+    }
+    if (isCoordinatorOrAbove) {
+      prayerSubTabs.push({ id: 'highlights', label: t('admin.highlights.title') || 'Esirukousnostot', component: HighlightManager });
+    }
+
+    if (prayerSubTabs.length > 0) {
+      domains.push({
+        id: 'prayers',
+        label: t('nav.prayers') || 'Esirukoukset',
+        icon: '🙏',
+        subTabs: prayerSubTabs,
+      });
+    }
+
+    // 2. Raamattu & Sana (Bible Word)
+    if (!isBishop || isAdmin) {
+      domains.push({
+        id: 'bible',
+        label: t('nav.bible') || 'Raamattu & Sana',
+        icon: '📖',
+        subTabs: [
+          { id: 'bible_hub', label: 'Raamatuntekstit & Anno API', component: BibleManager },
+        ],
+      });
+    }
+
+    // 3. Hetkirukous (Liturgy of Hours)
+    if (!isBishop || isAdmin) {
+      domains.push({
+        id: 'hours',
+        label: t('nav.hours') || 'Hetkirukous',
+        icon: '⏰',
+        subTabs: [
+          { id: 'hours_hub', label: 'Kirkkokäsikirja III -hetket', component: HoursManager },
+        ],
+      });
+    }
+
+    // 4. Meditaatiot (Meditations)
+    if (!isBishop || isAdmin) {
+      domains.push({
+        id: 'meditations',
+        label: t('nav.meditations') || 'Meditaatiot',
+        icon: '📿',
+        subTabs: [
+          { id: 'meditations_hub', label: 'Meditaatiot & Hiljaisuus', component: MeditationPage },
+        ],
+      });
+    }
+
+    // 5. Hartaus (Devotions)
+    if (isDevotionAuthor) {
+      domains.push({
+        id: 'hartaus',
+        label: t('nav.hartaus') || 'Hartaus',
+        icon: '✍️',
+        subTabs: [
+          { id: 'devotions', label: 'Päivän hartaudet & kirjoittaminen', component: DevotionManager },
+        ],
+      });
+    }
+
+    // 5. Yleiset asetukset (General Settings)
+    const generalSubTabs = [];
+    if (isCoordinatorOrAbove) {
+      generalSubTabs.push({ id: 'settings', label: 'Seurakunnan asetukset & ilme', component: SettingsManager });
+    }
+    if (isAdmin) {
+      generalSubTabs.push({ id: 'users', label: t('admin.users.title') || 'Käyttäjähallinta & roolit', component: UserManager });
+      generalSubTabs.push({ id: 'tenants', label: '🏛️ Seurakunnat (Tenants)', component: TenantManager });
+    }
+
+    if (generalSubTabs.length > 0) {
+      domains.push({
+        id: 'general',
+        label: 'Yleiset asetukset',
+        icon: '⚙️',
+        subTabs: generalSubTabs,
+      });
+    }
+
+    return domains;
+  }, [isAdmin, isBishop, isCoordinatorOrAbove, isDevotionAuthor, t]);
+
+  // Determine active Domain & SubTab from URL or role-based default
+  const defaultDomainId = useMemo(() => {
+    if (isBishop && !isAdmin) return 'prayers';
+    if (isDevotion && !isCoordinatorOrAbove && !isAdmin) return 'hartaus';
+    return allDomains[0]?.id || 'prayers';
+  }, [allDomains, isBishop, isAdmin, isDevotion, isCoordinatorOrAbove]);
+
+  const urlDomain = searchParams.get('domain');
+  const urlSubTab = searchParams.get('tab');
+
+  const activeDomain = useMemo(() => {
+    const found = allDomains.find((d) => d.id === urlDomain);
+    return found || allDomains.find((d) => d.id === defaultDomainId) || allDomains[0];
+  }, [allDomains, urlDomain, defaultDomainId]);
+
+  const activeSubTab = useMemo(() => {
+    if (!activeDomain) return null;
+    const found = activeDomain.subTabs.find((s) => s.id === urlSubTab);
+    return found || activeDomain.subTabs[0];
+  }, [activeDomain, urlSubTab]);
+
+  const handleSelectDomain = (domainId) => {
+    const domain = allDomains.find((d) => d.id === domainId);
+    const firstSubTab = domain?.subTabs[0]?.id || '';
+    setSearchParams({ domain: domainId, tab: firstSubTab });
+  };
+
+  const handleSelectSubTab = (subTabId) => {
+    if (activeDomain) {
+      setSearchParams({ domain: activeDomain.id, tab: subTabId });
+    }
+  };
 
   if (loading) {
     return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
-  if (!isWorkerOrAbove && !isBishop) {
+  if (!isWorkerOrAbove && !isBishop && !isDevotionAuthor) {
     return <Navigate to="/" replace />;
   }
 
-  const tabs = [];
-
-  // Bishop and bishop assistant only have access to bishop prayer management
-  if (isBishop && !isAdmin) {
-    tabs.push({ id: 'bishop', label: t('admin.bishop.title'), component: BishopPrayerForm });
-  } else {
-    // Workers and above
-    tabs.push(
-      { id: 'prayers', label: t('admin.prayers.title'), component: PrayerManager },
-      { id: 'staff', label: t('admin.staff.title'), component: StaffPrayerForm }
-    );
-
-    if (isCoordinatorOrAbove) {
-      tabs.push({ id: 'highlights', label: t('admin.highlights.title'), component: HighlightManager });
-    }
-
-    if (isAdmin) {
-      tabs.push({ id: 'pastor', label: t('admin.pastor.title'), component: PastorPrayerForm });
-      tabs.push({ id: 'bishop', label: t('admin.bishop.title'), component: BishopPrayerForm });
-      tabs.push({ id: 'settings', label: '⚙️ Seurakunnan ilme & asetukset', component: SettingsManager });
-      tabs.push({ id: 'bible', label: '📖 Raamattu & Anno API', component: BibleManager });
-      tabs.push({ id: 'users', label: t('admin.users.title'), component: UserManager });
-      tabs.push({ id: 'tenants', label: '🏛️ Seurakunnat (Tenants)', component: TenantManager });
-    }
+  if (!activeDomain || !activeSubTab) {
+    return <div className="text-center py-8 text-gray-500">Ei käyttöoikeuksia hallintapaneeliin.</div>;
   }
 
-  const effectiveActiveTab = tabs.some(t => t.id === activeTab) ? activeTab : tabs[0]?.id;
-  const ActiveComponent = tabs.find((tab) => tab.id === effectiveActiveTab)?.component || (isBishop ? BishopPrayerForm : PrayerManager);
+  const ActiveComponent = activeSubTab.component;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-primary-800 mb-6">
-        {t('admin.title')}
-      </h1>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Title */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-200 pb-4">
+        <div>
+          <h1 className="text-2xl font-bold font-martti text-primary-900">
+            {t('admin.title')}
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            Kaksitasoinen hallintapaneeli: valitse pääalue ja sen ala-asetus.
+          </p>
+        </div>
+      </div>
 
-      <div className="border-b border-gray-200 mb-6 overflow-x-auto pb-1 scrollbar-thin">
-        <nav className="flex gap-2 sm:gap-4 min-w-max">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-3 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${
-                effectiveActiveTab === tab.id
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+      {/* TIER 1: Main Domains */}
+      <div className="bg-gray-100/80 p-1.5 rounded-2xl border border-gray-200/80 shadow-xs">
+        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-thin pb-0.5" aria-label="Hallinnan pääalueet">
+          {allDomains.map((domain) => {
+            const isSelected = activeDomain.id === domain.id;
+            return (
+              <button
+                key={domain.id}
+                type="button"
+                onClick={() => handleSelectDomain(domain.id)}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-medium text-xs sm:text-sm whitespace-nowrap transition-all ${
+                  isSelected
+                    ? 'bg-white text-primary-900 shadow-sm font-semibold ring-1 ring-black/5'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+                }`}
+              >
+                <span className="text-base">{domain.icon}</span>
+                <span>{domain.label}</span>
+                <span className="text-[10px] px-1.5 py-0.2 bg-gray-200/70 rounded-full font-mono text-gray-600">
+                  {domain.subTabs.length}
+                </span>
+              </button>
+            );
+          })}
         </nav>
       </div>
 
-      <ActiveComponent />
+      {/* TIER 2: Sub-tabs under selected domain */}
+      {activeDomain.subTabs.length > 1 && (
+        <div className="border-b border-gray-200 pb-1 overflow-x-auto scrollbar-thin">
+          <nav className="flex gap-2 min-w-max" aria-label="Alueen toiminnot">
+            {activeDomain.subTabs.map((subTab) => {
+              const isSelected = activeSubTab.id === subTab.id;
+              return (
+                <button
+                  key={subTab.id}
+                  type="button"
+                  onClick={() => handleSelectSubTab(subTab.id)}
+                  className={`pb-2.5 px-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    isSelected
+                      ? 'border-primary-600 text-primary-700 font-semibold'
+                      : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+                  }`}
+                >
+                  {subTab.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      )}
+
+      {/* Active Component */}
+      <div className="animate-fadeIn">
+        <ActiveComponent />
+      </div>
     </div>
   );
 }
-
-export default AdminPanel;

@@ -28,7 +28,8 @@ const DEFAULT_SETTINGS = {
   week_rollover_day: 'thursday',
   week_cycle_mode: 'thursday_cycle',
   highlight_icon: 'candle',
-  church_logo_variant: 'auto'
+  church_logo_variant: 'auto',
+  active_modules: JSON.stringify(['prayers', 'bible', 'hours', 'hartaus', 'meditations'])
 };
 
 export async function getAllSettings() {

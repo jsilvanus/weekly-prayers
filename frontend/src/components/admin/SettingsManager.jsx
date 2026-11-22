@@ -133,6 +133,74 @@ function SettingsManager() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Moduulien hallinta */}
+        <div className="card">
+          <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-2 flex items-center gap-2">
+            <span>🧩</span> Aktiiviset pääosiot ja moduulit
+          </h3>
+          <p className="text-xs text-gray-500 mb-4">
+            Valitse mitkä neljästä pääsivusta ovat seurakuntasi käytössä. Sivuston ylänavigaatio, mobiilivalikko ja ristiinnavigointi mukautuvat automaattisesti aktiivisiin osioihin.
+          </p>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {[
+              { id: 'prayers', title: 'Esirukoukset', icon: '🙏', desc: 'Seurakunnan esirukousaiheet ja jättolomake' },
+              { id: 'bible', title: 'Raamattu & Sana', icon: '📖', desc: 'Päivän sana, lukukappaleet ja kirkkovuosi' },
+              { id: 'hours', title: 'Hetkirukous', icon: '⏰', desc: 'Kirkkokäsikirja III:n mukaiset rukoushetket' },
+              { id: 'hartaus', title: 'Hartaus', icon: '✍️', desc: 'Valmiiksi kirjoitettu päivän hartaus' },
+              { id: 'meditations', title: 'Meditaatiot', icon: '📿', desc: 'Rukoushelmet, katekismus ja sydämen rukous' },
+            ].map((m) => {
+              const activeList = parseSettingsList(formData.active_modules, ['prayers', 'bible', 'hours', 'hartaus', 'meditations']);
+              const isChecked = activeList.includes(m.id);
+
+              return (
+                <div
+                  key={m.id}
+                  onClick={() => {
+                    let next;
+                    if (isChecked) {
+                      if (activeList.length === 1) {
+                        alert('Vähintään yhden moduulin on oltava aktiivinen.');
+                        return;
+                      }
+                      next = activeList.filter((x) => x !== m.id);
+                    } else {
+                      next = [...activeList, m.id];
+                    }
+                    setFormData((prev) => ({ ...prev, active_modules: JSON.stringify(next) }));
+                  }}
+                  className={`p-3.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                    isChecked
+                      ? 'border-primary-600 bg-primary-50/50 shadow-sm ring-1 ring-primary-500/30'
+                      : 'border-gray-200 bg-gray-50/60 opacity-60 hover:opacity-90'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xl">{m.icon}</span>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {}}
+                        className="rounded text-primary-600 focus:ring-primary-500 pointer-events-none"
+                      />
+                    </div>
+                    <h4 className="font-semibold text-xs text-gray-900">{m.title}</h4>
+                    <p className="text-[11px] text-gray-500 mt-1 leading-snug">{m.desc}</p>
+                  </div>
+                  <div className="mt-2 text-[10px] font-bold uppercase tracking-wider text-right">
+                    {isChecked ? (
+                      <span className="text-emerald-700">Käytössä</span>
+                    ) : (
+                      <span className="text-gray-400">Pois päältä</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* 1. Parish Details & Clergy */}
         <div className="card">
           <h3 className="font-martti font-bold text-sm text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">

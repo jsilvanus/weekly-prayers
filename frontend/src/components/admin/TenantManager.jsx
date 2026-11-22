@@ -19,7 +19,8 @@ export default function TenantManager() {
     type: 'seurakunta',
     parent_id: '',
     domain: '',
-    diocese: 'Tampereen hiippakunta'
+    diocese: 'Tampereen hiippakunta',
+    active_modules: ['prayers', 'bible', 'hours', 'hartaus', 'meditations'],
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -48,13 +49,22 @@ export default function TenantManager() {
 
   const openEditModal = (t) => {
     setEditingTenant(t);
+    let mods = ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+    if (t.active_modules) {
+      if (Array.isArray(t.active_modules)) {
+        mods = t.active_modules;
+      } else if (typeof t.active_modules === 'string') {
+        try { mods = JSON.parse(t.active_modules); } catch (e) {}
+      }
+    }
     setFormData({
       name: t.name || '',
       slug: t.slug || '',
       type: t.type || 'seurakunta',
       parent_id: t.parent_id || '',
       domain: t.domain || '',
-      diocese: t.diocese || 'Tampereen hiippakunta'
+      diocese: t.diocese || 'Tampereen hiippakunta',
+      active_modules: mods,
     });
     setIsModalOpen(true);
   };
@@ -77,7 +87,8 @@ export default function TenantManager() {
         type: formData.type,
         parent_id: formData.type === 'seurakunta' && formData.parent_id ? formData.parent_id : null,
         domain: formData.domain ? formData.domain.trim() : null,
-        diocese: formData.diocese ? formData.diocese.trim() : null
+        diocese: formData.diocese ? formData.diocese.trim() : null,
+        active_modules: formData.active_modules || ['prayers', 'bible', 'hours', 'hartaus'],
       };
 
       if (editingTenant) {
@@ -384,6 +395,45 @@ export default function TenantManager() {
                   onChange={(e) => setFormData(prev => ({ ...prev, diocese: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                 />
+              </div>
+
+              {/* Active Modules selection */}
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <label className="block font-semibold text-gray-800 text-xs uppercase tracking-wide mb-2">
+                  Aktiiviset moduulit (Pääsivut)
+                </label>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {[
+                    { id: 'prayers', label: '🙏 Esirukoukset' },
+                    { id: 'bible', label: '📖 Raamattu & Sana' },
+                    { id: 'hours', label: '⏰ Hetkirukous' },
+                    { id: 'hartaus', label: '✍️ Hartaus' },
+                    { id: 'meditations', label: '📿 Meditaatiot' },
+                  ].map((m) => {
+                    const isChecked = (formData.active_modules || []).includes(m.id);
+                    return (
+                      <label key={m.id} className="flex items-center gap-2 cursor-pointer p-1.5 bg-white rounded border border-gray-200">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            const cur = formData.active_modules || [];
+                            const next = e.target.checked
+                              ? [...cur, m.id]
+                              : cur.filter((x) => x !== m.id);
+                            if (next.length === 0) {
+                              alert('Vähintään yhden moduulin on oltava aktiivinen.');
+                              return;
+                            }
+                            setFormData((prev) => ({ ...prev, active_modules: next }));
+                          }}
+                          className="rounded text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="font-medium text-gray-800">{m.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">

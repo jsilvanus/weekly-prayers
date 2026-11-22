@@ -5,7 +5,11 @@
   },
   "nav": {
     "home": "Hem",
-    "bible": "Bibeln",
+    "prayers": "Förböner",
+    "bible": "Bibeln & Ordet",
+    "hours": "Tidebön",
+    "hartaus": "Andakt",
+    "meditations": "Meditationer",
     "admin": "Admin",
     "intercessionList": "Förbönslista",
     "login": "Logga in",
@@ -77,6 +81,14 @@
   },
   "admin": {
     "title": "Adminpanel",
+    "domains": {
+      "prayers": "Förböner",
+      "bible": "Bibeln & Ordet",
+      "hours": "Tidebön",
+      "meditations": "Meditationer",
+      "hartaus": "Andakt",
+      "general": "Allmänna inställningar"
+    },
     "prayers": {
       "title": "Hantering av bönebegäran",
       "pending": "Väntar på godkännande",
@@ -106,6 +118,7 @@
         "bishop": "Biskop",
         "coordinator": "Koordinator",
         "worker": "Personal",
+        "devotion": "Andaktsskribent",
         "prayer_group": "Bönegrupp",
         "user": "Användare"
       }
@@ -145,7 +158,9 @@
     "confirm": "Bekräfta",
     "week": "Vecka",
     "startDate": "Startdatum",
-    "endDate": "Slutdatum"
+    "endDate": "Slutdatum",
+    "language": "Språk",
+    "Language": "Språk"
   },
   "settings": {
     "title": "Inställningar",
