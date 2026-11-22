@@ -13,15 +13,16 @@ const roleBadgeStyles = {
   bishop: 'bg-purple-100 text-purple-900 border-purple-200',
   coordinator: 'bg-indigo-100 text-indigo-900 border-indigo-200',
   worker: 'bg-blue-100 text-blue-900 border-blue-200',
+  devotion: 'bg-teal-100 text-teal-900 border-teal-200',
   prayer_group: 'bg-amber-100 text-amber-900 border-amber-200',
   user: 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
 function Header() {
   const { t, i18n } = useTranslation();
-  const { user, isAuthenticated, login, logout, isWorkerOrAbove, isBishop, canAccessPrayerList } = useAuth();
+  const { user, isAuthenticated, login, logout, isWorkerOrAbove, isBishop, isDevotionAuthor, canAccessPrayerList } = useAuth();
   const { settings } = useSettings();
-  const { currentTenant } = useTenant();
+  const { currentTenant, isModuleEnabled } = useTenant();
   const location = useLocation();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -143,21 +144,62 @@ function Header() {
           </Link>
 
           {/* Desktop Navigation & User Section (md and above) */}
-          <nav className="hidden md:flex items-center gap-3 lg:gap-5">
-            <Link
-              to="/"
-              className="text-xs md:text-sm font-medium text-gray-700 hover:text-primary-700 transition-colors"
-            >
-              {t('nav.home')}
-            </Link>
+          <nav className="hidden md:flex items-center gap-2.5 lg:gap-4">
+            {isModuleEnabled('prayers') && (
+              <Link
+                to="/"
+                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
+                  location.pathname === '/' || location.pathname === '/prayers' || location.pathname === '/esirukoukset'
+                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>🙏</span>
+                <span>{t('nav.prayers') || 'Esirukoukset'}</span>
+              </Link>
+            )}
 
-            <Link
-              to="/bible"
-              className="text-xs md:text-sm font-medium text-gray-700 hover:text-primary-700 transition-colors flex items-center gap-1"
-            >
-              <span>📖</span>
-              <span>{t('nav.bible') || 'Raamattu'}</span>
-            </Link>
+            {isModuleEnabled('bible') && (
+              <Link
+                to="/bible"
+                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
+                  location.pathname === '/bible' || location.pathname === '/raamattu'
+                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>📖</span>
+                <span>{t('nav.bible') || 'Raamattu & Sana'}</span>
+              </Link>
+            )}
+
+            {isModuleEnabled('hours') && (
+              <Link
+                to="/prayer-moment"
+                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
+                  location.pathname === '/prayer-moment' || location.pathname === '/hetkirukous'
+                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>⏰</span>
+                <span>{t('nav.hours') || 'Hetkirukous'}</span>
+              </Link>
+            )}
+
+            {isModuleEnabled('hartaus') && (
+              <Link
+                to="/hartaus"
+                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
+                  location.pathname === '/hartaus' || location.pathname === '/devotion'
+                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span>✍️</span>
+                <span>{t('nav.hartaus') || 'Hartaus'}</span>
+              </Link>
+            )}
 
             {canAccessPrayerList && (
               <a
@@ -165,7 +207,7 @@ function Header() {
                 onClick={handleOpenIntercession}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs md:text-sm font-medium text-gray-700 hover:text-primary-700 transition-colors flex items-center gap-1"
+                className="text-xs md:text-sm font-medium text-gray-700 hover:text-primary-700 hover:bg-gray-50 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
                 title="Avaa esirukouslista ja kuittausnäkymä"
               >
                 <span>📋</span>
@@ -173,10 +215,14 @@ function Header() {
               </a>
             )}
 
-            {(isWorkerOrAbove || isBishop) && (
+            {(isWorkerOrAbove || isBishop || isDevotionAuthor) && (
               <Link
                 to="/admin"
-                className="text-xs md:text-sm font-medium text-gray-700 hover:text-primary-700 transition-colors flex items-center gap-1"
+                className={`text-xs md:text-sm font-medium transition-colors flex items-center gap-1 px-2 py-1 rounded-md ${
+                  location.pathname.startsWith('/admin')
+                    ? 'text-primary-800 bg-primary-50/80 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
               >
                 <span>⚙️</span>
                 <span>{t('nav.admin')}</span>
@@ -246,23 +292,65 @@ function Header() {
         <div className="md:hidden border-t border-gray-200 bg-white/98 backdrop-blur-md px-4 pt-3 pb-5 space-y-4 shadow-lg animate-fadeIn">
           {/* Navigation links */}
           <nav className="flex flex-col space-y-1">
-            <Link
-              to="/"
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-primary-700 hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-base">🏠</span>
-              <span>{t('nav.home')}</span>
-            </Link>
+            {isModuleEnabled('prayers') && (
+              <Link
+                to="/"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === '/' || location.pathname === '/prayers' || location.pathname === '/esirukoukset'
+                    ? 'bg-primary-50 text-primary-800 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-base">🙏</span>
+                <span>{t('nav.prayers') || 'Esirukoukset'}</span>
+              </Link>
+            )}
 
-            <Link
-              to="/bible"
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-primary-700 hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-base">📖</span>
-              <span>{t('nav.bible') || 'Raamattu'}</span>
-            </Link>
+            {isModuleEnabled('bible') && (
+              <Link
+                to="/bible"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === '/bible' || location.pathname === '/raamattu'
+                    ? 'bg-primary-50 text-primary-800 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-base">📖</span>
+                <span>{t('nav.bible') || 'Raamattu & Sana'}</span>
+              </Link>
+            )}
+
+            {isModuleEnabled('hours') && (
+              <Link
+                to="/prayer-moment"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === '/prayer-moment' || location.pathname === '/hetkirukous'
+                    ? 'bg-primary-50 text-primary-800 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-base">⏰</span>
+                <span>{t('nav.hours') || 'Hetkirukous'}</span>
+              </Link>
+            )}
+
+            {isModuleEnabled('hartaus') && (
+              <Link
+                to="/hartaus"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === '/hartaus' || location.pathname === '/devotion'
+                    ? 'bg-primary-50 text-primary-800 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-base">✍️</span>
+                <span>{t('nav.hartaus') || 'Hartaus'}</span>
+              </Link>
+            )}
 
             {canAccessPrayerList && (
               <a
@@ -278,11 +366,15 @@ function Header() {
               </a>
             )}
 
-            {(isWorkerOrAbove || isBishop) && (
+            {(isWorkerOrAbove || isBishop || isDevotionAuthor) && (
               <Link
                 to="/admin"
                 onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:text-primary-700 hover:bg-gray-50 transition-colors"
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname.startsWith('/admin')
+                    ? 'bg-primary-50 text-primary-800 font-semibold'
+                    : 'text-gray-700 hover:text-primary-700 hover:bg-gray-50'
+                }`}
               >
                 <span className="text-base">⚙️</span>
                 <span>{t('nav.admin')}</span>
