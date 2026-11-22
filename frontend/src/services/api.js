@@ -212,6 +212,34 @@ export const api = {
     request(`/tenants/${identifier}`, {
       method: 'DELETE',
     }),
+
+  // Devotions (Hartaus)
+  getTodayDevotion: (date = null, tenant = null) => {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    if (tenant) params.append('tenant', tenant);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return request(`/devotions/today${qs}`);
+  },
+  listDevotions: (params = {}) => {
+    const sp = new URLSearchParams();
+    if (params.tenant) sp.append('tenant', params.tenant);
+    if (params.startDate) sp.append('startDate', params.startDate);
+    if (params.endDate) sp.append('endDate', params.endDate);
+    if (params.limit) sp.append('limit', params.limit);
+    if (params.offset) sp.append('offset', params.offset);
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
+    return request(`/devotions${qs}`);
+  },
+  saveDevotion: (data) =>
+    request('/devotions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  deleteDevotion: (id) =>
+    request(`/devotions/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 export default api;
