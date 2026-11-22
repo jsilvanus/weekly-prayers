@@ -367,4 +367,20 @@ Upotusmahdollisuudet, tuloste, Docker-kontitus ja dokumentaatio.
 | 3 | Rukousaihe-API ja AI-moderointi | 10 |
 | 4 | Frontend ja käyttöliittymä | 10 |
 | 5 | Viimeistely ja julkaisu | 10 |
-| **Yhteensä** | | **50** |
+| 6 | Kolmen päälaskeutumissivun rakenne ja kaksiportainen ylläpito | 10 |
+| **Yhteensä** | | **60** |
+
+---
+
+## Milestone 6: Kolmen päälaskeutumissivun rakenne ja kaksiportainen ylläpito
+
+Tarkempi arkkitehtuuri- ja toteutussuunnitelma dokumentoitu tiedostossa:
+👉 [`docs/plans/three-page-split-and-two-tier-admin.md`](docs/plans/three-page-split-and-two-tier-admin.md)
+
+1. **Esirukoukset (Prayer Intentions)**: Päälaskeutumissivu `/` toiminnolla "Jätä esirukouspyyntö" (avaa modaalin) sekä rinnakkaisnavigaatio Raamattuun ja Hetkirukoukseen.
+2. **Raamattu & Päivän sana (Bible & Word of the Day)**: Päälaskeutumissivu `/bible` toiminnolla "Näytä päivän sana" (avaa päivän jae -dialogin) sekä rinnakkaisnavigaatio Esirukouksiin ja Hetkirukoukseen.
+3. **Rukoushetki (Moment of Prayer / Liturgy of Hours)**: Päälaskeutumissivu `/prayer-moment` toiminnolla "Rukoile nyt" (avaa ja lataa suoraan vuorokaudenaikaa vastaavan hetkirukouksen teksteineen).
+4. **Kaksiportainen ylläpito (/admin)**:
+   - Taso 1: Esirukoukset, Raamattu & Sana, Hetkirukoukset, Yleiset asetukset.
+   - Taso 2: Toimialakohtaiset alisivut ja asetukset (esim. piispa, kirkkoherra, työalat, ryhmät, käännökset, hetkiaikataulut, logot, tunnukset).
+
