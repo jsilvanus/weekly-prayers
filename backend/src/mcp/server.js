@@ -304,11 +304,11 @@ export function createMcpServer({ publicUrl, user }) {
   );
 
   // ─────────────────────────────────────────────────────────────
-  // 2. REGISTERED / STAFF TOOLS (Worker, Coordinator, Bishop, Admin)
+  // 2. REGISTERED / STAFF TOOLS (Only visible in tools/list for authorized roles)
   // ─────────────────────────────────────────────────────────────
 
-  // Tool: get_pending_prayers
-  server.registerTool(
+  // Tool: get_pending_prayers (Staff only)
+  if (isStaff) server.registerTool(
     'get_pending_prayers',
     {
       description: 'Hae työntekijöiden tarkastusta ja hyväksyntää odottavat seurakuntalaisten rukouspyynnöt. Vaatii työntekijän roolin. (Staff only) Get prayer requests awaiting approval.',
@@ -344,8 +344,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: approve_prayer
-  server.registerTool(
+  // Tool: approve_prayer (Staff only)
+  if (isStaff) server.registerTool(
     'approve_prayer',
     {
       description: 'Hyväksy tai hylkää seurakuntalaisen rukouspyyntö. (Staff only) Approve or reject a pending prayer request.',
@@ -370,8 +370,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: set_prayer_highlight
-  server.registerTool(
+  // Tool: set_prayer_highlight (Coordinator+)
+  if (isCoordinator) server.registerTool(
     'set_prayer_highlight',
     {
       description: 'Nosta rukousaihe esille (Z-prioriteetti) ja aseta sille aktiivinen nostoaika. Korkeimman Z-arvon aiheet näkyvät kärkinostoina (Top 1–4). Nostoaika oletuksena 1 viikko. Z=0 poistaa noston. (Coordinator+) Set prayer highlight priority and date range.',
@@ -412,8 +412,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: create_staff_prayer
-  server.registerTool(
+  // Tool: create_staff_prayer (Staff only)
+  if (isStaff) server.registerTool(
     'create_staff_prayer',
     {
       description: 'Luo työalan rukousaihe (esim. nuorisotyö, diakonia, lähetystyö). (Staff only) Create ministry prayer request.',
@@ -464,8 +464,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: create_pastor_prayer
-  server.registerTool(
+  // Tool: create_pastor_prayer (Admin only)
+  if (isAdmin) server.registerTool(
     'create_pastor_prayer',
     {
       description: 'Aseta seurakunnan kirkkoherran viikoittainen rukousaihe. (Admin only) Create or update pastor prayer topic.',
@@ -510,8 +510,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: create_bishop_prayer
-  server.registerTool(
+  // Tool: create_bishop_prayer (Bishop/Admin only)
+  if (isBishopOrAdmin) server.registerTool(
     'create_bishop_prayer',
     {
       description: 'Aseta hiippakunnan piispan rukousaihe. Huom: piispan aiheen yhteydessä ei näytetä käyttäjän nimeä. (Bishop/Admin only) Create bishop prayer topic.',
@@ -555,8 +555,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: get_intercession_list
-  server.registerTool(
+  // Tool: get_intercession_list (Staff & Prayer Group only)
+  if (isPrayerListUser) server.registerTool(
     'get_intercession_list',
     {
       description: 'Hae sunnuntain jumalanpalveluksen esirukouslista (saarnatuolilista/esilukijan lista). Sisältää piispan ja kirkkoherran aiheet, nostetut aiheet sekä seurakunnan ja seurakuntalaisten aiheet jäsenneltynä. (Staff & Prayer Group only) Get Sunday service intercessions.',
@@ -615,8 +615,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: get_parish_settings
-  server.registerTool(
+  // Tool: get_parish_settings (Admin only)
+  if (isAdmin) server.registerTool(
     'get_parish_settings',
     {
       description: 'Hae seurakunnan ilme-, väripaletti-, nostokuvake-, viikkosykli- ja logoasetukset. (Admin only) Get parish settings and branding.',
@@ -633,8 +633,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: update_parish_settings
-  server.registerTool(
+  // Tool: update_parish_settings (Admin only)
+  if (isAdmin) server.registerTool(
     'update_parish_settings',
     {
       description: 'Päivitä seurakunnan ilme- ja toiminta-asetuksia, kuten viikon vaihtumispäivä (week_rollover_day), viikkosykli (week_cycle_mode), nostokuvake (highlight_icon), seurakunnan nimi tai väripaletti. (Admin only) Update parish settings.',
@@ -687,8 +687,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: construct_devotion
-  server.registerTool(
+  // Tool: construct_devotion (Devotion Author or Staff only)
+  if (isDevotionOrStaff) server.registerTool(
     'construct_devotion',
     {
       description: 'Luo tai päivitä päivän hartaus (Hartaus) käyttäen joko jäsenneltyjä kenttiä tai rakennuspalikoita (blocks: intro, scripture, reflection, prayer, hymn, blessing, media_embed, candle_lighting, children_story, liturgical_psalm, versicle_response, silence_timer). Voit myös nostaa hartauden etusivun portaaliin (portalPosition: "above" | "below" | null). (Devotion Author or Staff only)',
@@ -770,8 +770,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: construct_meditation
-  server.registerTool(
+  // Tool: construct_meditation (Devotion Author or Staff only)
+  if (isDevotionOrStaff) server.registerTool(
     'construct_meditation',
     {
       description: 'Rakenna uusi meditaatio tai muokkaa olemassa olevaa meditaatiota rakennuspalikoista (blocks: intro, candle_lighting, children_story, multi_strand, bead_sequence, steps_guide, breathing_timer, silence_timer, liturgical_psalm, versicle_response, scripture, reflection, prayer, hymn, blessing, media_embed). Voit myös nostaa meditaation etusivulle (portalPosition: "above" | "below" | "none"). (Staff or Devotion Author only)',
@@ -870,8 +870,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: set_holy_day_override
-  server.registerTool(
+  // Tool: set_holy_day_override (Staff only)
+  if (isStaff) server.registerTool(
     'set_holy_day_override',
     {
       description: 'Aseta seurakunnan oma otsikko (customHeading), kuvaus (customDescription), paimenellinen saatesana (pastoralReflection), messutiedot (serviceInfo) ja etusivunosto (portalPosition: "above" | "below" | "none") tietylle kirkkovuoden pyhäpäivälle. (Staff only)',
@@ -910,8 +910,8 @@ export function createMcpServer({ publicUrl, user }) {
     }
   );
 
-  // Tool: set_prayer_portal_lift
-  server.registerTool(
+  // Tool: set_prayer_portal_lift (Staff only)
+  if (isStaff) server.registerTool(
     'set_prayer_portal_lift',
     {
       description: 'Nosta yksittäinen rukousaihe (piispan, kirkkoherran, työalan tai seurakuntalaisen julkinen rukous) suoraan pääportaalin (/) etusivulle karusellin yläpuolelle ("above"), alapuolelle ("below") tai poista nosto ("none"). (Staff only)',

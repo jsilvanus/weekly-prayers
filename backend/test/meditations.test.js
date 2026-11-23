@@ -83,16 +83,34 @@ test('Christian & Lutheran Meditations Service & Building Blocks', async (t) => 
     assert.ok(holyDay.readings && holyDay.readings.gospel);
   });
 
-  await t.test('MCP server registers construction tools for devotions, meditations, hours, holy days, and portal lifting', () => {
-    const mcp = createMcpServer({ publicUrl: 'https://rukous.riihimaenseurakunta.fi', user: { id: '1', role: 'admin' } });
-    const registeredTools = Object.keys(mcp._registeredTools || {});
-    assert.ok(registeredTools.includes('get_today_devotion'));
-    assert.ok(registeredTools.includes('construct_devotion'));
-    assert.ok(registeredTools.includes('get_meditations'));
-    assert.ok(registeredTools.includes('construct_meditation'));
-    assert.ok(registeredTools.includes('get_liturgical_hours'));
-    assert.ok(registeredTools.includes('get_holy_day'));
-    assert.ok(registeredTools.includes('set_holy_day_override'));
-    assert.ok(registeredTools.includes('set_prayer_portal_lift'));
+  await t.test('MCP server registers construction tools for authorized staff and hides staff-only tools from public users', () => {
+    const adminMcp = createMcpServer({ publicUrl: 'https://rukous.riihimaenseurakunta.fi', user: { id: '1', role: 'admin' } });
+    const adminTools = Object.keys(adminMcp._registeredTools || {});
+    assert.ok(adminTools.includes('get_today_devotion'));
+    assert.ok(adminTools.includes('construct_devotion'));
+    assert.ok(adminTools.includes('get_meditations'));
+    assert.ok(adminTools.includes('construct_meditation'));
+    assert.ok(adminTools.includes('get_liturgical_hours'));
+    assert.ok(adminTools.includes('get_holy_day'));
+    assert.ok(adminTools.includes('set_holy_day_override'));
+    assert.ok(adminTools.includes('set_prayer_portal_lift'));
+    assert.ok(adminTools.includes('get_pending_prayers'));
+    assert.ok(adminTools.includes('update_parish_settings'));
+
+    // Public / anonymous user must only see public tools
+    const publicMcp = createMcpServer({ publicUrl: 'https://rukous.riihimaenseurakunta.fi', user: { id: 'anon', role: 'anonymous', isAnonymous: true } });
+    const publicTools = Object.keys(publicMcp._registeredTools || {});
+    assert.ok(publicTools.includes('get_current_prayers'));
+    assert.ok(publicTools.includes('get_today_devotion'));
+    assert.ok(publicTools.includes('get_meditations'));
+    assert.ok(publicTools.includes('get_liturgical_hours'));
+    assert.ok(publicTools.includes('get_holy_day'));
+    assert.ok(!publicTools.includes('construct_devotion'), 'Public user must not see construct_devotion');
+    assert.ok(!publicTools.includes('construct_meditation'), 'Public user must not see construct_meditation');
+    assert.ok(!publicTools.includes('set_holy_day_override'), 'Public user must not see set_holy_day_override');
+    assert.ok(!publicTools.includes('set_prayer_portal_lift'), 'Public user must not see set_prayer_portal_lift');
+    assert.ok(!publicTools.includes('get_pending_prayers'), 'Public user must not see get_pending_prayers');
+    assert.ok(!publicTools.includes('approve_prayer'), 'Public user must not see approve_prayer');
+    assert.ok(!publicTools.includes('update_parish_settings'), 'Public user must not see update_parish_settings');
   });
 });
