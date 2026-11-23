@@ -212,7 +212,8 @@ export async function createTenant(data = {}) {
     week_cycle_mode = 'thursday_cycle',
     highlight_icon = 'candle',
     church_logo_variant = 'auto',
-    active_modules = ['prayers', 'bible', 'hours', 'hartaus', 'meditations'],
+    active_modules = ['prayers', 'bible', 'hours', 'hartaus', 'meditations', 'pyhapaiva'],
+    portal_config = null,
   } = data;
 
   if (!name || !name.trim()) {
@@ -336,6 +337,13 @@ export async function updateTenant(identifier, updates = {}) {
       : JSON.stringify(updates.active_modules);
     fields.push(`active_modules = $${idx++}`);
     values.push(modulesJson);
+  }
+  if (updates.portal_config !== undefined) {
+    const portalJson = typeof updates.portal_config === 'string'
+      ? updates.portal_config
+      : JSON.stringify(updates.portal_config);
+    fields.push(`portal_config = $${idx++}`);
+    values.push(portalJson);
   }
 
   if (fields.length === 0) return tenant;

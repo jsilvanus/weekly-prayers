@@ -4,7 +4,9 @@ import {
   useSettings,
   DEFAULT_MINISTRY_GROUPS,
   DEFAULT_MINISTRY_TAGS,
-  parseSettingsList
+  DEFAULT_PORTAL_CONFIG,
+  parseSettingsList,
+  parsePortalConfig
 } from '../../context/SettingsContext';
 import { ChurchCircleLogo, LocalParishLogo, PastorSealLogo } from '../../assets/churchIcons';
 import { CHURCH_LOGO_VARIANTS, resolveChurchLogoVariant } from '../../utils/churchLogo';
@@ -34,9 +36,94 @@ function SettingsManager() {
   const [newGroupInput, setNewGroupInput] = useState('');
   const [newTagInput, setNewTagInput] = useState('');
 
-  // Parsed current groups and tags
+  // Parsed current groups, tags, and portal configuration
   const currentGroups = parseSettingsList(formData.ministry_groups, DEFAULT_MINISTRY_GROUPS);
   const currentTags = parseSettingsList(formData.ministry_tags, DEFAULT_MINISTRY_TAGS);
+  const currentPortalConfig = parsePortalConfig(formData.portal_config);
+
+  const updatePortalConfig = (updater) => {
+    const nextConfig = typeof updater === 'function' ? updater(currentPortalConfig) : updater;
+    setFormData((prev) => ({
+      ...prev,
+      portal_config: JSON.stringify(nextConfig)
+    }));
+  };
+
+  const handleMoveSlide = (slideId, direction) => {
+    updatePortalConfig((cfg) => {
+      const slides = [...cfg.carousel.slides].sort((a, b) => a.order - b.order);
+      const idx = slides.findIndex((s) => s.id === slideId);
+      if (idx === -1) return cfg;
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= slides.length) return cfg;
+      const temp = slides[idx];
+      slides[idx] = slides[swapIdx];
+      slides[swapIdx] = temp;
+      const reordered = slides.map((s, i) => ({ ...s, order: i + 1 }));
+      return {
+        ...cfg,
+        carousel: { ...cfg.carousel, slides: reordered }
+      };
+    });
+  };
+
+  const handleToggleSlide = (slideId) => {
+    updatePortalConfig((cfg) => {
+      const slides = cfg.carousel.slides.map((s) =>
+        s.id === slideId ? { ...s, visible: !s.visible } : s
+      );
+      return {
+        ...cfg,
+        carousel: { ...cfg.carousel, slides }
+      };
+    });
+  };
+
+  const handleUpdateSection = (sectionId, patch) => {
+    updatePortalConfig((cfg) => {
+      const updated = cfg.sections.map((sec) =>
+        sec.id === sectionId ? { ...sec, ...patch } : sec
+      );
+      const above = updated
+        .filter((s) => s.position === 'above')
+        .sort((a, b) => a.order - b.order)
+        .map((s, i) => ({ ...s, order: i + 1 }));
+      const below = updated
+        .filter((s) => s.position !== 'above')
+        .sort((a, b) => a.order - b.order)
+        .map((s, i) => ({ ...s, order: i + 1 }));
+      return {
+        ...cfg,
+        sections: [...above, ...below]
+      };
+    });
+  };
+
+  const handleMoveSectionInZone = (sectionId, zonePosition, direction) => {
+    updatePortalConfig((cfg) => {
+      const zoneList = cfg.sections
+        .filter((s) => s.position === zonePosition)
+        .sort((a, b) => a.order - b.order);
+      const otherList = cfg.sections
+        .filter((s) => s.position !== zonePosition)
+        .sort((a, b) => a.order - b.order);
+
+      const idx = zoneList.findIndex((s) => s.id === sectionId);
+      if (idx === -1) return cfg;
+      const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= zoneList.length) return cfg;
+
+      const temp = zoneList[idx];
+      zoneList[idx] = zoneList[swapIdx];
+      zoneList[swapIdx] = temp;
+
+      const reorderedZone = zoneList.map((s, i) => ({ ...s, order: i + 1 }));
+      return {
+        ...cfg,
+        sections: [...reorderedZone, ...otherList]
+      };
+    });
+  };
 
   const handleFileUpload = (field, file) => {
     if (!file) return;
@@ -148,15 +235,16 @@ function SettingsManager() {
             Valitse mitkä neljästä pääsivusta ovat seurakuntasi käytössä. Sivuston ylänavigaatio, mobiilivalikko ja ristiinnavigointi mukautuvat automaattisesti aktiivisiin osioihin.
           </p>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {[
-              { id: 'prayers', title: 'Esirukoukset', icon: '🙏', desc: 'Seurakunnan esirukousaiheet ja jättolomake' },
-              { id: 'bible', title: 'Raamattu & Sana', icon: '📖', desc: 'Päivän sana, lukukappaleet ja kirkkovuosi' },
-              { id: 'hours', title: 'Hetkirukous', icon: '⏰', desc: 'Kirkkokäsikirja III:n mukaiset rukoushetket' },
+              { id: 'prayers', title: 'Esirukoukset', icon: '🙏', desc: 'Seurakunnan esirukousaiheet ja jättölomake' },
+              { id: 'pyhapaiva', title: 'Pyhäpäivä', icon: '⛪', desc: 'Sunnuntain evankeliumi, lukukappaleet ja teema' },
               { id: 'hartaus', title: 'Hartaus', icon: '✍️', desc: 'Valmiiksi kirjoitettu päivän hartaus' },
-              { id: 'meditations', title: 'Meditaatiot', icon: '📿', desc: 'Rukoushelmet, katekismus ja sydämen rukous' },
+              { id: 'hours', title: 'Hetkirukous', icon: '⏰', desc: 'Kirkkokäsikirja III:n mukaiset rukoushetket' },
+              { id: 'meditations', title: 'Meditaatiot', icon: '📿', desc: 'Rukoushelmet, katekismus, hiljaisuus ja adventti' },
+              { id: 'bible', title: 'Raamattu & Sana', icon: '📖', desc: 'Päivän sana, lukukappaleet ja kirkkovuosi' },
             ].map((m) => {
-              const activeList = parseSettingsList(formData.active_modules, ['prayers', 'bible', 'hours', 'hartaus', 'meditations']);
+              const activeList = parseSettingsList(formData.active_modules, ['prayers', 'bible', 'hours', 'hartaus', 'meditations', 'pyhapaiva']);
               const isChecked = activeList.includes(m.id);
 
               return (
@@ -266,6 +354,439 @@ function SettingsManager() {
                 placeholder="Meditaatiot"
               />
             </div>
+            <div>
+              <label className="label text-xs">Pyhäpäivä (oletus: Pyhäpäivä)</label>
+              <input
+                type="text"
+                value={formData.module_title_pyhapaiva || ''}
+                onChange={(e) => setFormData({ ...formData, module_title_pyhapaiva: e.target.value })}
+                className="input text-sm"
+                placeholder="Pyhäpäivä"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Etusivun portaali, mobiilikaruselli, osioiden sijoittelu ja sisältönostot */}
+        <div className="card space-y-6 border-primary-200 bg-gradient-to-b from-white to-primary-50/20" data-testid="portal-settings-card">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 pb-3">
+            <div>
+              <h3 className="font-martti font-bold text-sm text-primary-950 uppercase tracking-wide flex items-center gap-2">
+                <span>🏠</span> Etusivun portaali (/), mobiilikaruselli ja nostot (Ylä-/Alapuoli)
+              </h3>
+              <p className="text-xs text-gray-600 mt-1">
+                Hallitse seurakunnan pääportaalin (/) hero-karusellia, osioiden näkyvyyttä ja järjestystä karusellin <strong>yläpuolella</strong> tai <strong>alapuolella</strong>, sekä yksittäisten sisältöjen (voimassa oleva hartaus, pyhäpäivä ja meditaatiot) nostoja.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => updatePortalConfig(DEFAULT_PORTAL_CONFIG)}
+              className="text-xs text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg font-medium transition-colors"
+            >
+              🔄 Palauta portaalin oletusasetukset
+            </button>
+          </div>
+
+          {/* 1. Mobiilikarusellin asetukset */}
+          <div className="p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h4 className="font-martti font-bold text-sm text-slate-900 flex items-center gap-2">
+                  <span>🎠</span> 1. Mobiili edellä -karuselli (Hero Carousel)
+                </h4>
+                <p className="text-xs text-slate-600">
+                  Kosketusystävällinen karuselli nostaa esiin juuri nyt hengellisesti ajankohtaisen sisällön.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 bg-white px-3 py-1.5 rounded-lg border border-slate-200 cursor-pointer">
+                  <span>Näytä karuselli etusivulla:</span>
+                  <input
+                    type="checkbox"
+                    checked={currentPortalConfig.carousel.enabled}
+                    onChange={(e) =>
+                      updatePortalConfig((cfg) => ({
+                        ...cfg,
+                        carousel: { ...cfg.carousel, enabled: e.target.checked }
+                      }))
+                    }
+                    className="rounded text-primary-600 focus:ring-primary-500"
+                  />
+                </label>
+
+                <select
+                  value={currentPortalConfig.carousel.autoPlayMs}
+                  onChange={(e) =>
+                    updatePortalConfig((cfg) => ({
+                      ...cfg,
+                      carousel: { ...cfg.carousel, autoPlayMs: Number(e.target.value) }
+                    }))
+                  }
+                  className="input text-xs py-1.5 px-2.5 w-auto"
+                  aria-label="Karusellin automaattinen vaihtonopeus"
+                >
+                  <option value={5000}>Vaihto: 5 sekuntia</option>
+                  <option value={7000}>Vaihto: 7 sekuntia (Oletus)</option>
+                  <option value={10000}>Vaihto: 10 sekuntia</option>
+                  <option value={0}>Ei automaattista vaihtoa</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              {currentPortalConfig.carousel.slides.map((slide, idx) => {
+                const slideMeta = {
+                  hartaus: { icon: '🕯️', title: 'Päivän hartaus', desc: 'Nostaa tämän päivän hartauden pikalukupainikkeella' },
+                  hours: { icon: '🕊️', title: 'Hetkirukous juuri nyt', desc: 'Kellonajan mukainen rukoushetki ja "Rukoile nyt" -painike' },
+                  pyhapaiva: { icon: '⛪', title: 'Pyhäpäivä & evankeliumi', desc: 'Sunnuntain/pyhäpäivän teema, liturginen väri ja tekstit' },
+                  prayers: { icon: '🙏', title: 'Rukousyhteisö & laskuri', desc: '"Jätä rukouspyyntö" -pikapainike ja "Olen rukoillut" -laskuri' }
+                }[slide.id] || { icon: '✨', title: slide.id, desc: '' };
+
+                return (
+                  <div
+                    key={slide.id}
+                    className={`p-3 rounded-xl border flex items-center justify-between gap-2 transition-all ${
+                      slide.visible
+                        ? 'bg-white border-primary-300 shadow-2xs'
+                        : 'bg-gray-100/70 border-gray-200 opacity-60'
+                    }`}
+                  >
+                    <label className="flex items-start gap-2.5 cursor-pointer min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={slide.visible}
+                        onChange={() => handleToggleSlide(slide.id)}
+                        className="mt-1 rounded text-primary-600"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                          <span>{slideMeta.icon}</span>
+                          <span>Dia {idx + 1}: {slideMeta.title}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-snug">{slideMeta.desc}</p>
+                      </div>
+                    </label>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveSlide(slide.id, 'up')}
+                        disabled={idx === 0}
+                        className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-30 text-xs"
+                        title="Siirrä dia aiemmaksi"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveSlide(slide.id, 'down')}
+                        disabled={idx === currentPortalConfig.carousel.slides.length - 1}
+                        className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-30 text-xs"
+                        title="Siirrä dia myöhemmäksi"
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Yksittäisten sisältöjen nosto etusivulle (Hartaus, Pyhäpäivä, Meditaatiot & Rukoukset) */}
+          <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-4">
+            <div>
+              <h4 className="font-martti font-bold text-sm text-amber-950 flex items-center gap-2">
+                <span>📌</span> 2. Yksittäisten sisältöjen nostaminen pääsivulle (Lifted Content)
+              </h4>
+              <p className="text-xs text-amber-900/80 mt-0.5">
+                Voit nostaa <strong>voimassa olevan päivän hartauden</strong>, <strong>tämänhetkisen pyhäpäivän</strong> tai <strong>yksittäisen meditaation</strong> täytenä nostokorttina suoraan etusivulle karusellin ylä- tai alapuolelle. (Yksittäiset piispan, kirkkoherran, työalan ja seurakuntalaisen rukouspyynnöt nostetaan <em>Esirukoukset</em>-hallintavälilehdellä!)
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Voimassa oleva päivän hartaus */}
+              <div className="p-3 bg-white rounded-xl border border-amber-200 flex flex-col justify-between gap-2">
+                <div>
+                  <div className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                    <span>🕯️</span>
+                    <span>Voimassa oleva päivän hartaus</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    Nostaa kulloinkin vuorossa olevan päivän hartauden suoraan etusivulle luettavaksi.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-lg self-start">
+                  {[
+                    { id: 'none', label: 'Ei nostoa' },
+                    { id: 'above', label: '⬆️ Karusellin yläpuolella' },
+                    { id: 'below', label: '⬇️ Karusellin alapuolella' }
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() =>
+                        updatePortalConfig((cfg) => ({ ...cfg, liftActiveDevotion: opt.id }))
+                      }
+                      className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
+                        currentPortalConfig.liftActiveDevotion === opt.id
+                          ? 'bg-teal-700 text-white shadow-2xs'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tuleva / kuluva pyhäpäivä */}
+              <div className="p-3 bg-white rounded-xl border border-amber-200 flex flex-col justify-between gap-2">
+                <div>
+                  <div className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                    <span>⛪</span>
+                    <span>Voimassa oleva Pyhäpäivä & evankeliumi</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    Nostaa kuluvan/tulevan pyhäpäivän teeman, evankeliumin ja päivän rukouksen etusivulle.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-lg self-start">
+                  {[
+                    { id: 'none', label: 'Ei nostoa' },
+                    { id: 'above', label: '⬆️ Karusellin yläpuolella' },
+                    { id: 'below', label: '⬇️ Karusellin alapuolella' }
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() =>
+                        updatePortalConfig((cfg) => ({ ...cfg, liftCurrentPyhapaiva: opt.id }))
+                      }
+                      className={`px-2 py-1 rounded text-[11px] font-semibold transition-all ${
+                        currentPortalConfig.liftCurrentPyhapaiva === opt.id
+                          ? 'bg-amber-700 text-white shadow-2xs'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Yksittäisten meditaatioiden nosto etusivulle */}
+            <div className="pt-2 border-t border-amber-200/60">
+              <div className="text-xs font-bold text-amber-950 mb-2 flex items-center gap-1.5">
+                <span>📿</span>
+                <span>Yksittäisten meditaatioiden nosto etusivulle:</span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  { id: 'lonnebo_beads', title: 'Pelastuksen rengas (Lönnebo)', icon: '📿' },
+                  { id: 'luther_wreath', title: 'Lutherin rukousseppele', icon: '🌹' },
+                  { id: 'jesus_prayer', title: 'Jeesuksen rukous (Hengitys)', icon: '🕊️' },
+                  { id: 'lectio_divina', title: 'Lectio Divina', icon: '📜' },
+                  { id: 'examen', title: 'Ignatiaaninen Examen', icon: '🕯️' },
+                  { id: 'advent_children', title: 'Lasten adventti- & kynttilähetki', icon: '🕯️' },
+                ].map((med) => {
+                  const currentMedPos = currentPortalConfig.liftedMeditations?.[med.id] || 'none';
+                  return (
+                    <div key={med.id} className="p-2.5 bg-white rounded-xl border border-amber-200/80 flex flex-col justify-between gap-2">
+                      <div className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">
+                        <span>{med.icon}</span>
+                        <span className="truncate">{med.title}</span>
+                      </div>
+                      <div className="inline-flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg self-start">
+                        {[
+                          { id: 'none', label: 'Ei' },
+                          { id: 'above', label: '⬆️ Ylä' },
+                          { id: 'below', label: '⬇️ Ala' }
+                        ].map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() =>
+                              updatePortalConfig((cfg) => ({
+                                ...cfg,
+                                liftedMeditations: {
+                                  ...(cfg.liftedMeditations || {}),
+                                  [med.id]: opt.id
+                                }
+                              }))
+                            }
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all ${
+                              currentMedPos === opt.id
+                                ? opt.id === 'none'
+                                  ? 'bg-slate-700 text-white'
+                                  : 'bg-teal-700 text-white'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Moduuliosioiden näkyvyys, Ylä-/Alapuolinen sijainti ja järjestys */}
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-martti font-bold text-sm text-gray-900 flex items-center gap-2">
+                <span>📐</span> 3. Etusivun moduuliosiot: Näkyvyys, sijainti (karusellin ylä-/alapuolella) ja järjestys
+              </h4>
+              <p className="text-xs text-gray-500">
+                Määritä jokaiselle päämoduulille, näytetäänkö sen koontiosio etusivulla ja sijoitetaanko se <strong>karusellin yläpuolelle</strong> vai <strong>karusellin alapuolelle</strong>.
+              </p>
+            </div>
+
+            {[
+              { zone: 'above', title: '⬆️ KARUSELLIN YLÄPUOLELLA (Above Carousel)', bg: 'bg-indigo-50/40 border-indigo-200' },
+              { zone: 'below', title: '⬇️ KARUSELLIN ALAPUOLELLA (Below Carousel)', bg: 'bg-emerald-50/40 border-emerald-200' }
+            ].map((zoneInfo, zIdx) => {
+              const zoneSections = currentPortalConfig.sections
+                .filter((s) => (zoneInfo.zone === 'above' ? s.position === 'above' : s.position !== 'above'))
+                .sort((a, b) => a.order - b.order);
+
+              const sectionMetaMap = {
+                prayers: { icon: '🙏', title: formData.module_title_prayers || 'Esirukoukset', desc: 'Kirkkoherran/piispan rukous, yhteisön rukousnostot ja jättönappi' },
+                hartaus: { icon: '🕯️', title: formData.module_title_hartaus || 'Hartaus', desc: 'Tämän päivän hartauden esikatselu ja kirjoittajatieto' },
+                pyhapaiva: { icon: '⛪', title: formData.module_title_pyhapaiva || 'Pyhäpäivä', desc: 'Pyhäpäivän teema, liturginen väri ja sunnuntain evankeliumi' },
+                hours: { icon: '⏰', title: formData.module_title_hours || 'Hetkirukous', desc: 'Ajankohtainen rukoushetki (Laudes, Seksti, Vesper, Kompletorio, Pieni rukoushetki)' },
+                meditations: { icon: '📿', title: formData.module_title_meditations || 'Meditaatiot', desc: 'Rukoushelmet, katekismusmeditaatio, hengitysrukous ja hiljaisuus' },
+                bible: { icon: '📖', title: formData.module_title_bible || 'Raamattu & Sana', desc: 'Päivän sana -jae, mietiskely ja raamatunlukukappaleet' }
+              };
+
+              return (
+                <div key={zoneInfo.zone} className="space-y-3">
+                  {zIdx === 1 && (
+                    <div className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-primary-800 via-teal-800 to-primary-900 text-white text-center text-xs font-bold tracking-wider uppercase shadow-xs flex items-center justify-center gap-2">
+                      <span>🎠</span>
+                      <span>Mobiili edellä -karuselli sijaitsee tässä välissä</span>
+                    </div>
+                  )}
+
+                  <div className={`p-3.5 rounded-2xl border ${zoneInfo.bg} space-y-2.5`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-gray-800">
+                        {zoneInfo.title}
+                      </span>
+                      <span className="text-[11px] text-gray-500 font-medium">
+                        {zoneSections.length} osiota
+                      </span>
+                    </div>
+
+                    {zoneSections.length === 0 ? (
+                      <div className="p-3 rounded-xl bg-white/70 border border-dashed border-gray-300 text-center text-xs text-gray-500 italic">
+                        Ei osioita tässä vyöhykkeessä. Voit siirtää minkä tahansa osion tähän valitsemalla sen sijainniksi &rdquo;{zoneInfo.zone === 'above' ? 'Karusellin yläpuolella' : 'Karusellin alapuolella'}&rdquo;.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {zoneSections.map((sec, idx) => {
+                          const meta = sectionMetaMap[sec.id] || { icon: '🧩', title: sec.id, desc: '' };
+                          return (
+                            <div
+                              key={sec.id}
+                              className={`p-3 rounded-xl border bg-white flex flex-wrap items-center justify-between gap-3 transition-all ${
+                                sec.visible ? 'border-gray-200 shadow-2xs' : 'border-gray-200 opacity-55 bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-700 font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                                  {idx + 1}
+                                </span>
+                                <span className="text-xl shrink-0">{meta.icon}</span>
+                                <div className="min-w-0">
+                                  <div className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-2">
+                                    <span>{meta.title}</span>
+                                    {!sec.visible && (
+                                      <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-gray-200 text-gray-600">
+                                        Piilotettu etusivulta
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-gray-500 truncate">{meta.desc}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2 ml-auto">
+                                {/* Visibility toggle */}
+                                <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={sec.visible}
+                                    onChange={(e) => handleUpdateSection(sec.id, { visible: e.target.checked })}
+                                    className="rounded text-primary-600"
+                                  />
+                                  <span>Näytä</span>
+                                </label>
+
+                                {/* Above / Below Carousel Position Switcher */}
+                                <div className="inline-flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateSection(sec.id, { position: 'above', order: 99 })}
+                                    className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                                      sec.position === 'above'
+                                        ? 'bg-indigo-700 text-white shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                    title="Sijoita karusellin yläpuolelle"
+                                  >
+                                    ⬆️ Yläpuolella
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateSection(sec.id, { position: 'below', order: 99 })}
+                                    className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                                      sec.position !== 'above'
+                                        ? 'bg-emerald-700 text-white shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                    title="Sijoita karusellin alapuolelle"
+                                  >
+                                    ⬇️ Alapuolella
+                                  </button>
+                                </div>
+
+                                {/* Order Up / Down buttons */}
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveSectionInZone(sec.id, sec.position, 'up')}
+                                    disabled={idx === 0}
+                                    className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:opacity-30 text-xs font-bold"
+                                    title="Siirrä ylemmäs"
+                                  >
+                                    ↑
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveSectionInZone(sec.id, sec.position, 'down')}
+                                    disabled={idx === zoneSections.length - 1}
+                                    className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 disabled:opacity-30 text-xs font-bold"
+                                    title="Siirrä alemmas"
+                                  >
+                                    ↓
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

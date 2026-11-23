@@ -1,5 +1,29 @@
 import { query } from '../db/index.js';
 
+export const DEFAULT_PORTAL_CONFIG = {
+  carousel: {
+    enabled: true,
+    autoPlayMs: 7000,
+    slides: [
+      { id: 'hartaus', visible: true, order: 1 },
+      { id: 'hours', visible: true, order: 2 },
+      { id: 'pyhapaiva', visible: true, order: 3 },
+      { id: 'prayers', visible: true, order: 4 }
+    ]
+  },
+  liftActiveDevotion: 'none', // 'none' | 'above' | 'below'
+  liftCurrentPyhapaiva: 'none', // 'none' | 'above' | 'below'
+  liftedMeditations: {}, // { [meditationId]: 'above' | 'below' | 'none' }
+  sections: [
+    { id: 'hartaus', visible: true, position: 'below', order: 1 },
+    { id: 'pyhapaiva', visible: true, position: 'below', order: 2 },
+    { id: 'hours', visible: true, position: 'below', order: 3 },
+    { id: 'prayers', visible: true, position: 'below', order: 4 },
+    { id: 'meditations', visible: true, position: 'below', order: 5 },
+    { id: 'bible', visible: true, position: 'below', order: 6 }
+  ]
+};
+
 const DEFAULT_SETTINGS = {
   parish_name: 'Tuomiokirkkoseurakunta',
   parish_subtitle: 'Viikon rukousaiheet',
@@ -29,15 +53,17 @@ const DEFAULT_SETTINGS = {
   week_cycle_mode: 'thursday_cycle',
   highlight_icon: 'candle',
   church_logo_variant: 'auto',
-  active_modules: JSON.stringify(['prayers', 'bible', 'hours', 'hartaus', 'meditations']),
-  active_meditations: JSON.stringify(['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen']),
+  active_modules: JSON.stringify(['prayers', 'bible', 'hours', 'hartaus', 'meditations', 'pyhapaiva']),
+  active_meditations: JSON.stringify(['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen', 'advent_children']),
   brand_name: 'Rukoushetki',
   header_prominence: 'parish',
   module_title_prayers: 'Esirukoukset',
   module_title_bible: 'Raamattu & Sana',
   module_title_hours: 'Hetkirukous',
   module_title_hartaus: 'Hartaus',
-  module_title_meditations: 'Meditaatiot'
+  module_title_meditations: 'Meditaatiot',
+  module_title_pyhapaiva: 'Pyhäpäivä',
+  portal_config: JSON.stringify(DEFAULT_PORTAL_CONFIG)
 };
 
 export async function getAllSettings() {
@@ -113,6 +139,24 @@ export async function updateSettings(newSettings = {}) {
       await query(
         `UPDATE tenants SET church_logo_variant = $1, updated_at = NOW()`,
         [newSettings.church_logo_variant]
+      );
+    }
+    if (newSettings.active_modules) {
+      const modulesVal = typeof newSettings.active_modules === 'string'
+        ? newSettings.active_modules
+        : JSON.stringify(newSettings.active_modules);
+      await query(
+        `UPDATE tenants SET active_modules = $1::jsonb, updated_at = NOW()`,
+        [modulesVal]
+      );
+    }
+    if (newSettings.portal_config) {
+      const portalVal = typeof newSettings.portal_config === 'string'
+        ? newSettings.portal_config
+        : JSON.stringify(newSettings.portal_config);
+      await query(
+        `UPDATE tenants SET portal_config = $1::jsonb, updated_at = NOW()`,
+        [portalVal]
       );
     }
   } catch (e) {

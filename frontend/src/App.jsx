@@ -5,10 +5,12 @@ import { SettingsProvider } from './context/SettingsContext';
 import { TenantProvider } from './context/TenantContext';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
+import PortalPage from './components/portal/PortalPage';
 import HomePage from './components/prayers/HomePage';
 import PrayerMomentPage from './components/prayers/PrayerMomentPage';
 import DevotionPage from './components/prayers/DevotionPage';
 import MeditationPage from './components/prayers/MeditationPage';
+import PyhapaivaPage from './components/prayers/PyhapaivaPage';
 import AdminPanel from './components/admin/AdminPanel';
 import BiblePage from './components/bible/BiblePage';
 import { withBasePath } from './services/api';
@@ -36,9 +38,14 @@ function App() {
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8">
               <Routes>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<PortalPage />} />
+                <Route path="/portal" element={<PortalPage />} />
+                <Route path="/etusivu" element={<PortalPage />} />
                 <Route path="/prayers" element={<HomePage />} />
                 <Route path="/esirukoukset" element={<HomePage />} />
+                <Route path="/pyhapaiva" element={<PyhapaivaPage />} />
+                <Route path="/kirkkovuosi" element={<PyhapaivaPage />} />
+                <Route path="/church-year" element={<PyhapaivaPage />} />
                 <Route path="/bible" element={<BiblePage />} />
                 <Route path="/raamattu" element={<BiblePage />} />
                 <Route path="/prayer-moment" element={<PrayerMomentPage />} />

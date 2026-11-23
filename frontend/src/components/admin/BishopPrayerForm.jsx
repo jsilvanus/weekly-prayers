@@ -14,6 +14,7 @@ function BishopPrayerForm() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [highlightPriority, setHighlightPriority] = useState(0);
+  const [portalPosition, setPortalPosition] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -46,7 +47,7 @@ function BishopPrayerForm() {
     setMessage(null);
 
     try {
-      await api.submitBishopPrayer(
+      const res = await api.submitBishopPrayer(
         content.trim(),
         startDate || undefined,
         endDate || undefined,
@@ -55,11 +56,17 @@ function BishopPrayerForm() {
         undefined,
         highlightPriority
       );
+      if (portalPosition && res?.prayer?.id) {
+        try {
+          await api.updatePrayer(res.prayer.id, { portalPosition });
+        } catch (e) {}
+      }
       setMessage({ type: 'success', text: t('admin.bishop.success', 'Piispan rukousaihe lisätty onnistuneesti!') });
       setContent('');
       setStartDate('');
       setEndDate('');
       setHighlightPriority(0);
+      setPortalPosition(null);
       setShowCalendar(false);
       await loadBishopPrayers();
     } catch (error) {
@@ -85,6 +92,15 @@ function BishopPrayerForm() {
       setMessage({ type: 'error', text: error.message });
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleUpdatePortalPosition = async (id, nextPos) => {
+    try {
+      await api.updatePrayer(id, { portalPosition: nextPos });
+      await loadBishopPrayers();
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message });
     }
   };
 
@@ -179,6 +195,39 @@ function BishopPrayerForm() {
           )}
         </div>
 
+        {/* Portal Lift Selector */}
+        <div className="bg-purple-50/70 p-3 rounded-xl border border-purple-200/80 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+              <span>📌</span>
+              <span>Näkyvyys etusivun portaalissa (/)</span>
+            </span>
+            <p className="text-[11px] text-purple-800">
+              Nosta piispan esirukousviesti suoraan etusivulle karusellin ylä- tai alapuolelle.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-1 bg-white p-1 rounded-lg border border-purple-200">
+            {[
+              { id: null, label: 'Ei nostoa' },
+              { id: 'above', label: '⬆️ Karusellin yläpuolella' },
+              { id: 'below', label: '⬇️ Karusellin alapuolella' },
+            ].map((opt) => (
+              <button
+                key={String(opt.id)}
+                type="button"
+                onClick={() => setPortalPosition(opt.id)}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                  portalPosition === opt.id
+                    ? 'bg-purple-700 text-white shadow-2xs'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex items-center justify-end pt-1">
           <button
             type="submit"
@@ -263,6 +312,37 @@ function BishopPrayerForm() {
                   <p className="text-sm text-gray-800 italic bg-white/80 p-3 rounded-lg border border-purple-100/60 leading-relaxed">
                     &rdquo;{prayer.content}&rdquo;
                   </p>
+
+                  {/* Quick portal position toggle for existing bishop prayer */}
+                  <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 bg-white/90 px-3 py-2 rounded-lg border border-purple-200/60">
+                    <span className="text-xs font-semibold text-purple-950 flex items-center gap-1">
+                      <span>📌</span>
+                      <span>Näkyvyys etusivulla (/):</span>
+                    </span>
+                    <div className="inline-flex items-center gap-1">
+                      {[
+                        { id: null, label: 'Ei nostoa' },
+                        { id: 'above', label: '⬆️ Yläpuolella' },
+                        { id: 'below', label: '⬇️ Alapuolella' },
+                      ].map((opt) => {
+                        const active = (prayer.portalPosition || null) === opt.id;
+                        return (
+                          <button
+                            key={String(opt.id)}
+                            type="button"
+                            onClick={() => handleUpdatePortalPosition(prayer.id, opt.id)}
+                            className={`px-2 py-0.5 rounded text-xs font-semibold transition-colors ${
+                              active
+                                ? 'bg-purple-700 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <div className="mt-2.5 pt-2 border-t border-purple-100/40 flex items-center justify-between text-[11px] text-gray-500">
                     <span>

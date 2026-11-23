@@ -6,10 +6,16 @@ import { useAuth } from '../../context/AuthContext';
 
 const MODULE_NAV_INFO = {
   prayers: {
-    path: '/',
+    path: '/prayers',
     icon: '🙏',
     labelKey: 'nav.prayers',
     defaultLabel: 'Esirukoukset',
+  },
+  pyhapaiva: {
+    path: '/pyhapaiva',
+    icon: '⛪',
+    labelKey: 'nav.pyhapaiva',
+    defaultLabel: 'Pyhäpäivä',
   },
   bible: {
     path: '/bible',
@@ -54,7 +60,7 @@ export default function LandingHero({
   const displayTitle = title || (currentModule ? getModuleTitle(currentModule) : '');
 
   // Sibling modules that are active for this tenant (or all if admin/worker)
-  const allModules = ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+  const allModules = ['prayers', 'pyhapaiva', 'bible', 'hours', 'hartaus', 'meditations'];
   const siblingModules = allModules
     .filter((mod) => mod !== currentModule && (isModuleEnabled(mod) || canSeeDisabled))
     .map((mod) => ({
@@ -129,6 +135,13 @@ export default function LandingHero({
         {siblingModules.length > 0 && (
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
             <span className="text-gray-600 text-xs font-semibold mr-1">Siirry myös:</span>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-primary-300 bg-primary-50/90 text-primary-900 hover:bg-primary-100 transition-all shadow-2xs font-semibold"
+            >
+              <span>🏠</span>
+              <span>{t('nav.portal') || 'Etusivu'}</span>
+            </Link>
             {siblingModules.map((sibling) => (
               <Link
                 key={sibling.path}

@@ -75,25 +75,30 @@ export const api = {
   getPrayers: (tenant) => request(`/prayers${tenant ? `?tenant=${tenant}` : ''}`),
   getPrayersByWeek: (week, year, tenant) =>
     request(`/prayers/week/${week}?year=${year}${tenant ? `&tenant=${tenant}` : ''}`),
-  submitPrayer: (content, startDate, endDate, tenantId) =>
+  submitPrayer: (content, startDate, endDate, tenantId, portalPosition = null) =>
     request('/prayers', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, tenantId }),
+      body: JSON.stringify({ content, startDate, endDate, tenantId, portalPosition }),
     }),
-  submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId) =>
+  submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId, portalPosition = null) =>
     request('/prayers/staff', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId }),
+      body: JSON.stringify({ content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId, portalPosition }),
     }),
-  submitPastorPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority) =>
+  submitPastorPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority, portalPosition = null) =>
     request('/prayers/pastor', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority }),
+      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority, portalPosition }),
     }),
-  submitBishopPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority) =>
+  submitBishopPrayer: (content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority, portalPosition = null) =>
     request('/prayers/bishop', {
       method: 'POST',
-      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority }),
+      body: JSON.stringify({ content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority, portalPosition }),
+    }),
+  updatePrayerPortalPlacement: (id, portalPosition, portalOrder = 0) =>
+    request(`/prayers/${id}/portal`, {
+      method: 'PUT',
+      body: JSON.stringify({ portalPosition, portalOrder }),
     }),
   updatePrayer: (id, updates) =>
     request(`/prayers/${id}`, {
@@ -238,13 +243,84 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  updateDevotionPortal: (id, portalPosition) =>
+    request(`/devotions/${id}/portal`, {
+      method: 'PATCH',
+      body: JSON.stringify({ portal_position: portalPosition, portalPosition }),
+    }),
   deleteDevotion: (id) =>
     request(`/devotions/${id}`, {
       method: 'DELETE',
     }),
-  getMeditations: (includeInactive = false) =>
-    request(`/meditations${includeInactive ? '?includeInactive=true' : ''}`),
+
+  // Meditations
+  getMeditations: (includeInactive = false, tenant = null) => {
+    const params = new URLSearchParams();
+    if (includeInactive) params.append('includeInactive', 'true');
+    if (tenant) params.append('tenant', tenant);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return request(`/meditations${qs}`);
+  },
   getMeditationById: (id) => request(`/meditations/${id}`),
+  saveMeditation: (data) => {
+    const targetId = data.dbId || data.id;
+    if (targetId && !data.createNew) {
+      return request(`/meditations/${encodeURIComponent(targetId)}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    }
+    return request('/meditations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  updateMeditationPortal: (id, portalPosition, tenant = null) =>
+    request(`/meditations/${encodeURIComponent(id)}/portal`, {
+      method: 'PATCH',
+      body: JSON.stringify({ portal_position: portalPosition, portalPosition, tenant }),
+    }),
+  deleteMeditation: (id) =>
+    request(`/meditations/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    }),
+
+  // Pyhäpäivä & Kirkkovuosi
+  getPyhapaivaDay: (date = null, tenant = null, translation = 'KR92') => {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    if (tenant) params.append('tenant', tenant);
+    if (translation) params.append('translation', translation);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return request(`/pyhapaiva/day${qs}`);
+  },
+  getHolyDay: (date = null, tenant = null, translation = 'KR92') => {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    if (tenant) params.append('tenant', tenant);
+    if (translation) params.append('translation', translation);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return request(`/pyhapaiva/day${qs}`);
+  },
+  getPyhapaivaCalendar: (from = null, days = 90, tenant = null) => {
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (days) params.append('days', String(days));
+    if (tenant) params.append('tenant', tenant);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return request(`/pyhapaiva/calendar${qs}`);
+  },
+  getPyhapaivaOverrides: (tenant = null) =>
+    request(`/pyhapaiva/overrides${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ''}`),
+  savePyhapaivaOverride: (date, payload) =>
+    request(`/pyhapaiva/overrides/${encodeURIComponent(date)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deletePyhapaivaOverride: (date, tenant = null) =>
+    request(`/pyhapaiva/overrides/${encodeURIComponent(date)}${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ''}`, {
+      method: 'DELETE',
+    }),
 };
 
 export default api;

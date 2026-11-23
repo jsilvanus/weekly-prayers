@@ -11,8 +11,10 @@ import HighlightManager from './HighlightManager';
 import SettingsManager from './SettingsManager';
 import TenantManager from './TenantManager';
 import BibleManager from './BibleManager';
+import PyhapaivaManager from './PyhapaivaManager';
 import HoursManager from './HoursManager';
 import DevotionManager from './DevotionManager';
+import MeditationManager from './MeditationManager';
 import MeditationPage from '../prayers/MeditationPage';
 
 export default function AdminPanel() {
@@ -49,7 +51,19 @@ export default function AdminPanel() {
       });
     }
 
-    // 2. Raamattu & Sana (Bible Word)
+    // 2. Pyhäpäivä & Kirkkovuosi (Holy Day & Church Year)
+    if (!isBishop || isAdmin) {
+      domains.push({
+        id: 'pyhapaiva',
+        label: t('nav.pyhapaiva') || 'Pyhäpäivä',
+        icon: '⛪',
+        subTabs: [
+          { id: 'pyhapaiva_hub', label: 'Kirkkovuoden pyhäpäivät & seurakunnan otsikot', component: PyhapaivaManager },
+        ],
+      });
+    }
+
+    // 3. Raamattu & Sana (Bible Word)
     if (!isBishop || isAdmin) {
       domains.push({
         id: 'bible',
@@ -61,7 +75,7 @@ export default function AdminPanel() {
       });
     }
 
-    // 3. Hetkirukous (Liturgy of Hours)
+    // 4. Hetkirukous (Liturgy of Hours)
     if (!isBishop || isAdmin) {
       domains.push({
         id: 'hours',
@@ -73,14 +87,15 @@ export default function AdminPanel() {
       });
     }
 
-    // 4. Meditaatiot (Meditations)
+    // 5. Meditaatiot (Meditations)
     if (!isBishop || isAdmin) {
       domains.push({
         id: 'meditations',
         label: t('nav.meditations') || 'Meditaatiot',
         icon: '📿',
         subTabs: [
-          { id: 'meditations_hub', label: 'Meditaatiot & Hiljaisuus', component: MeditationPage },
+          { id: 'meditations_builder', label: 'Meditaatioiden rakennuspalikat & hallinta', component: MeditationManager },
+          { id: 'meditations_hub', label: 'Esikatselu: Meditaatiot & Hiljaisuus', component: MeditationPage },
         ],
       });
     }

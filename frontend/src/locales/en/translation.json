@@ -5,7 +5,9 @@
   },
   "nav": {
     "home": "Home",
+    "portal": "Portal",
     "prayers": "Prayer Intentions",
+    "pyhapaiva": "Holy Day",
     "bible": "Bible & Word",
     "hours": "Prayer of the Hours",
     "hartaus": "Devotion",

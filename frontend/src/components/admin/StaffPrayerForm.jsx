@@ -15,6 +15,7 @@ function StaffPrayerForm() {
   const [ministryTag, setMinistryTag] = useState(ministryTags?.[0] || 'Diakonia');
   const [customTag, setCustomTag] = useState('');
   const [isYhtymaWide, setIsYhtymaWide] = useState(false);
+  const [portalPosition, setPortalPosition] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
@@ -55,7 +56,7 @@ function StaffPrayerForm() {
     const effectiveTag = customTag.trim() || ministryTag;
 
     try {
-      await api.submitStaffPrayer(
+      const res = await api.submitStaffPrayer(
         content.trim(),
         startDate,
         endDate,
@@ -64,10 +65,16 @@ function StaffPrayerForm() {
         isYhtymaWide,
         currentTenant?.id
       );
+      if (portalPosition && res?.prayer?.id) {
+        try {
+          await api.updatePrayer(res.prayer.id, { portalPosition });
+        } catch (e) {}
+      }
       setMessage({ type: 'success', text: 'Työalan rukouspyyntö lisätty onnistuneesti!' });
       setContent('');
       setCustomTag('');
       setIsYhtymaWide(false);
+      setPortalPosition(null);
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
     } finally {
@@ -209,6 +216,39 @@ function StaffPrayerForm() {
               />
             </div>
           )}
+        </div>
+
+        {/* Portal Lift Selector */}
+        <div className="bg-primary-50/50 p-3 rounded-xl border border-primary-200/80 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span className="text-xs font-bold text-primary-950 flex items-center gap-1.5">
+              <span>📌</span>
+              <span>Nosta suoraan etusivun portaaliin (/)</span>
+            </span>
+            <p className="text-[11px] text-gray-500">
+              Voit nostaa tämän työalan rukouspyynnön näkymään suoraan etusivulla karusellin ylä- tai alapuolella.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-1 bg-white p-1 rounded-lg border border-primary-200">
+            {[
+              { id: null, label: 'Ei nostoa' },
+              { id: 'above', label: '⬆️ Karusellin yläpuolella' },
+              { id: 'below', label: '⬇️ Karusellin alapuolella' },
+            ].map((opt) => (
+              <button
+                key={String(opt.id)}
+                type="button"
+                onClick={() => setPortalPosition(opt.id)}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                  portalPosition === opt.id
+                    ? 'bg-primary-700 text-white shadow-2xs'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex items-center justify-end pt-1">

@@ -36,7 +36,8 @@ function Header() {
   const canSeeDisabled = isWorkerOrAbove || user?.role === 'admin';
 
   const navModules = [
-    { id: 'prayers', to: '/', activePaths: ['/', '/prayers', '/esirukoukset'], icon: '🙏', defaultTitle: 'Esirukoukset' },
+    { id: 'prayers', to: '/prayers', activePaths: ['/prayers', '/esirukoukset'], icon: '🙏', defaultTitle: 'Esirukoukset' },
+    { id: 'pyhapaiva', to: '/pyhapaiva', activePaths: ['/pyhapaiva', '/kirkkovuosi', '/church-year'], icon: '⛪', defaultTitle: 'Pyhäpäivä' },
     { id: 'bible', to: '/bible', activePaths: ['/bible', '/raamattu'], icon: '📖', defaultTitle: 'Raamattu & Sana' },
     { id: 'hours', to: '/prayer-moment', activePaths: ['/prayer-moment', '/hetkirukous'], icon: '⏰', defaultTitle: 'Hetkirukous' },
     { id: 'hartaus', to: '/hartaus', activePaths: ['/hartaus', '/devotion'], icon: '✍️', defaultTitle: 'Hartaus' },

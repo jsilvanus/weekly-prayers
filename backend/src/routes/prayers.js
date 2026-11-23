@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPrayersForWeek, createPrayer, getPrayerById, updatePrayer, deletePrayer, approvePrayer, updatePrayerHighlight } from '../services/prayerService.js';
+import { getPrayersForWeek, createPrayer, getPrayerById, updatePrayer, deletePrayer, approvePrayer, updatePrayerHighlight, updatePrayerPortalPlacement } from '../services/prayerService.js';
 import { getCurrentWeekInfo, getCurrentWeekInfoForTenant, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
 import { optionalAuth, requireAuth } from '../middleware/authenticate.js';
 import { isWorkerOrAbove, requireWorker, requireAdmin, requireCoordinator, requireBishopOrAdmin } from '../middleware/authorize.js';
@@ -148,7 +148,7 @@ router.post('/', optionalAuth, async (req, res, next) => {
 // POST /api/prayers/staff - Submit a staff prayer request (worker+)
 router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
   try {
-    const { content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId } = req.body;
+    const { content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId, portalPosition, portalOrder } = req.body;
 
     // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -190,7 +190,9 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
       ministryGroup: ministryGroup || 'local',
       ministryTag: ministryTag || null,
       isYhtymaWide: !!isYhtymaWide,
-      tenantId: tenantId || req.user.tenant_id || null
+      tenantId: tenantId || req.user.tenant_id || null,
+      portalPosition: portalPosition || null,
+      portalOrder: portalOrder || 0
     });
 
     res.status(201).json({
@@ -206,6 +208,8 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
         ministryTag: prayer.ministry_tag,
         isYhtymaWide: prayer.is_yhtyma_wide,
         tenantId: prayer.tenant_id,
+        portalPosition: prayer.portal_position || null,
+        portalOrder: prayer.portal_order || 0,
         createdAt: prayer.created_at
       }
     });
@@ -217,7 +221,7 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
 // POST /api/prayers/pastor - Submit the pastor's prayer topic (admin only)
 router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    const { content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority } = req.body;
+    const { content, startDate, endDate, logoUrl, isYhtymaWide, tenantId, highlightPriority, portalPosition, portalOrder } = req.body;
 
     // Validate content
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -259,7 +263,9 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
       highlightPriority: parseInt(highlightPriority, 10) || 0,
       logoUrl: logoUrl || null,
       isYhtymaWide: !!isYhtymaWide,
-      tenantId: tenantId || req.user.tenant_id || null
+      tenantId: tenantId || req.user.tenant_id || null,
+      portalPosition: portalPosition || null,
+      portalOrder: portalOrder || 0
     });
 
     res.status(201).json({
@@ -272,6 +278,8 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
         endDate: prayer.end_date,
         isApproved: prayer.is_approved,
         logoUrl: prayer.logo_url,
+        portalPosition: prayer.portal_position || null,
+        portalOrder: prayer.portal_order || 0,
         createdAt: prayer.created_at
       }
     });
@@ -283,7 +291,7 @@ router.post('/pastor', requireAuth, requireAdmin, async (req, res, next) => {
 // POST /api/prayers/bishop - Submit the optional bishop's prayer topic (bishop or admin)
 router.post('/bishop', requireAuth, requireBishopOrAdmin, async (req, res, next) => {
   try {
-    const { content, startDate, endDate, logoUrl, highlightPriority, isYhtymaWide, tenantId } = req.body;
+    const { content, startDate, endDate, logoUrl, highlightPriority, isYhtymaWide, tenantId, portalPosition, portalOrder } = req.body;
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return res.status(400).json({
@@ -323,7 +331,9 @@ router.post('/bishop', requireAuth, requireBishopOrAdmin, async (req, res, next)
       highlightPriority: parseInt(highlightPriority, 10) || 0,
       logoUrl: logoUrl || null,
       isYhtymaWide: !!isYhtymaWide,
-      tenantId: tenantId || req.user.tenant_id || null
+      tenantId: tenantId || req.user.tenant_id || null,
+      portalPosition: portalPosition || null,
+      portalOrder: portalOrder || 0
     });
 
     res.status(201).json({
@@ -336,6 +346,8 @@ router.post('/bishop', requireAuth, requireBishopOrAdmin, async (req, res, next)
         endDate: prayer.end_date,
         isApproved: prayer.is_approved,
         logoUrl: prayer.logo_url,
+        portalPosition: prayer.portal_position || null,
+        portalOrder: prayer.portal_order || 0,
         createdAt: prayer.created_at
       }
     });
@@ -345,10 +357,10 @@ router.post('/bishop', requireAuth, requireBishopOrAdmin, async (req, res, next)
 });
 
 // PUT /api/prayers/:id - Update a prayer request
-router.put('/:id', requireAuth, requireWorker, async (req, res, next) => {
+router.put('/:id', requireAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { content, startDate, endDate } = req.body;
+    const { content, startDate, endDate, portalPosition, portalOrder } = req.body;
 
     // Get existing prayer
     const existingPrayer = await getPrayerById(id);
@@ -362,6 +374,11 @@ router.put('/:id', requireAuth, requireWorker, async (req, res, next) => {
     // Check permissions: admin can edit all, worker can edit staff/public, bishop by admin or bishop, pastor only by admin
     const isAdmin = req.user.role === 'admin';
     const isBishop = req.user.role === 'bishop';
+    if (!isWorkerOrAbove(req.user) && !isBishop) {
+      return res.status(403).json({
+        error: { message: 'Insufficient permissions' }
+      });
+    }
     if (existingPrayer.type === 'bishop' && !isAdmin && !isBishop) {
       return res.status(403).json({
         error: { message: 'Only admin or bishop can edit bishop prayer topics' }
@@ -388,6 +405,12 @@ router.put('/:id', requireAuth, requireWorker, async (req, res, next) => {
 
     if (startDate !== undefined) updates.startDate = startDate;
     if (endDate !== undefined) updates.endDate = endDate;
+    if (portalPosition !== undefined) {
+      updates.portalPosition = ['above', 'below'].includes(portalPosition) ? portalPosition : null;
+    }
+    if (portalOrder !== undefined) {
+      updates.portalOrder = parseInt(portalOrder, 10) || 0;
+    }
 
     const updatedPrayer = await updatePrayer(id, updates);
 
@@ -400,6 +423,61 @@ router.put('/:id', requireAuth, requireWorker, async (req, res, next) => {
         startDate: updatedPrayer.start_date,
         endDate: updatedPrayer.end_date,
         isApproved: updatedPrayer.is_approved,
+        portalPosition: updatedPrayer.portal_position || null,
+        portalOrder: updatedPrayer.portal_order || 0,
+        updatedAt: updatedPrayer.updated_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH / PUT / POST /api/prayers/:id/portal - Lift or unlift any prayer (bishop, pastor, staff, public) to the main portal
+router.all('/:id/portal', requireAuth, async (req, res, next) => {
+  if (!['PATCH', 'PUT', 'POST'].includes(req.method)) {
+    return next();
+  }
+  try {
+    const { id } = req.params;
+    const { portalPosition, portalOrder } = req.body;
+
+    const existingPrayer = await getPrayerById(id);
+    if (!existingPrayer) {
+      return res.status(404).json({
+        error: { message: 'Prayer request not found' }
+      });
+    }
+
+    const isAdmin = req.user.role === 'admin';
+    const isBishop = req.user.role === 'bishop';
+    if (!isWorkerOrAbove(req.user) && !isBishop) {
+      return res.status(403).json({
+        error: { message: 'Insufficient permissions to lift prayers to main portal' }
+      });
+    }
+    if (existingPrayer.type === 'bishop' && !isAdmin && !isBishop) {
+      return res.status(403).json({
+        error: { message: 'Only admin or bishop can modify bishop prayer portal visibility' }
+      });
+    }
+
+    const normalizedPos = ['above', 'below'].includes(portalPosition) ? portalPosition : null;
+    const normalizedOrder = portalOrder !== undefined ? (parseInt(portalOrder, 10) || 0) : (existingPrayer.portal_order || 0);
+
+    const updatedPrayer = await updatePrayerPortalPlacement(id, normalizedPos, normalizedOrder);
+
+    res.json({
+      message: normalizedPos
+        ? `Prayer lifted to portal (${normalizedPos} carousel).`
+        : 'Prayer removed from portal lift.',
+      prayer: {
+        id: updatedPrayer.id,
+        type: updatedPrayer.type,
+        content: updatedPrayer.sanitized_content || updatedPrayer.original_content,
+        isApproved: updatedPrayer.is_approved,
+        portalPosition: updatedPrayer.portal_position || null,
+        portalOrder: updatedPrayer.portal_order || 0,
         updatedAt: updatedPrayer.updated_at
       }
     });

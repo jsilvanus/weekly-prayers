@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
-import { useSettings } from './SettingsContext';
+import { useSettings, parsePortalConfig } from './SettingsContext';
 
 const TenantContext = createContext(null);
 
@@ -144,15 +144,18 @@ export function TenantProvider({ children }) {
 
   const activeModules = (() => {
     const raw = effectiveTenant?.active_modules || settings?.active_modules;
-    if (!raw) return ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+    const defaultMods = ['prayers', 'bible', 'hours', 'hartaus', 'meditations', 'pyhapaiva'];
+    if (!raw) return defaultMods;
     if (Array.isArray(raw)) return raw;
     try {
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      return Array.isArray(parsed) ? parsed : ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+      return Array.isArray(parsed) ? parsed : defaultMods;
     } catch (e) {
-      return ['prayers', 'bible', 'hours', 'hartaus', 'meditations'];
+      return defaultMods;
     }
   })();
+
+  const portalConfig = parsePortalConfig(effectiveTenant?.portal_config || settings?.portal_config);
 
   const isModuleEnabled = (moduleKey, isPrivileged = false) => {
     if (isPrivileged) return true;
@@ -171,6 +174,8 @@ export function TenantProvider({ children }) {
         return settings?.module_title_hartaus || fallback || 'Hartaus';
       case 'meditations':
         return settings?.module_title_meditations || fallback || 'Meditaatiot';
+      case 'pyhapaiva':
+        return settings?.module_title_pyhapaiva || fallback || 'Pyhäpäivä';
       default:
         return fallback || moduleKey;
     }
@@ -185,6 +190,7 @@ export function TenantProvider({ children }) {
     allTenants: allTenantsList,
     selectedSlug,
     activeModules,
+    portalConfig,
     isModuleEnabled,
     getModuleTitle,
     switchParish,

@@ -5,12 +5,16 @@ import {
   createPrayer,
   getPrayerById,
   approvePrayer,
-  updatePrayerHighlight
+  updatePrayerHighlight,
+  updatePrayerPortalPlacement
 } from '../services/prayerService.js';
 import { getCurrentWeekInfoForTenant, getWeekDates, formatDate } from '../utils/weekHelper.js';
 import { getAllSettings, updateSettings } from '../services/settingsService.js';
 import { getAllTenants, getTenantHierarchy } from '../services/tenantService.js';
 import { getBibleForDate } from '../services/bibleService.js';
+import { getDevotionForDate, saveDevotion } from '../services/devotionService.js';
+import { getActiveMeditationsList, saveMeditation } from '../services/meditationService.js';
+import { getHolyDayForDate, saveHolyDayOverride } from '../services/pyhapaivaService.js';
 import { sanitizePrayerContent } from '../services/aiSanitizer.js';
 import { query } from '../db/index.js';
 
@@ -51,6 +55,7 @@ export function createMcpServer({ publicUrl, user }) {
   });
 
   const isStaff = user && ['worker', 'coordinator', 'bishop', 'admin'].includes(user.role);
+  const isDevotionOrStaff = user && ['devotion', 'worker', 'coordinator', 'bishop', 'admin'].includes(user.role);
   const isCoordinator = user && ['coordinator', 'admin'].includes(user.role);
   const isAdmin = user && user.role === 'admin';
   const isBishopOrAdmin = user && ['bishop', 'admin'].includes(user.role);
@@ -649,6 +654,281 @@ export function createMcpServer({ publicUrl, user }) {
         return result({
           message: 'Seurakunnan asetukset päivitetty onnistuneesti.',
           settings: updated
+        });
+      } catch (err) {
+        return errorResult(err.message);
+      }
+    }
+  );
+
+  // ─────────────────────────────────────────────────────────────
+  // 4. DEVOTIONS, MEDITATIONS, LITURGY OF THE HOURS & PYHÄPÄIVÄ
+  // ─────────────────────────────────────────────────────────────
+
+  // Tool: get_today_devotion
+  server.registerTool(
+    'get_today_devotion',
+    {
+      description: 'Hae päivän hartaus (tai valitun päivän hartaus) rakennuspalikoineen (blocks), raamatunkohtineen, rukouksineen ja virsineen. Get today\'s devotion including modular building blocks.',
+      inputSchema: {
+        date: z.string().optional().describe('Päivämäärä muodossa YYYY-MM-DD (oletus: tämä päivä)'),
+        tenant: z.string().optional().describe('Seurakunnan slug')
+      }
+    },
+    async (args) => {
+      try {
+        const devotion = await getDevotionForDate(args.tenant || null, args.date || null, {
+          includeAudit: isDevotionOrStaff
+        });
+        return result({ devotion });
+      } catch (err) {
+        return errorResult(err.message);
+      }
+    }
+  );
+
+  // Tool: construct_devotion
+  server.registerTool(
+    'construct_devotion',
+    {
+      description: 'Luo tai päivitä päivän hartaus (Hartaus) käyttäen joko jäsenneltyjä kenttiä tai rakennuspalikoita (blocks: intro, scripture, reflection, prayer, hymn, blessing, media_embed, candle_lighting, children_story, liturgical_psalm, versicle_response, silence_timer). Voit myös nostaa hartauden etusivun portaaliin (portalPosition: "above" | "below" | null). (Devotion Author or Staff only)',
+      inputSchema: {
+        targetDate: z.string().optional().describe('Kohdepäivä YYYY-MM-DD (oletus: tämä päivä)'),
+        title: z.string().min(2).describe('Hartauden otsikko'),
+        format: z.enum(['structured', 'single_block', 'blocks']).default('blocks').describe('Hartauden muoto'),
+        openingQuote: z.string().optional().describe('Alkusitaatti tai johdanto'),
+        scriptureReference: z.string().optional().describe('Raamatunkohdan viite (esim. "Ps. 23:1-3")'),
+        scriptureText: z.string().optional().describe('Raamatunkohdan teksti'),
+        reflection: z.string().optional().describe('Varsinainen hartausteksti / pohdinta'),
+        prayer: z.string().optional().describe('Rukous'),
+        hymn: z.string().optional().describe('Virsi tai hengellinen laulu (esim. "VK 1:1")'),
+        blessing: z.string().optional().describe('Siunaus'),
+        youtubeUrl: z.string().optional().describe('YouTube-upotuksen URL'),
+        blocks: z.array(z.any()).optional().describe('Valinnainen lista rakennuspalikoita (BlockRenderer-muodossa: [{ id, type, data }])'),
+        authorType: z.enum(['self', 'other_user', 'custom_text']).default('self').describe('Kirjoittajan attribuutiotapa'),
+        authorDisplayName: z.string().optional().describe('Julkinen kirjoittajanimi (jos custom_text)'),
+        portalPosition: z.enum(['above', 'below', 'none']).optional().describe('Nosta hartaus pääsivulle karusellin ylä- tai alapuolelle ("above", "below", "none")'),
+        isPublished: z.boolean().default(true).describe('Onko hartaus julkaistu'),
+        tenant: z.string().optional().describe('Seurakunnan slug')
+      }
+    },
+    async (args) => {
+      if (!isDevotionOrStaff) return authError(publicUrl, 'Hartauden luominen vaatii hartauden kirjoittajan tai työntekijän oikeudet.');
+      try {
+        const saved = await saveDevotion(
+          {
+            target_date: args.targetDate,
+            title: args.title,
+            format: args.blocks && args.blocks.length > 0 ? 'structured' : args.format,
+            opening_quote: args.openingQuote,
+            scripture_reference: args.scriptureReference,
+            scripture_text: args.scriptureText,
+            reflection: args.reflection,
+            prayer: args.prayer,
+            hymn: args.hymn,
+            blessing: args.blessing,
+            youtube_url: args.youtubeUrl,
+            blocks: args.blocks || null,
+            author_type: args.authorType,
+            author_display_name: args.authorDisplayName,
+            portal_position: args.portalPosition === 'none' ? null : (args.portalPosition || null),
+            is_published: args.isPublished,
+            tenant: args.tenant
+          },
+          user
+        );
+        return result({
+          message: 'Hartaus tallennettu onnistuneesti.',
+          devotion: saved
+        });
+      } catch (err) {
+        return errorResult(err.message);
+      }
+    }
+  );
+
+  // Tool: get_meditations
+  server.registerTool(
+    'get_meditations',
+    {
+      description: 'Hae seurakunnan meditaatiot ja rukoushetket (esim. Lönnebon rukoushelmet, Lutherin katekismusmeditaatio, Jeesuksen rukous, Lectio Divina, Examen, Lasten adventti- ja kynttilähetki) rakennuspalikoineen (blocks). Get active meditations and their building blocks.',
+      inputSchema: {
+        includeInactive: z.boolean().default(false).describe('Sisällytä myös piilotetut meditaatiot'),
+        tenant: z.string().optional().describe('Seurakunnan slug')
+      }
+    },
+    async (args) => {
+      try {
+        const meditations = await getActiveMeditationsList({
+          includeInactive: args.includeInactive && isDevotionOrStaff,
+          tenantSlug: args.tenant || null
+        });
+        return result({ meditations });
+      } catch (err) {
+        return errorResult(err.message);
+      }
+    }
+  );
+
+  // Tool: construct_meditation
+  server.registerTool(
+    'construct_meditation',
+    {
+      description: 'Rakenna uusi meditaatio tai muokkaa olemassa olevaa meditaatiota rakennuspalikoista (blocks: intro, candle_lighting, children_story, multi_strand, bead_sequence, steps_guide, breathing_timer, silence_timer, liturgical_psalm, versicle_response, scripture, reflection, prayer, hymn, blessing, media_embed). Voit myös nostaa meditaation etusivulle (portalPosition: "above" | "below" | "none"). (Staff or Devotion Author only)',
+      inputSchema: {
+        id: z.string().optional().describe('Olemassa olevan meditaation ID tai slug (jos muokataan)'),
+        slug: z.string().optional().describe('Yksilöllinen tunniste (esim. "lasten_adventtihetki")'),
+        title: z.string().min(2).describe('Meditaation otsikko'),
+        subtitle: z.string().optional().describe('Alaotsikko'),
+        category: z.string().default('custom').describe('Kategoria (esim. "Rukoushelmet", "Katekismus", "Perheet & Lapset", "Hiljaisuus")'),
+        icon: z.string().default('🕯️').describe('Kuvake-emoji (esim. 📿, 🕯️, 🌿, 📖)'),
+        shortDescription: z.string().optional().describe('Lyhyt kuvaus korttinäkymään'),
+        introduction: z.string().optional().describe('Johdantoteksti'),
+        blocks: z.array(z.any()).min(1).describe('Meditaation rakennuspalikat ([{ id, type, data }])'),
+        portalPosition: z.enum(['above', 'below', 'none']).optional().describe('Nosta meditaatio etusivulle karusellin ylä- tai alapuolelle'),
+        isPublished: z.boolean().default(true).describe('Onko meditaatio julkinen'),
+        tenant: z.string().optional().describe('Seurakunnan slug')
+      }
+    },
+    async (args) => {
+      if (!isDevotionOrStaff) return authError(publicUrl, 'Meditaation luominen tai muokkaaminen vaatii työntekijän tai hartauden kirjoittajan oikeudet.');
+      try {
+        const saved = await saveMeditation(
+          {
+            id: args.id,
+            slug: args.slug,
+            title: args.title,
+            subtitle: args.subtitle,
+            category: args.category,
+            icon: args.icon,
+            shortDescription: args.shortDescription,
+            introduction: args.introduction,
+            blocks: args.blocks,
+            portal_position: args.portalPosition === 'none' ? null : (args.portalPosition || null),
+            is_published: args.isPublished,
+            tenant: args.tenant
+          },
+          user
+        );
+        return result({
+          message: 'Meditaatio tallennettu onnistuneesti.',
+          meditation: saved
+        });
+      } catch (err) {
+        return errorResult(err.message);
+      }
+    }
+  );
+
+  // Tool: get_liturgical_hours
+  server.registerTool(
+    'get_liturgical_hours',
+    {
+      description: 'Hae Kirkkokäsikirja III:n mukaiset hetkirukoukset (Laudes/Aamurukous, Seksti/Päivärukous, Vesper/Iltarukous, Kompletorio/Yörukous sekä Pieni rukoushetki) vuorolauseineen, psalmeineen, kiitosvirsineen (Benedictus, Magnificat, Nunc dimittis) ja ABC-nuotteineen. Get canonical Liturgy of the Hours with liturgical blocks and ABC notation.',
+      inputSchema: {
+        date: z.string().optional().describe('Päivämäärä YYYY-MM-DD (oletus: tämä päivä)'),
+        hour: z.enum(['all', 'laudes', 'seksti', 'vesper', 'kompletorio']).default('all').describe('Haluttu rukoushetki tai "all"')
+      }
+    },
+    async (args) => {
+      try {
+        const data = await getBibleForDate(args.date || null);
+        const hours = data.liturgicalHours || {};
+        return result({
+          date: data.date,
+          holyDay: data.holyDay,
+          liturgicalHours: args.hour === 'all' ? hours : { [args.hour]: hours[args.hour] }
+        });
+      } catch (err) {
+        return errorResult(err.message);
+      }
+    }
+  );
+
+  // Tool: get_holy_day
+  server.registerTool(
+    'get_holy_day',
+    {
+      description: 'Hae Pyhäpäivä-sivun (/pyhapaiva) kirkkovuoden tiedot, liturginen väri, Anno API:n lukukappaleet (1. lukukappale, 2. lukukappale, Evankeliumi, Päivän psalmi, Päivän rukous) sekä seurakunnan oma otsikko ja kuvaus valitulle päivälle. Get Church Year Holy Day readings and parish overrides.',
+      inputSchema: {
+        date: z.string().optional().describe('Päivämäärä YYYY-MM-DD (oletus: tuleva sunnuntai / pyhäpäivä)'),
+        translation: z.enum(['KR92', 'KR38', 'UT2020']).default('KR92').describe('Raamatunkäännös'),
+        tenant: z.string().optional().describe('Seurakunnan slug')
+      }
+    },
+    async (args) => {
+      try {
+        const data = await getHolyDayForDate({
+          date: args.date || null,
+          tenant: args.tenant || null,
+          translation: args.translation || 'KR92'
+        });
+        return result(data);
+      } catch (err) {
+        return errorResult(err.message);
+      }
+    }
+  );
+
+  // Tool: set_holy_day_override
+  server.registerTool(
+    'set_holy_day_override',
+    {
+      description: 'Aseta seurakunnan oma otsikko (customHeading), kuvaus (customDescription), paimenellinen saatesana (pastoralReflection), messutiedot (serviceInfo) ja etusivunosto (portalPosition: "above" | "below" | "none") tietylle kirkkovuoden pyhäpäivälle. (Staff only)',
+      inputSchema: {
+        targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe('Pyhäpäivän päivämäärä YYYY-MM-DD'),
+        customHeading: z.string().optional().describe('Seurakunnan oma otsikko pyhäpäivälle'),
+        customDescription: z.string().optional().describe('Seurakunnan oma kuvaus pyhäpäivälle'),
+        pastoralReflection: z.string().optional().describe('Paimenellinen tervehdys tai selitys'),
+        customCollect: z.string().optional().describe('Vaihtoehtoinen päivän rukous'),
+        serviceInfo: z.string().optional().describe('Jumalanpalveluksen tiedot (esim. klo 10 Messu, liturgi, saarnaaja)'),
+        portalPosition: z.enum(['above', 'below', 'none']).optional().describe('Nosta pyhäpäivä etusivulle karusellin ylä- tai alapuolelle'),
+        tenant: z.string().optional().describe('Seurakunnan slug')
+      }
+    },
+    async (args) => {
+      if (!isStaff) return authError(publicUrl, 'Pyhäpäivän seurakuntakohtaisten tietojen muokkaaminen vaatii työntekijän oikeudet.');
+      try {
+        const saved = await saveHolyDayOverride({
+          targetDate: args.targetDate,
+          tenant: args.tenant || null,
+          customHeading: args.customHeading,
+          customDescription: args.customDescription,
+          pastoralReflection: args.pastoralReflection,
+          customCollect: args.customCollect,
+          serviceInfo: args.serviceInfo,
+          portalPosition: args.portalPosition === 'none' ? null : (args.portalPosition || null),
+          userId: user?.id || null
+        });
+        return result({
+          message: 'Pyhäpäivän seurakuntakohtaiset tiedot tallennettu.',
+          override: saved
+        });
+      } catch (err) {
+        return errorResult(err.message);
+      }
+    }
+  );
+
+  // Tool: set_prayer_portal_lift
+  server.registerTool(
+    'set_prayer_portal_lift',
+    {
+      description: 'Nosta yksittäinen rukousaihe (piispan, kirkkoherran, työalan tai seurakuntalaisen julkinen rukous) suoraan pääportaalin (/) etusivulle karusellin yläpuolelle ("above"), alapuolelle ("below") tai poista nosto ("none"). (Staff only)',
+      inputSchema: {
+        prayerId: z.string().uuid().describe('Rukousaiheen UUID'),
+        portalPosition: z.enum(['above', 'below', 'none']).describe('Sijainti pääportaalissa: "above" (karusellin yläpuolella), "below" (karusellin alapuolella) tai "none" (ei nostoa)'),
+        portalOrder: z.number().int().default(0).describe('Järjestysnumero nostojen joukossa')
+      }
+    },
+    async (args) => {
+      if (!isStaff) return authError(publicUrl, 'Rukousaiheen nostaminen etusivulle vaatii työntekijän oikeudet.');
+      try {
+        const pos = args.portalPosition === 'none' ? null : args.portalPosition;
+        const updated = await updatePrayerPortalPlacement(args.prayerId, pos, args.portalOrder);
+        return result({
+          message: pos ? `Rukousaihe nostettu etusivulle (${pos === 'above' ? 'karusellin yläpuolelle' : 'karusellin alapuolelle'}).` : 'Rukousaiheen etusivunosto poistettu.',
+          prayer: updated
         });
       } catch (err) {
         return errorResult(err.message);

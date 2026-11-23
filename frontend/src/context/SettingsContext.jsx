@@ -161,6 +161,87 @@ export function parseSettingsList(val, fallback = []) {
   return fallback;
 }
 
+export const DEFAULT_PORTAL_CONFIG = {
+  carousel: {
+    enabled: true,
+    autoPlayMs: 7000,
+    slides: [
+      { id: 'hartaus', visible: true, order: 1 },
+      { id: 'hours', visible: true, order: 2 },
+      { id: 'pyhapaiva', visible: true, order: 3 },
+      { id: 'prayers', visible: true, order: 4 }
+    ]
+  },
+  liftActiveDevotion: 'none', // 'none' | 'above' | 'below'
+  liftCurrentPyhapaiva: 'none', // 'none' | 'above' | 'below'
+  liftedMeditations: {}, // { [meditationId]: 'above' | 'below' | 'none' }
+  sections: [
+    { id: 'hartaus', visible: true, position: 'below', order: 1 },
+    { id: 'pyhapaiva', visible: true, position: 'below', order: 2 },
+    { id: 'hours', visible: true, position: 'below', order: 3 },
+    { id: 'prayers', visible: true, position: 'below', order: 4 },
+    { id: 'meditations', visible: true, position: 'below', order: 5 },
+    { id: 'bible', visible: true, position: 'below', order: 6 }
+  ]
+};
+
+export function parsePortalConfig(rawVal) {
+  let parsed = null;
+  if (rawVal) {
+    if (typeof rawVal === 'object') {
+      parsed = rawVal;
+    } else if (typeof rawVal === 'string') {
+      try {
+        parsed = JSON.parse(rawVal);
+      } catch (e) {
+        parsed = null;
+      }
+    }
+  }
+
+  const defaultSlides = DEFAULT_PORTAL_CONFIG.carousel.slides;
+  const rawSlides = Array.isArray(parsed?.carousel?.slides) ? parsed.carousel.slides : [];
+  const mergedSlides = defaultSlides.map((defSlide, idx) => {
+    const found = rawSlides.find((s) => s.id === defSlide.id);
+    return {
+      id: defSlide.id,
+      visible: found?.visible !== undefined ? Boolean(found.visible) : defSlide.visible,
+      order: typeof found?.order === 'number' ? found.order : idx + 1
+    };
+  }).sort((a, b) => a.order - b.order);
+
+  const defaultSections = DEFAULT_PORTAL_CONFIG.sections;
+  const rawSections = Array.isArray(parsed?.sections) ? parsed.sections : [];
+  const mergedSections = defaultSections.map((defSec, idx) => {
+    const found = rawSections.find((s) => s.id === defSec.id);
+    return {
+      id: defSec.id,
+      visible: found?.visible !== undefined ? Boolean(found.visible) : defSec.visible,
+      position: found?.position === 'above' ? 'above' : 'below',
+      order: typeof found?.order === 'number' ? found.order : idx + 1
+    };
+  }).sort((a, b) => a.order - b.order);
+
+  return {
+    carousel: {
+      enabled: parsed?.carousel?.enabled !== undefined ? Boolean(parsed.carousel.enabled) : true,
+      autoPlayMs: typeof parsed?.carousel?.autoPlayMs === 'number' ? parsed.carousel.autoPlayMs : 7000,
+      slides: mergedSlides
+    },
+    liftActiveDevotion: ['above', 'below', 'none'].includes(parsed?.liftActiveDevotion)
+      ? parsed.liftActiveDevotion
+      : 'none',
+    liftCurrentPyhapaiva: ['above', 'below', 'none'].includes(parsed?.liftCurrentPyhapaiva)
+      ? parsed.liftCurrentPyhapaiva
+      : 'none',
+    liftedMeditations:
+      parsed?.liftedMeditations && typeof parsed.liftedMeditations === 'object'
+        ? parsed.liftedMeditations
+        : {},
+    sections: mergedSections
+  };
+}
+
 const SettingsContext = createContext(null);
 
 export function SettingsProvider({ children }) {
@@ -195,12 +276,15 @@ export function SettingsProvider({ children }) {
     highlight_icon: 'candle',
     brand_name: 'Rukoushetki',
     header_prominence: 'parish',
-    active_meditations: JSON.stringify(['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen']),
+    active_modules: JSON.stringify(['prayers', 'bible', 'hours', 'hartaus', 'meditations', 'pyhapaiva']),
+    active_meditations: JSON.stringify(['lonnebo_beads', 'luther_wreath', 'jesus_prayer', 'lectio_divina', 'examen', 'advent_children']),
     module_title_prayers: 'Esirukoukset',
     module_title_bible: 'Raamattu & Sana',
     module_title_hours: 'Hetkirukous',
     module_title_hartaus: 'Hartaus',
-    module_title_meditations: 'Meditaatiot'
+    module_title_meditations: 'Meditaatiot',
+    module_title_pyhapaiva: 'Pyhäpäivä',
+    portal_config: JSON.stringify(DEFAULT_PORTAL_CONFIG)
   });
   const [loading, setLoading] = useState(true);
 
@@ -253,6 +337,7 @@ export function SettingsProvider({ children }) {
   const highlightEmoji = getHighlightEmoji(highlightIcon);
   const ministryGroups = parseSettingsList(settings.ministry_groups, DEFAULT_MINISTRY_GROUPS);
   const ministryTags = parseSettingsList(settings.ministry_tags, DEFAULT_MINISTRY_TAGS);
+  const portalConfig = parsePortalConfig(settings.portal_config);
 
   const getModuleTitle = (key, fallback = '') => {
     switch (key) {
@@ -266,6 +351,8 @@ export function SettingsProvider({ children }) {
         return settings.module_title_hartaus || fallback || 'Hartaus';
       case 'meditations':
         return settings.module_title_meditations || fallback || 'Meditaatiot';
+      case 'pyhapaiva':
+        return settings.module_title_pyhapaiva || fallback || 'Pyhäpäivä';
       default:
         return fallback || key;
     }
@@ -284,6 +371,7 @@ export function SettingsProvider({ children }) {
         getHighlightEmoji,
         ministryGroups,
         ministryTags,
+        portalConfig,
         getModuleTitle
       }}
     >

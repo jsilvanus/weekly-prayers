@@ -48,6 +48,8 @@ export async function getPrayersForWeek(week, year, options = {}) {
       pr.logo_url,
       pr.is_yhtyma_wide,
       pr.tenant_id,
+      pr.portal_position,
+      pr.portal_order,
       pr.created_at,
       pr.updated_at,
       u.name as author_name,
@@ -89,7 +91,19 @@ export async function getPrayersForWeek(week, year, options = {}) {
 
   sql += ` ORDER BY pr.type, pr.highlight_priority DESC, pr.created_at DESC`;
 
-  const result = await query(sql, params);
+  let result;
+  try {
+    result = await query(sql, params);
+  } catch (err) {
+    if (err.message && err.message.includes('portal_position')) {
+      const fallbackSql = sql
+        .replace('pr.portal_position,', '')
+        .replace('pr.portal_order,', '');
+      result = await query(fallbackSql, params);
+    } else {
+      throw err;
+    }
+  }
 
   // Group by type
   const grouped = {
@@ -116,6 +130,8 @@ export async function getPrayersForWeek(week, year, options = {}) {
       isYhtymaWide: !!row.is_yhtyma_wide,
       tenantId: row.tenant_id || null,
       tenantName: row.tenant_name || null,
+      portalPosition: row.portal_position || null,
+      portalOrder: row.portal_order || 0,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       authorName: row.type === 'staff' ? row.author_name : null
@@ -168,16 +184,36 @@ export async function createPrayer({
   ministryTag = null,
   logoUrl = null,
   isYhtymaWide = false,
-  tenantId = null
+  tenantId = null,
+  portalPosition = null,
+  portalOrder = 0
 }) {
-  const result = await query(
-    `INSERT INTO prayer_requests
-     (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url, is_yhtyma_wide, tenant_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-     RETURNING *`,
-    [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl, isYhtymaWide, tenantId]
-  );
-  return result.rows[0];
+  const normalizedPortalPos = ['above', 'below'].includes(portalPosition) ? portalPosition : null;
+  const normalizedPortalOrder = parseInt(portalOrder, 10) || 0;
+
+  try {
+    const result = await query(
+      `INSERT INTO prayer_requests
+       (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url, is_yhtyma_wide, tenant_id, portal_position, portal_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       RETURNING *`,
+      [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl, isYhtymaWide, tenantId, normalizedPortalPos, normalizedPortalOrder]
+    );
+    return result.rows[0];
+  } catch (err) {
+    // Fallback if migration 022 hasn't been executed yet
+    if (err.message && err.message.includes('portal_position')) {
+      const result = await query(
+        `INSERT INTO prayer_requests
+         (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url, is_yhtyma_wide, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+         RETURNING *`,
+        [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl, isYhtymaWide, tenantId]
+      );
+      return result.rows[0];
+    }
+    throw err;
+  }
 }
 
 /**
@@ -198,7 +234,9 @@ export async function updatePrayer(id, {
   ministryTag,
   logoUrl,
   isYhtymaWide,
-  tenantId
+  tenantId,
+  portalPosition,
+  portalOrder
 }) {
   const updates = [];
   const values = [];
@@ -264,6 +302,15 @@ export async function updatePrayer(id, {
     updates.push(`tenant_id = $${paramIndex++}`);
     values.push(tenantId);
   }
+  if (portalPosition !== undefined) {
+    const normalizedPos = ['above', 'below'].includes(portalPosition) ? portalPosition : null;
+    updates.push(`portal_position = $${paramIndex++}`);
+    values.push(normalizedPos);
+  }
+  if (portalOrder !== undefined) {
+    updates.push(`portal_order = $${paramIndex++}`);
+    values.push(parseInt(portalOrder, 10) || 0);
+  }
 
   if (updates.length === 0) {
     return getPrayerById(id);
@@ -311,4 +358,16 @@ export async function updatePrayerHighlight(id, highlightPriority, highlightStar
     highlightEndDate: priority > 0 ? (highlightEndDate || null) : null,
   };
   return updatePrayer(id, updates);
+}
+
+/**
+ * Update prayer portal position ('above' | 'below' | null) and order on the root portal page
+ */
+export async function updatePrayerPortalPlacement(id, portalPosition = null, portalOrder = 0) {
+  const normalizedPos = ['above', 'below'].includes(portalPosition) ? portalPosition : null;
+  const normalizedOrder = parseInt(portalOrder, 10) || 0;
+  return updatePrayer(id, {
+    portalPosition: normalizedPos,
+    portalOrder: normalizedOrder
+  });
 }

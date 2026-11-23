@@ -5,7 +5,9 @@
   },
   "nav": {
     "home": "Etusivu",
+    "portal": "Etusivu",
     "prayers": "Esirukoukset",
+    "pyhapaiva": "Pyhäpäivä",
     "bible": "Raamattu & Sana",
     "hours": "Hetkirukous",
     "hartaus": "Hartaus",

@@ -18,6 +18,7 @@ import bibleRouter from './routes/bible.js';
 import tenantRouter from './routes/tenants.js';
 import devotionsRouter from './routes/devotions.js';
 import meditationsRouter from './routes/meditations.js';
+import pyhapaivaRouter from './routes/pyhapaiva.js';
 import docsRouter from './routes/docs.js';
 import mcpRouter from './mcp/routes.js';
 
@@ -83,6 +84,7 @@ router.use('/api/settings', settingsRouter);
 router.use('/api/bible', bibleRouter);
 router.use('/api/devotions', devotionsRouter);
 router.use('/api/meditations', meditationsRouter);
+router.use('/api/pyhapaiva', pyhapaivaRouter);
 router.use('/api/tenants', tenantRouter);
 router.use('/api', docsRouter);
 router.use('/', docsRouter);
