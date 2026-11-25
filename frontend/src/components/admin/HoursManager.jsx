@@ -2,11 +2,150 @@ import { useState, useEffect } from 'react';
 import { useTenant } from '../../context/TenantContext';
 import { api } from '../../services/api';
 import { Link } from 'react-router-dom';
+import { FALLBACK_LITURGY_HOURS } from '../prayers/liturgyFallback';
+
+const HOUR_META = {
+  morning: {
+    icon: '🌅',
+    subtitle: 'Laudes — Aamun kiitoshetki',
+    description: 'Uuden päivän, ylösnousemuksen ja Kristus-valon kiitosrukous (Benedictus).',
+  },
+  midday: {
+    icon: '☀️',
+    subtitle: 'Ad sextam (Seksti) — Päivän rukoushetki',
+    description: 'Keskipäivän pysähtyminen työn ja arjen keskellä ristin ja kutsumuksen äärelle.',
+  },
+  noon: {
+    icon: '☀️',
+    subtitle: 'Ad sextam (Seksti) — Päivän rukoushetki',
+    description: 'Keskipäivän pysähtyminen työn ja arjen keskellä ristin ja kutsumuksen äärelle.',
+  },
+  evening: {
+    icon: '🕯️',
+    subtitle: 'Vesper — Illan rukoushetki',
+    description: 'Päivän päättyessä kiitos valosta, suitsutuspsalmi ja Marian kiitosvirsi (Magnificat).',
+  },
+  night: {
+    icon: '🌙',
+    subtitle: 'Completorium (Kompletorio) — Yön rukoushetki',
+    description: 'Päivän jättäminen Jumalan käsiin, synnintunnustus, suojeluspsalmi ja Simeonin kiitosvirsi (Nunc dimittis).',
+  },
+  small: {
+    icon: '🕊️',
+    subtitle: 'Oratio parva — Lyhyt arjen rukoushetki',
+    description: 'Kompakti, milloin tahansa rukoiltava Kirkkokäsikirja III:n rukoushetki yksin tai ryhmässä.',
+  },
+};
+
+function buildSectionsFromHour(key, h) {
+  if (Array.isArray(h.sections) && h.sections.length > 0) {
+    return h.sections;
+  }
+  const sections = [];
+  if (h.opening) {
+    sections.push({ title: 'Johdanto (Versiculum & Gloria Patri)', text: h.opening });
+  }
+  if (h.confession?.text) {
+    sections.push({
+      title: h.confession.title || 'Synnintunnustus ja synninpäästö',
+      text: `${h.confession.text}${h.confession.absolution ? `\n\nSynninpäästö: ${h.confession.absolution}` : ''}`,
+    });
+  }
+  if (h.lucernarium) {
+    sections.push({ title: 'Valon rukous (Lucernarium)', text: h.lucernarium });
+  }
+  if (h.hymnSuggestion) {
+    sections.push({ title: 'Hymni / Virsi', text: h.hymnSuggestion });
+  }
+  if (Array.isArray(h.psalms) && h.psalms.length > 0) {
+    const psalmText = h.psalms
+      .map((p) => `${p.reference ? `${p.reference}:\n` : ''}${p.text || ''}`)
+      .join('\n\n');
+    sections.push({
+      title: `Psalmi${h.antiphon ? ' ja antifoni' : ''}`,
+      text: `${h.antiphon ? `Antifoni: ${h.antiphon}\n\n` : ''}${psalmText}`,
+    });
+  }
+  if (Array.isArray(h.readings) && h.readings.length > 0) {
+    const readingText = h.readings
+      .map((r) => `${r.reference ? `${r.reference}:\n` : ''}${r.text || ''}`)
+      .join('\n\n');
+    sections.push({ title: 'Raamatunluku (Capitulum)', text: readingText });
+  }
+  if (h.responsory) {
+    sections.push({ title: 'Vastauslaulu (Responsorium)', text: h.responsory });
+  }
+  if (h.canticle) {
+    sections.push({
+      title: h.canticle.name || h.canticle.title || 'Evankeliumin kiitosvirsi (Canticle)',
+      text: `${h.canticle.reference ? `(${h.canticle.reference})\n` : ''}${h.canticle.text || ''}`,
+    });
+  }
+  if (h.intercessions || h.prayer) {
+    const interText = [
+      h.intercessions?.intro,
+      Array.isArray(h.intercessions?.prayers) ? h.intercessions.prayers.join('\n') : null,
+      h.prayer ? `Kollehtarukous: ${h.prayer}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n\n');
+    sections.push({
+      title: h.intercessions?.title || 'Rukousjakso (Kyrie, esirukoukset & kollehtarukous)',
+      text: interText,
+      hasParishIntentions: Boolean(h.intercessions?.hasParishIntentions ?? (key !== 'night')),
+    });
+  }
+  if (h.lordsPrayer || h.blessing) {
+    sections.push({
+      title: 'Isä meidän & Siunaus (Benedicamus)',
+      text: [h.lordsPrayer, h.blessing].filter(Boolean).join('\n\n'),
+    });
+  }
+  return sections;
+}
+
+function normalizeHoursList(rawHours) {
+  if (Array.isArray(rawHours)) {
+    return rawHours;
+  }
+  const sourceObj =
+    rawHours && typeof rawHours === 'object' && Object.keys(rawHours).length > 0
+      ? rawHours
+      : FALLBACK_LITURGY_HOURS;
+
+  const orderedKeys = ['morning', 'midday', 'noon', 'evening', 'night', 'small'].filter(
+    (k, idx, arr) => sourceObj[k] && !(k === 'noon' && sourceObj.midday)
+  );
+
+  return orderedKeys.map((key) => {
+    const h = sourceObj[key];
+    const meta = HOUR_META[key] || {
+      icon: '⏰',
+      subtitle: h.latinTitle || '',
+      description: 'Kirkkokäsikirja III:n rukoushetki',
+    };
+    return {
+      id: key,
+      name: h.name || key,
+      icon: h.icon || meta.icon,
+      timeRange: h.timeRange || h.timeSlot || '',
+      subtitle: h.subtitle || meta.subtitle,
+      description: h.description || meta.description,
+      canticle: h.canticle
+        ? {
+            ...h.canticle,
+            title: h.canticle.title || h.canticle.name,
+          }
+        : null,
+      sections: buildSectionsFromHour(key, h),
+    };
+  });
+}
 
 export default function HoursManager() {
-  const { currentTenant, isModuleEnabled } = useTenant();
+  const { isModuleEnabled } = useTenant();
   const [hours, setHours] = useState([]);
-  const [currentHourId, setCurrentHourId] = useState('laudes');
+  const [currentHourId, setCurrentHourId] = useState('morning');
   const [selectedHour, setSelectedHour] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -15,14 +154,17 @@ export default function HoursManager() {
       setLoading(true);
       try {
         const res = await api.getLiturgicalHours();
-        if (res?.hours) {
-          setHours(res.hours);
-          setCurrentHourId(res.currentHourId || 'laudes');
-          const found = res.hours.find((h) => h.id === (res.currentHourId || 'laudes')) || res.hours[0];
-          setSelectedHour(found);
-        }
+        const normalized = normalizeHoursList(res?.hours || res?.liturgyOfTheHours);
+        const activeId = res?.nearestHourKey || res?.currentHourId || 'morning';
+        setHours(normalized);
+        setCurrentHourId(activeId);
+        const found = normalized.find((h) => h.id === activeId) || normalized[0] || null;
+        setSelectedHour(found);
       } catch (err) {
-        console.error('Failed to load hours info:', err);
+        console.error('Failed to load hours info, using fallback:', err);
+        const fallbackList = normalizeHoursList(FALLBACK_LITURGY_HOURS);
+        setHours(fallbackList);
+        setSelectedHour(fallbackList[0] || null);
       } finally {
         setLoading(false);
       }
