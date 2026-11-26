@@ -81,3 +81,11 @@ test('redact: the redacted output no longer contains the matched value', () => {
   assert.equal(out.includes('4111 1111'), false);
   assert.equal(out, 'Tili [tilinumero] ja kortti [korttinumero]');
 });
+
+test('redact: person_name spans use the neutral name labels', () => {
+  const src = 'Pyydämme Tuijan parempaa oloa.';
+  const { findings } = analyze(src);
+  assert.equal(redactSuggestion(src, findings), 'Pyydämme [nimi] parempaa oloa.');
+  assert.equal(redactSuggestion(src, findings, 'sv'), 'Pyydämme [namn] parempaa oloa.');
+  assert.equal(redactSuggestion(src, findings, 'en'), 'Pyydämme [name] parempaa oloa.');
+});

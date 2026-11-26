@@ -10,6 +10,7 @@
     "migrate": "node src/db/migrations/migrate.js",
     "test": "node --test",
     "eval:moderation": "node scripts/eval-moderation.js",
+    "build:names": "node scripts/build-name-list.js",
     "gen:moderation-dataset": "node scripts/moderation-dataset/generate.js"
   },
   "dependencies": {

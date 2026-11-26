@@ -1,6 +1,7 @@
 /**
  * Personal-data analysis: runs every rule over the normalised text, maps the spans back
  * to the original text, and resolves overlaps by keeping the highest-confidence finding.
+ * Person-name findings (names.js) run on the original text and yield to any other finding.
  *
  * Findings carry only type, offsets and confidence. The matched text is never returned.
  */
@@ -15,9 +16,10 @@ import { findAddress } from './rules/address.js';
 import { findUrl } from './rules/url.js';
 import { findPlate } from './rules/plate.js';
 import { findDob } from './rules/dob.js';
+import { findNames } from './names.js';
 
 export const FINDING_TYPES = Object.freeze([
-  'hetu', 'iban', 'card', 'phone', 'email', 'address', 'url', 'plate', 'dob',
+  'hetu', 'iban', 'card', 'phone', 'email', 'address', 'url', 'plate', 'dob', 'person_name',
 ]);
 
 const RULES = [findHetu, findIban, findCard, findPhone, findEmail, findAddress, findUrl, findPlate, findDob];
@@ -53,6 +55,12 @@ export function analyze(text) {
 
   const kept = [];
   for (const f of mapped) {
+    const overlaps = kept.some((k) => f.start < k.end && k.start < f.end);
+    if (!overlaps) kept.push(f);
+  }
+
+  // Names are added last, so any rule-based finding wins on overlap.
+  for (const f of findNames(src)) {
     const overlaps = kept.some((k) => f.start < k.end && k.start < f.end);
     if (!overlaps) kept.push(f);
   }
