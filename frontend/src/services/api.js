@@ -62,6 +62,7 @@ async function request(endpoint, options = {}) {
     );
   }
 
+  if (response.status === 204) return null;
   return response.json();
 }
 
@@ -321,6 +322,36 @@ export const api = {
     request(`/pyhapaiva/overrides/${encodeURIComponent(date)}${tenant ? `?tenant=${encodeURIComponent(tenant)}` : ''}`, {
       method: 'DELETE',
     }),
+
+  // Weekly prayer mailings (coordinator and above)
+  getMailingLists: () => request('/mailings/lists'),
+  createMailingList: (data) =>
+    request('/mailings/lists', { method: 'POST', body: JSON.stringify(data) }),
+  updateMailingList: (id, data) =>
+    request(`/mailings/lists/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteMailingList: (id) =>
+    request(`/mailings/lists/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getMailingSubscribers: (listId) =>
+    request(`/mailings/lists/${encodeURIComponent(listId)}/subscribers`),
+  addMailingSubscribers: (listId, data) =>
+    request(`/mailings/lists/${encodeURIComponent(listId)}/subscribers`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  removeMailingSubscriber: (id) =>
+    request(`/mailings/subscribers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getMailings: () => request('/mailings'),
+  createMailing: (data) =>
+    request('/mailings', { method: 'POST', body: JSON.stringify(data) }),
+  updateMailing: (id, data) =>
+    request(`/mailings/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteMailing: (id) =>
+    request(`/mailings/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  getMailingSends: (id) => request(`/mailings/${encodeURIComponent(id)}/sends`),
+  previewMailing: (id) =>
+    request(`/mailings/${encodeURIComponent(id)}/preview`, { method: 'POST' }),
+  sendMailingTest: (id) =>
+    request(`/mailings/${encodeURIComponent(id)}/test`, { method: 'POST' }),
 };
 
 export default api;

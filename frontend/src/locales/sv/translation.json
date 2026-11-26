@@ -149,6 +149,163 @@
       "title": "Skriv ut förbön",
       "all": "Skriv ut alla",
       "highlightsOnly": "Skriv ut endast lyfta"
+    },
+    "mailing": {
+      "tab": "Bönbrev",
+      "title": "Bönbrev",
+      "intro": "Schemalägg veckovisa bönbrev för grupper: välj mottagargrupp, utskicksdatum och klockslag.",
+      "heading": "Utskick",
+      "desc": "Ett utskick skickas till vald mottagargrupp på angivna datum, eller varje vecka.",
+      "new": "Nytt utskick",
+      "edit": "Redigera",
+      "save": "Spara",
+      "saving": "Sparar…",
+      "cancel": "Avbryt",
+      "close": "Stäng",
+      "delete": "Ta bort",
+      "deleted": "Utskicket togs bort.",
+      "saved": "Utskicket sparades.",
+      "empty": "Inga schemalagda utskick ännu.",
+      "target": "Mottagare",
+      "kinds": {
+        "week": "en vecka",
+        "recurring": "varje vecka"
+      },
+      "sendHourShort": "Skickas kl. {{hour}}:00 (finsk tid)",
+      "enabled": "Aktiv",
+      "disabled": "Inaktiv",
+      "enable": "Aktivera",
+      "disable": "Inaktivera",
+      "testButton": "Skicka test till mig",
+      "testSent": "Testmeddelandet skickades till din adress.",
+      "confirmDelete": "Ta bort utskicket \"{{name}}\"? Sändningshistoriken tas bort också.",
+      "loadError": "Utskicken kunde inte laddas.",
+      "unknownList": "Okänd lista",
+      "schedule": {
+        "week": "Vecka {{week}}/{{year}}, utskicksdatum: {{dates}}",
+        "recurring": "Varje {{weekday}} från {{start}}",
+        "recurringUntil": "Varje {{weekday}} {{start}} – {{end}}"
+      },
+      "weekdays": {
+        "sun": "söndag",
+        "mon": "måndag",
+        "tue": "tisdag",
+        "wed": "onsdag",
+        "thu": "torsdag",
+        "fri": "fredag",
+        "sat": "lördag"
+      },
+      "detail": {
+        "preview": "Förhandsgranskning",
+        "sends": "Sändningshistorik"
+      },
+      "preview": {
+        "button": "Förhandsgranska",
+        "subject": "Ämne",
+        "recipients": "Mottagare",
+        "frameTitle": "Förhandsgranskning av utskick"
+      },
+      "sends": {
+        "button": "Sändningshistorik",
+        "empty": "Inget har skickats ännu.",
+        "date": "Datum",
+        "status": "Status",
+        "recipients": "Mottagare",
+        "failed": "Misslyckade",
+        "statuses": {
+          "sending": "Skickas",
+          "sent": "Skickat",
+          "failed": "Misslyckades",
+          "skipped": "Hoppades över"
+        }
+      },
+      "form": {
+        "title": "Utskickets uppgifter",
+        "name": "Utskickets namn",
+        "target": "Mottagargrupp",
+        "pickTarget": "Välj mottagargrupp…",
+        "targetLists": "Utskicksslistor",
+        "targetGroups": "Användargrupper",
+        "noLists": "Skapa först en utskickslista eller välj en användargrupp.",
+        "kind": "Schema",
+        "kindWeek": "En vecka (bestämda datum)",
+        "kindRecurring": "Varje vecka",
+        "week": "Vecka",
+        "year": "År",
+        "sendDates": "Utskicksdatum",
+        "sendDate": "Utskicksdatum {{n}}",
+        "sendDatesHint": "Minst ett datum krävs. Utskicket skickas på vart och ett av dessa datum.",
+        "addDate": "Lägg till datum",
+        "removeDate": "Ta bort",
+        "weekday": "Veckodag",
+        "startDate": "Från",
+        "endDate": "Till (valfritt)",
+        "endDateHint": "Lämna tomt om utskicket fortsätter tills vidare.",
+        "sendHour": "Utskickstid (0–23)",
+        "subject": "Ämne (valfritt)",
+        "includePublic": "Inkludera offentliga böneämnen",
+        "includePublicHint": "Som standard ingår endast anhöriga från personal och biskop.",
+        "enabled": "Utskicket är aktivt"
+      },
+      "errors": {
+        "name": "Ange ett namn för utskicket.",
+        "target": "Välj en mottagargrupp.",
+        "week": "Veckan måste vara mellan 1 och 53.",
+        "year": "Året måste vara mellan 2000 och 2100.",
+        "sendDates": "Lägg till minst ett utskicksdatum.",
+        "sendDateFormat": "Utskicksdatum måste anges i formatet ÅÅÅÅ-MM-DD.",
+        "weekday": "Välj en veckodag.",
+        "startDate": "Ange ett startdatum.",
+        "endDate": "Slutdatumet måste vara efter startdatumet.",
+        "sendHour": "Utskickstiden måste vara mellan 0 och 23."
+      },
+      "lists": {
+        "heading": "Utskicksslistor",
+        "desc": "Listorna är församlingens egna prenumerantlistor. Varje prenumerant behöver samtycke.",
+        "new": "Ny lista",
+        "edit": "Redigera",
+        "delete": "Ta bort",
+        "saved": "Listan sparades.",
+        "deleted": "Listan togs bort.",
+        "empty": "Inga utskicksslistor ännu.",
+        "name": "Listans namn",
+        "description": "Beskrivning (valfritt)",
+        "allowPublicSignup": "Tillåt anmälan från webbplatsen",
+        "allowPublicSignupHint": "Besökare kan prenumerera och bekräftar via e-post (dubbel bekräftelse).",
+        "errorName": "Ange ett namn för listan.",
+        "formTitle": "Listans uppgifter",
+        "confirmDelete": "Ta bort listan \"{{name}}\" med alla prenumeranter?",
+        "publicBadge": "Offentlig anmälan",
+        "counts": "Aktiva: {{active}} · Ej bekräftade: {{pending}}",
+        "manageSubscribers": "Prenumeranter",
+        "hideSubscribers": "Dölj prenumeranter"
+      },
+      "subscribers": {
+        "heading": "Prenumeranter: {{name}}",
+        "addTitle": "Lägg till prenumeranter",
+        "emails": "E-postadresser",
+        "emailsHint": "Separera adresserna med kommatecken, semikolon eller radbrytningar.",
+        "name": "Namn (valfritt, gäller alla som läggs till)",
+        "consent": "Jag bekräftar att dessa personer har gett sitt samtycke till att få bönbrev.",
+        "consentHint": "Adresser kan inte läggas till utan denna bekräftelse. Datum och den som lägger till registreras.",
+        "add": "Lägg till prenumeranter",
+        "empty": "Listan har inga prenumeranter ännu.",
+        "errorConsent": "Bekräfta samtycket innan du lägger till.",
+        "errorEmails": "Ange minst en e-postadress.",
+        "result": "Tillagda: {{added}}. Redan på listan: {{alreadyPresent}}. Ogiltiga adresser: {{invalid}}.",
+        "confirmRemove": "Ta bort {{email}} från listan? Adressen raderas helt.",
+        "removed": "Prenumeranten togs bort.",
+        "remove": "Ta bort",
+        "status": {
+          "active": "Aktiv",
+          "pending": "Väntar på bekräftelse",
+          "unsubscribed": "Avregistrerad"
+        },
+        "source": {
+          "self_signup": "Anmäld via webbplatsen",
+          "admin_attested": "Tillagd av personal (samtycke bekräftat)"
+        }
+      }
     }
   },
   "common": {

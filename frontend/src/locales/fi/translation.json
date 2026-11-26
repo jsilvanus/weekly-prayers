@@ -149,6 +149,163 @@
       "title": "Tulosta esirukous",
       "all": "Tulosta kaikki",
       "highlightsOnly": "Tulosta vain nostot"
+    },
+    "mailing": {
+      "tab": "Esirukousviestit",
+      "title": "Esirukousviestit",
+      "intro": "Ajasta viikoittaisia esirukousviestejä ryhmille: valitse kohderyhmä, lähetyspäivät ja kellonaika.",
+      "heading": "Viestit (mailingit)",
+      "desc": "Viesti lähetetään valitulle kohderyhmälle tiettyinä päivinä tai joka viikko.",
+      "new": "Uusi viesti",
+      "edit": "Muokkaa",
+      "save": "Tallenna",
+      "saving": "Tallennetaan…",
+      "cancel": "Peruuta",
+      "close": "Sulje",
+      "delete": "Poista",
+      "deleted": "Viesti poistettiin.",
+      "saved": "Viesti tallennettiin.",
+      "empty": "Ei vielä ajastettuja viestejä.",
+      "target": "Kohde",
+      "kinds": {
+        "week": "yksi viikko",
+        "recurring": "joka viikko"
+      },
+      "sendHourShort": "Lähetysaika klo {{hour}}:00 (Suomen aika)",
+      "enabled": "Käytössä",
+      "disabled": "Pois käytöstä",
+      "enable": "Ota käyttöön",
+      "disable": "Poista käytöstä",
+      "testButton": "Lähetä testi itselle",
+      "testSent": "Testiviesti lähetettiin sähköpostiisi.",
+      "confirmDelete": "Poistetaanko viesti \"{{name}}\"? Lähetyshistoria poistuu.",
+      "loadError": "Viestien lataus epäonnistui.",
+      "unknownList": "Tuntematon lista",
+      "schedule": {
+        "week": "Viikko {{week}}/{{year}}, lähetyspäivät: {{dates}}",
+        "recurring": "Joka {{weekday}} alkaen {{start}}",
+        "recurringUntil": "Joka {{weekday}} {{start}} – {{end}}"
+      },
+      "weekdays": {
+        "sun": "sunnuntai",
+        "mon": "maanantai",
+        "tue": "tiistai",
+        "wed": "keskiviikko",
+        "thu": "torstai",
+        "fri": "perjantai",
+        "sat": "lauantai"
+      },
+      "detail": {
+        "preview": "Esikatselu",
+        "sends": "Lähetyshistoria"
+      },
+      "preview": {
+        "button": "Esikatsele",
+        "subject": "Aihe",
+        "recipients": "Vastaanottajia",
+        "frameTitle": "Viestin esikatselu"
+      },
+      "sends": {
+        "button": "Lähetyshistoria",
+        "empty": "Viestiä ei ole vielä lähetetty.",
+        "date": "Päivä",
+        "status": "Tila",
+        "recipients": "Vastaanottajia",
+        "failed": "Epäonnistuneet",
+        "statuses": {
+          "sending": "Lähetetään",
+          "sent": "Lähetetty",
+          "failed": "Epäonnistui",
+          "skipped": "Ohitettu"
+        }
+      },
+      "form": {
+        "title": "Viestin tiedot",
+        "name": "Viestin nimi",
+        "target": "Kohderyhmä",
+        "pickTarget": "Valitse kohderyhmä…",
+        "targetLists": "Postituslistat",
+        "targetGroups": "Käyttäjäryhmät",
+        "noLists": "Luo ensin postituslista tai valitse käyttäjäryhmä.",
+        "kind": "Lähetystapa",
+        "kindWeek": "Yksi viikko (tietyt päivät)",
+        "kindRecurring": "Joka viikko",
+        "week": "Viikko",
+        "year": "Vuosi",
+        "sendDates": "Lähetyspäivät",
+        "sendDate": "Lähetyspäivä {{n}}",
+        "sendDatesHint": "Vähintään yksi päivä vaaditaan. Viesti lähetetään jokaisena näistä päivistä.",
+        "addDate": "Lisää päivä",
+        "removeDate": "Poista",
+        "weekday": "Viikonpäivä",
+        "startDate": "Alkaen",
+        "endDate": "Päättyen (valinnainen)",
+        "endDateHint": "Jätä tyhjäksi, jos viesti jatkuu toistaiseksi.",
+        "sendHour": "Lähetyskellonaika (0–23)",
+        "subject": "Aihe (valinnainen)",
+        "includePublic": "Sisällytä yleiset esirukouspyynnöt",
+        "includePublicHint": "Oletuksena mukana vain työntekijöiden ja kirkkoherran aiheet.",
+        "enabled": "Viesti on käytössä"
+      },
+      "errors": {
+        "name": "Anna viestille nimi.",
+        "target": "Valitse kohderyhmä.",
+        "week": "Viikon on oltava väliltä 1–53.",
+        "year": "Vuoden on oltava väliltä 2000–2100.",
+        "sendDates": "Lisää vähintään yksi lähetyspäivä.",
+        "sendDateFormat": "Lähetyspäivät on annettava muodossa VVVV-KK-PP.",
+        "weekday": "Valitse viikonpäivä.",
+        "startDate": "Anna aloituspäivä.",
+        "endDate": "Päättymispäivän on oltava aloituspäivän jälkeen.",
+        "sendHour": "Lähetyskellonajan on oltava väliltä 0–23."
+      },
+      "lists": {
+        "heading": "Postituslistat",
+        "desc": "Listat ovat seurakunnan omia tilaajalistoja. Jokainen tilaaja tarvitsee suostumuksen.",
+        "new": "Uusi lista",
+        "edit": "Muokkaa",
+        "delete": "Poista",
+        "saved": "Lista tallennettiin.",
+        "deleted": "Lista poistettiin.",
+        "empty": "Ei vielä postituslistoja.",
+        "name": "Listan nimi",
+        "description": "Kuvaus (valinnainen)",
+        "allowPublicSignup": "Salli tilaus verkkosivuilta",
+        "allowPublicSignupHint": "Vierailijat voivat tilata viestin vahvistussähköpostilla (kaksoisvahvistus).",
+        "errorName": "Anna listalle nimi.",
+        "formTitle": "Listan tiedot",
+        "confirmDelete": "Poistetaanko lista \"{{name}}\" tilaajineen?",
+        "publicBadge": "Julkinen tilaus",
+        "counts": "Aktiiviset: {{active}} · Vahvistamatta: {{pending}}",
+        "manageSubscribers": "Tilaajat",
+        "hideSubscribers": "Piilota tilaajat"
+      },
+      "subscribers": {
+        "heading": "Tilaajat: {{name}}",
+        "addTitle": "Lisää tilaajia",
+        "emails": "Sähköpostiosoitteet",
+        "emailsHint": "Erota osoitteet pilkulla, puolipisteellä tai rivinvaihdolla.",
+        "name": "Nimi (valinnainen, koskee kaikkia lisättäviä)",
+        "consent": "Vahvistan, että nämä henkilöt ovat antaneet suostumuksensa saada esirukousviestejä.",
+        "consentHint": "Suostumusta ei voi lisätä ilman tätä vahvistusta. Tallennetaan lisäyspäivä ja lisääjä.",
+        "add": "Lisää tilaajat",
+        "empty": "Listalla ei ole vielä tilaajia.",
+        "errorConsent": "Vahvista suostumus ennen lisäämistä.",
+        "errorEmails": "Anna vähintään yksi sähköpostiosoite.",
+        "result": "Lisätty: {{added}}. Jo listalla: {{alreadyPresent}}. Virheellisiä osoitteita: {{invalid}}.",
+        "confirmRemove": "Poistetaanko {{email}} listalta? Osoite poistetaan kokonaan.",
+        "removed": "Tilaaja poistettiin.",
+        "remove": "Poista",
+        "status": {
+          "active": "Aktiivinen",
+          "pending": "Vahvistamatta",
+          "unsubscribed": "Peruttu"
+        },
+        "source": {
+          "self_signup": "Tilattu verkosta",
+          "admin_attested": "Lisätty henkilökunnan toimesta (suostumus vahvistettu)"
+        }
+      }
     }
   },
   "common": {
