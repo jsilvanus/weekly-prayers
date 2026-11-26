@@ -8,7 +8,9 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "migrate": "node src/db/migrations/migrate.js",
-    "test": "node --test"
+    "test": "node --test",
+    "eval:moderation": "node scripts/eval-moderation.js",
+    "gen:moderation-dataset": "node scripts/moderation-dataset/generate.js"
   },
   "dependencies": {
     "@azure/msal-node": "^2.6.0",
