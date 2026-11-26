@@ -9,6 +9,7 @@ import PastorPrayerForm from './PastorPrayerForm';
 import BishopPrayerForm from './BishopPrayerForm';
 import HighlightManager from './HighlightManager';
 import SettingsManager from './SettingsManager';
+import MailingManager from './MailingManager';
 import TenantManager from './TenantManager';
 import BibleManager from './BibleManager';
 import PyhapaivaManager from './PyhapaivaManager';
@@ -116,6 +117,7 @@ export default function AdminPanel() {
     const generalSubTabs = [];
     if (isCoordinatorOrAbove) {
       generalSubTabs.push({ id: 'settings', label: 'Seurakunnan asetukset & ilme', component: SettingsManager });
+      generalSubTabs.push({ id: 'mailing', label: t('admin.mailing.tab'), component: MailingManager });
     }
     if (isAdmin) {
       generalSubTabs.push({ id: 'users', label: t('admin.users.title') || 'Käyttäjähallinta & roolit', component: UserManager });

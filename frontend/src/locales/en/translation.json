@@ -149,6 +149,163 @@
       "title": "Print Intercessions",
       "all": "Print All",
       "highlightsOnly": "Print Highlights Only"
+    },
+    "mailing": {
+      "tab": "Prayer emails",
+      "title": "Prayer emails",
+      "intro": "Schedule weekly prayer emails for groups: choose the recipient group, the send dates and the time.",
+      "heading": "Mailings",
+      "desc": "A mailing is sent to the chosen recipient group on the set dates, or every week.",
+      "new": "New mailing",
+      "edit": "Edit",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "close": "Close",
+      "delete": "Delete",
+      "deleted": "Mailing deleted.",
+      "saved": "Mailing saved.",
+      "empty": "No scheduled mailings yet.",
+      "target": "Recipients",
+      "kinds": {
+        "week": "one week",
+        "recurring": "every week"
+      },
+      "sendHourShort": "Sent at {{hour}}:00 (Finnish time)",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enable": "Enable",
+      "disable": "Disable",
+      "testButton": "Send test to me",
+      "testSent": "Test email sent to your address.",
+      "confirmDelete": "Delete mailing \"{{name}}\"? Its send history is removed too.",
+      "loadError": "Could not load mailings.",
+      "unknownList": "Unknown list",
+      "schedule": {
+        "week": "Week {{week}}/{{year}}, send dates: {{dates}}",
+        "recurring": "Every {{weekday}} from {{start}}",
+        "recurringUntil": "Every {{weekday}} {{start}} – {{end}}"
+      },
+      "weekdays": {
+        "sun": "Sunday",
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday"
+      },
+      "detail": {
+        "preview": "Preview",
+        "sends": "Send history"
+      },
+      "preview": {
+        "button": "Preview",
+        "subject": "Subject",
+        "recipients": "Recipients",
+        "frameTitle": "Mailing preview"
+      },
+      "sends": {
+        "button": "Send history",
+        "empty": "Nothing has been sent yet.",
+        "date": "Date",
+        "status": "Status",
+        "recipients": "Recipients",
+        "failed": "Failed",
+        "statuses": {
+          "sending": "Sending",
+          "sent": "Sent",
+          "failed": "Failed",
+          "skipped": "Skipped"
+        }
+      },
+      "form": {
+        "title": "Mailing details",
+        "name": "Mailing name",
+        "target": "Recipient group",
+        "pickTarget": "Choose a recipient group…",
+        "targetLists": "Mailing lists",
+        "targetGroups": "User groups",
+        "noLists": "Create a mailing list first, or choose a user group.",
+        "kind": "Schedule",
+        "kindWeek": "One week (specific dates)",
+        "kindRecurring": "Every week",
+        "week": "Week",
+        "year": "Year",
+        "sendDates": "Send dates",
+        "sendDate": "Send date {{n}}",
+        "sendDatesHint": "At least one date is required. The mailing is sent on each of these dates.",
+        "addDate": "Add date",
+        "removeDate": "Remove",
+        "weekday": "Weekday",
+        "startDate": "Starting",
+        "endDate": "Ending (optional)",
+        "endDateHint": "Leave empty to continue until further notice.",
+        "sendHour": "Send hour (0–23)",
+        "subject": "Subject (optional)",
+        "includePublic": "Include public prayer requests",
+        "includePublicHint": "By default only staff and bishop intentions are included.",
+        "enabled": "Mailing is enabled"
+      },
+      "errors": {
+        "name": "Enter a name for the mailing.",
+        "target": "Choose a recipient group.",
+        "week": "Week must be between 1 and 53.",
+        "year": "Year must be between 2000 and 2100.",
+        "sendDates": "Add at least one send date.",
+        "sendDateFormat": "Send dates must be in the format YYYY-MM-DD.",
+        "weekday": "Choose a weekday.",
+        "startDate": "Enter a start date.",
+        "endDate": "The end date must be after the start date.",
+        "sendHour": "Send hour must be between 0 and 23."
+      },
+      "lists": {
+        "heading": "Mailing lists",
+        "desc": "Lists are the parish's own subscriber lists. Every subscriber needs consent.",
+        "new": "New list",
+        "edit": "Edit",
+        "delete": "Delete",
+        "saved": "List saved.",
+        "deleted": "List deleted.",
+        "empty": "No mailing lists yet.",
+        "name": "List name",
+        "description": "Description (optional)",
+        "allowPublicSignup": "Allow sign-up from the website",
+        "allowPublicSignupHint": "Visitors can subscribe; they confirm by email (double opt-in).",
+        "errorName": "Enter a name for the list.",
+        "formTitle": "List details",
+        "confirmDelete": "Delete list \"{{name}}\" and all its subscribers?",
+        "publicBadge": "Public sign-up",
+        "counts": "Active: {{active}} · Pending: {{pending}}",
+        "manageSubscribers": "Subscribers",
+        "hideSubscribers": "Hide subscribers"
+      },
+      "subscribers": {
+        "heading": "Subscribers: {{name}}",
+        "addTitle": "Add subscribers",
+        "emails": "Email addresses",
+        "emailsHint": "Separate addresses with commas, semicolons or line breaks.",
+        "name": "Name (optional, applies to all added)",
+        "consent": "I confirm these people have given their consent to receive prayer emails.",
+        "consentHint": "Addresses cannot be added without this confirmation. The date and the adding user are recorded.",
+        "add": "Add subscribers",
+        "empty": "No subscribers on this list yet.",
+        "errorConsent": "Confirm consent before adding.",
+        "errorEmails": "Enter at least one email address.",
+        "result": "Added: {{added}}. Already on list: {{alreadyPresent}}. Invalid addresses: {{invalid}}.",
+        "confirmRemove": "Remove {{email}} from the list? The address is erased.",
+        "removed": "Subscriber removed.",
+        "remove": "Remove",
+        "status": {
+          "active": "Active",
+          "pending": "Pending confirmation",
+          "unsubscribed": "Unsubscribed"
+        },
+        "source": {
+          "self_signup": "Signed up on the website",
+          "admin_attested": "Added by staff (consent confirmed)"
+        }
+      }
     }
   },
   "common": {
