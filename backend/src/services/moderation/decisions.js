@@ -10,7 +10,7 @@ function normalizeReasons(reasons) {
   if (!reasons || typeof reasons !== 'object') return out;
   for (const [type, count] of Object.entries(reasons)) {
     if (typeof type === 'string' && Number.isFinite(Number(count))) {
-      out[type.slice(0, 40)] = Number(count);
+      out[type.slice(0, 64)] = Number(count);
     }
   }
   return out;

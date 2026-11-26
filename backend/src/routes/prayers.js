@@ -4,7 +4,7 @@ import { getCurrentWeekInfo, getCurrentWeekInfoForTenant, getWeekNumber, getWeek
 import { optionalAuth, requireAuth } from '../middleware/authenticate.js';
 import { isWorkerOrAbove, requireWorker, requireAdmin, requireCoordinator, requireBishopOrAdmin } from '../middleware/authorize.js';
 import { rateLimit } from '../middleware/rateLimit.js';
-import { analyze, decide, REJECT_CONFIDENCE } from '../services/moderation/index.js';
+import { analyze, decide, applyLlmSignal, llmReview, REJECT_CONFIDENCE } from '../services/moderation/index.js';
 import { recordDecision, listDecisions } from '../services/moderation/decisions.js';
 import { recordReject } from '../services/moderationDigest.js';
 
@@ -171,7 +171,8 @@ router.post('/', optionalAuth, async (req, res, next) => {
     }
 
     const text = content.trim();
-    const verdict = decide(text, parseLang(lang));
+    const verdictLang = parseLang(lang);
+    let verdict = decide(text, verdictLang);
 
     if (verdict.decision === 'reject') {
       // Counts only (type + number), never the text. A counter failure must not change the response.
@@ -185,8 +186,14 @@ router.post('/', optionalAuth, async (req, res, next) => {
       });
     }
 
+    // Optional second gate (self-hosted Ollama). Runs only for non-rejected drafts; null means no change.
+    verdict = applyLlmSignal(verdict, await llmReview(text, verdictLang), text);
+
     const flagged = verdict.decision === 'review';
-    const flagTypes = [...new Set(verdict.findings.map((f) => f.type))];
+    const flagTypes = [...new Set([
+      ...verdict.findings.map((f) => f.type),
+      ...Object.keys(verdict.reasons).filter((k) => k.startsWith('llm_')),
+    ])];
 
     // Public prayers are always anonymous and need staff approval
     const prayer = await createPrayer({

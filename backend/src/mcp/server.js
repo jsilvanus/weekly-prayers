@@ -15,7 +15,7 @@ import { getBibleForDate } from '../services/bibleService.js';
 import { getDevotionForDate, saveDevotion } from '../services/devotionService.js';
 import { getActiveMeditationsList, saveMeditation } from '../services/meditationService.js';
 import { getHolyDayForDate, saveHolyDayOverride } from '../services/pyhapaivaService.js';
-import { decide } from '../services/moderation/index.js';
+import { decide, applyLlmSignal, llmReview } from '../services/moderation/index.js';
 import { recordDecision } from '../services/moderation/decisions.js';
 import { recordReject } from '../services/moderationDigest.js';
 import { displayContent } from '../services/prayerService.js';
@@ -254,15 +254,21 @@ export function createMcpServer({ publicUrl, user }) {
 
         // Same two-gate policy as POST /api/prayers. Nothing is stored on reject.
         const text = args.content.trim();
-        const verdict = decide(text, 'fi');
+        let verdict = decide(text, 'fi');
         if (verdict.decision === 'reject') {
           // Counts only, never the text. A counter failure must not change the result.
           await recordReject(null, verdict.reasons).catch((err) => console.error(`Moderation reject counter failed: ${err.message}`));
           return errorResult('Rukouspyyntö sisältää henkilötietoja eikä sitä tallennettu. Poista henkilötiedot ja yritä uudelleen. / The prayer request contains personal data and was not stored. Remove the personal details and try again.');
         }
 
+        // Optional second gate (self-hosted Ollama). Runs only for non-rejected drafts; null means no change.
+        verdict = applyLlmSignal(verdict, await llmReview(text, 'fi'), text);
+
         const flagged = verdict.decision === 'review';
-        const flagTypes = [...new Set(verdict.findings.map((f) => f.type))];
+        const flagTypes = [...new Set([
+          ...verdict.findings.map((f) => f.type),
+          ...Object.keys(verdict.reasons).filter((k) => k.startsWith('llm_')),
+        ])];
         const prayer = await createPrayer({
           userId: user && !user.isAnonymous ? user.id : null,
           type: 'public',

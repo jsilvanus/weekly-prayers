@@ -650,6 +650,78 @@ paths:
           description: Authentication required
         '403':
           description: Moderator role required
+  /api/moderation/stats:
+    get:
+      summary: Retention statistics of public prayer requests (platform admin)
+      description: Counts only, never prayer text. Per Helsinki day, summed over tenants, for the last N days including today. Public prayers are deleted 30 days after creation when unpublished and 14 days after end_date when published (configurable). Staff, pastor and bishop prayers are never removed.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 90
+      responses:
+        '200':
+          description: Retention counts for the window
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [days, from, to, totals, byDay]
+                properties:
+                  days:
+                    type: integer
+                  from:
+                    type: string
+                    format: date
+                  to:
+                    type: string
+                    format: date
+                  totals:
+                    type: object
+                    required: [unpublished, published, byStatus, byReason]
+                    properties:
+                      unpublished:
+                        type: integer
+                        description: Unpublished public prayers removed in the window
+                      published:
+                        type: integer
+                        description: Published public prayers removed in the window
+                      byStatus:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        description: Removed prayers by redaction status
+                      byReason:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        description: Removed prayers per finding type
+                  byDay:
+                    type: array
+                    items:
+                      type: object
+                      required: [day, unpublished, published]
+                      properties:
+                        day:
+                          type: string
+                          format: date
+                        unpublished:
+                          type: integer
+                        published:
+                          type: integer
+        '400':
+          description: days must be an integer from 1 to 365
+        '401':
+          description: Authentication required
+        '403':
+          description: Platform admin role required
+
   /api/prayers/check:
     post:
       summary: Check a draft public prayer for personal data (stores nothing)

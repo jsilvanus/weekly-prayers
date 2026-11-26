@@ -62,3 +62,31 @@ export function decide(text, lang = 'fi') {
 
   return { decision: 'ok', findings, internalFindings, redactedSuggestion: null, reasons };
 }
+
+/**
+ * Applies the optional Ollama signal (llm.js) on top of a rule-based verdict. Pure.
+ *  - 'reject' is kept as it is. A hard reject is never softened by the model.
+ *  - No flag from the model: the verdict is returned unchanged.
+ *  - Flagged: the decision becomes 'review' with reasons 'llm_flag' and 'llm_<reason>' (count 1 each).
+ *    The redacted suggestion stays what the rules produced. When the rules had nothing to
+ *    redact, the ORIGINAL text is kept, so a moderator must edit it before approval.
+ *    The model never produces the redacted text.
+ * @param {ReturnType<typeof decide>} verdict
+ * @param {{ flagged: boolean, reasons: string[] } | null} llm
+ * @param {string} originalText the text that was passed to decide()
+ */
+export function applyLlmSignal(verdict, llm, originalText = '') {
+  if (!verdict || verdict.decision === 'reject') return verdict;
+  if (!llm || llm.flagged !== true) return verdict;
+
+  const reasons = { ...verdict.reasons, llm_flag: 1 };
+  for (const reason of Array.isArray(llm.reasons) ? llm.reasons : []) {
+    reasons[`llm_${reason}`] = 1;
+  }
+  return {
+    ...verdict,
+    decision: 'review',
+    reasons,
+    redactedSuggestion: verdict.redactedSuggestion ?? (typeof originalText === 'string' ? originalText : null),
+  };
+}

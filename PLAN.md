@@ -12,7 +12,7 @@ Sovellus seurakunnan viikottaisten rukousaiheiden hallintaan ja näyttämiseen. 
 | Backend | Node.js + Express (ESM) |
 | Tietokanta | PostgreSQL 16 |
 | Autentikointi | Microsoft Entra ID (Azure AD) |
-| AI-moderointi | OpenAI API / Claude API |
+| Moderointi | Sääntöpohjainen tunnistus (pääosin) ja valinnainen paikallinen Ollama (vain itse ylläpidetty) toisena tarkistuksena |
 | I18n | react-i18next (FI, EN, SV) |
 | Kontitus | Docker + Docker Compose |
 | Reverse Proxy | Nginx |
@@ -287,7 +287,7 @@ Rukousaiheiden CRUD-operaatiot ja AI-pohjainen sisällön tarkistus.
 | 3.1 | GET /api/prayers | Hae viikon rukousaiheet (julkinen) |
 | 3.2 | Viikkolaskenta-utility | Viikkonumeron ja päivämäärävälin laskenta |
 | 3.3 | POST /api/prayers | Uusi julkinen rukouspyyntö |
-| 3.4 | AI-sanitizer -palvelu | OpenAI/Claude-integraatio sisällön tarkistukseen |
+| 3.4 | Moderointipalvelu | Sääntöpohjainen tunnistus ja valinnainen paikallinen Ollama (OLLAMA_URL) toisena tarkistuksena; ei ulkoisia AI-palveluita |
 | 3.5 | AI-tarkistuksen integrointi | Julkiset pyynnöt AI:n läpi automaattisesti |
 | 3.6 | POST /api/prayers/staff | Työntekijän rukouspyyntö (worker+) |
 | 3.7 | POST /api/prayers/pastor | Kirkkoherran aihe (admin only) |

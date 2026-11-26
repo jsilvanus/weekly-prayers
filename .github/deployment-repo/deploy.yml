@@ -12,6 +12,7 @@
 #   JWT_SECRET          — application JWT signing secret
 #   OIDC_CLIENT_SECRET  — OIDC client secret from Tunnus
 #   GHCR_TOKEN          — classic PAT with read:packages (to pull the private image)
+#   TUNNUS_MAIL_RELAY_TOKEN — Tunnus mail relay token (weekly prayer email, optional)
 #
 # Required Environment variables (Settings -> Environments -> production -> Variables):
 #   DEPLOY_PATH         — app deployment directory on the VM (e.g. /opt/apps/rukoukset)
@@ -27,6 +28,11 @@
 #   OIDC_GROUP_ROLE_MAP — role mapping (or pattern parish/<tenant>/prayers-<role>)
 #   IMAGE_TAG           — image tag to deploy (e.g. latest, sha-<short>, or vX.Y.Z)
 #   DEFAULT_TENANT_SLUG — default tenant slug (e.g. riihimaki or tuomiokirkko)
+#   TUNNUS_MAIL_URL    — Tunnus mail relay URL (optional; mailing stays off without it)
+#   MAIL_FROM           — sender address for prayer email (optional)
+#   MAILING_SCHEDULER   — set to false to turn the periodic sender off (optional)
+#   OLLAMA_URL          — self-hosted Ollama base URL for the optional second moderation gate (optional, only a self-hosted Ollama is supported)
+#   OLLAMA_MODEL        — Ollama model name, required when OLLAMA_URL is set (optional)
 
 name: Deploy to production
 
@@ -66,8 +72,7 @@ jobs:
           APP_DB_PASSWORD:        ${{ secrets.DB_PASSWORD }}
           APP_JWT_SECRET:         ${{ secrets.JWT_SECRET }}
           APP_OIDC_CLIENT_SECRET: ${{ secrets.OIDC_CLIENT_SECRET }}
-          APP_OPENAI_API_KEY:     ${{ secrets.OPENAI_API_KEY }}
-          APP_ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
+          APP_TUNNUS_MAIL_RELAY_TOKEN: ${{ secrets.TUNNUS_MAIL_RELAY_TOKEN }}
           # --- variables ---
           APP_NODE_ENV:           ${{ vars.NODE_ENV || 'production' }}
           APP_PORT:               ${{ vars.APP_PORT || '3000' }}
@@ -87,7 +92,11 @@ jobs:
           APP_OIDC_GROUP_ROLE_MAP: ${{ vars.OIDC_GROUP_ROLE_MAP }}
           APP_DEFAULT_TENANT_SLUG: ${{ vars.DEFAULT_TENANT_SLUG || 'riihimaki' }}
           APP_ADMIN_EMAILS:       ${{ vars.ADMIN_EMAILS || '' }}
-          APP_AI_PROVIDER:        ${{ vars.AI_PROVIDER || 'openai' }}
+          APP_TUNNUS_MAIL_URL:    ${{ vars.TUNNUS_MAIL_URL }}
+          APP_MAIL_FROM:          ${{ vars.MAIL_FROM }}
+          APP_MAILING_SCHEDULER:  ${{ vars.MAILING_SCHEDULER }}
+          APP_OLLAMA_URL:         ${{ vars.OLLAMA_URL }}
+          APP_OLLAMA_MODEL:       ${{ vars.OLLAMA_MODEL }}
         with:
           host:     ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
@@ -95,12 +104,13 @@ jobs:
           port:     ${{ vars.VM_SSH_PORT || 22 }}
           envs: >-
             APP_GHCR_TOKEN,APP_DB_PASSWORD,APP_JWT_SECRET,
-            APP_OIDC_CLIENT_SECRET,APP_OPENAI_API_KEY,APP_ANTHROPIC_API_KEY,
+            APP_OIDC_CLIENT_SECRET,APP_TUNNUS_MAIL_RELAY_TOKEN,
             APP_NODE_ENV,APP_PORT,APP_NAME,APP_DOMAIN,APP_DOMAIN_PATH,APP_BASE_URL,
             APP_IMAGE_REPO,APP_IMAGE_TAG,APP_DB_HOST,APP_DB_PORT,APP_DB_SSL,
             APP_OIDC_ISSUER,APP_OIDC_CLIENT_ID,APP_OIDC_REDIRECT_URI,
             APP_OIDC_SCOPES,APP_OIDC_GROUP_ROLE_MAP,APP_DEFAULT_TENANT_SLUG,
-            APP_ADMIN_EMAILS,APP_AI_PROVIDER
+            APP_ADMIN_EMAILS,APP_TUNNUS_MAIL_URL,APP_MAIL_FROM,APP_MAILING_SCHEDULER,
+            APP_OLLAMA_URL,APP_OLLAMA_MODEL
           script: |
             set -euo pipefail
             DEPLOY_PATH="${{ vars.DEPLOY_PATH }}"
@@ -153,9 +163,12 @@ jobs:
               printf 'OIDC_GROUP_ROLE_MAP=%s\n' "${APP_OIDC_GROUP_ROLE_MAP}"
               printf 'DEFAULT_TENANT_SLUG=%s\n' "${APP_DEFAULT_TENANT_SLUG}"
               printf 'ADMIN_EMAILS=%s\n'        "${APP_ADMIN_EMAILS}"
-              printf 'AI_PROVIDER=%s\n'         "${APP_AI_PROVIDER}"
-              printf 'OPENAI_API_KEY=%s\n'      "${APP_OPENAI_API_KEY}"
-              printf 'ANTHROPIC_API_KEY=%s\n'   "${APP_ANTHROPIC_API_KEY}"
+              printf 'TUNNUS_MAIL_URL=%s\n'    "${APP_TUNNUS_MAIL_URL}"
+              printf 'TUNNUS_MAIL_RELAY_TOKEN=%s\n' "${APP_TUNNUS_MAIL_RELAY_TOKEN}"
+              printf 'MAIL_FROM=%s\n'          "${APP_MAIL_FROM}"
+              printf 'MAILING_SCHEDULER=%s\n'  "${APP_MAILING_SCHEDULER}"
+              printf 'OLLAMA_URL=%s\n'         "${APP_OLLAMA_URL}"
+              printf 'OLLAMA_MODEL=%s\n'       "${APP_OLLAMA_MODEL}"
             } > .env
             chmod 600 .env
 
