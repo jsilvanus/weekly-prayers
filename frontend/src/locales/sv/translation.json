@@ -50,7 +50,34 @@
       "button": "Skicka bönebegäran",
       "success": "Bönebegäran skickad! Den granskas innan publicering.",
       "error": "Kunde inte skicka bönebegäran",
-      "close": "Stäng"
+      "close": "Stäng",
+      "guidance": {
+        "toggle": "Anvisningar för att skriva en bönebegäran",
+        "title": "Så skriver du en bönebegäran",
+        "points": [
+          "Skriv ämnet på allmän nivå, till exempel “be för min sjuka vän”.",
+          "Skriv inga namn, adresser, telefonnummer, e-postadresser eller personbeteckningar.",
+          "Beskriv inte någon så detaljerat att personen kan kännas igen (till exempel arbetsplats, gatuadress eller en särskild situation).",
+          "Du kan be för dig själv eller en närstående utan namn: “min vän”, “min familj”, “min granne”.",
+          "Begäran granskas innan publicering. Personuppgifter tas bort, och endast den granskade versionen visas offentligt."
+        ]
+      },
+      "findingTypes": {
+        "hetu": "personbeteckning",
+        "iban": "IBAN-kontonummer",
+        "card": "betalkortsnummer",
+        "phone": "telefonnummer",
+        "email": "e-postadress",
+        "address": "adress",
+        "url": "webbadress",
+        "plate": "registreringsnummer",
+        "dob": "födelsedatum",
+        "person_name": "namn",
+        "unknown": "personuppgifter"
+      },
+      "foundLabel": "Identifierade delar",
+      "rejectMessage": "Texten innehåller personuppgifter som inte kan publiceras: {{types}}. Ta bort dem och försök igen.",
+      "reviewMessage": "Texten granskas innan publicering och personuppgifter tas bort."
     },
     "seeAll": "Visa alla ({{count}})",
     "showLess": "Minska",
@@ -100,7 +127,30 @@
       "reject": "Avvisa",
       "edit": "Redigera",
       "delete": "Radera",
-      "confirmDelete": "Är du säker på att du vill radera denna bönebegäran?"
+      "confirmDelete": "Är du säker på att du vill radera denna bönebegäran?",
+      "moderation": {
+        "originalLabel": "Originaltext (endast personal)",
+        "redactedLabel": "Version för publicering",
+        "findingsLabel": "Identifierade typer",
+        "status": {
+          "clean": "Ren",
+          "needsReview": "Behöver granskas",
+          "redactedHuman": "Borttagen av person",
+          "redactedAuto": "Automatiskt borttagen",
+          "redactedOther": "Borttagen"
+        },
+        "saveRedaction": "Spara redigerad version",
+        "confirmRedaction": "Godkänn automatiskt förslag",
+        "saved": "Den redigerade versionen sparades.",
+        "confirmed": "Det automatiska förslaget godkändes.",
+        "stillHasData": "Den redigerade versionen innehåller fortfarande personuppgifter. Ta bort dem och spara igen.",
+        "redactionRequired": "Bekräfta eller redigera den borttagna versionen först",
+        "history": "Beslutshistorik",
+        "historyEmpty": "Inga beslut.",
+        "historyError": "Det gick inte att läsa beslutshistoriken.",
+        "reasons": "Motivering",
+        "actionError": "Åtgärden misslyckades."
+      }
     },
     "highlights": {
       "title": "Bönelyft",

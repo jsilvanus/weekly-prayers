@@ -1,11 +1,77 @@
 import { Router } from 'express';
-import { getPrayersForWeek, createPrayer, getPrayerById, updatePrayer, deletePrayer, approvePrayer, updatePrayerHighlight, updatePrayerPortalPlacement } from '../services/prayerService.js';
+import { getPrayersForWeek, createPrayer, getPrayerById, updatePrayer, deletePrayer, approvePrayer, updatePrayerHighlight, updatePrayerPortalPlacement, displayContent } from '../services/prayerService.js';
 import { getCurrentWeekInfo, getCurrentWeekInfoForTenant, getWeekNumber, getWeekYear, getWeekDates, formatDate } from '../utils/weekHelper.js';
 import { optionalAuth, requireAuth } from '../middleware/authenticate.js';
 import { isWorkerOrAbove, requireWorker, requireAdmin, requireCoordinator, requireBishopOrAdmin } from '../middleware/authorize.js';
-import { sanitizePrayerContent } from '../services/aiSanitizer.js';
+import { rateLimit } from '../middleware/rateLimit.js';
+import { analyze, decide, REJECT_CONFIDENCE } from '../services/moderation/index.js';
+import { recordDecision, listDecisions } from '../services/moderation/decisions.js';
 
 const router = Router();
+
+const LANGS = ['fi', 'sv', 'en'];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Public-request content validation shared by POST / and POST /check. */
+function validatePublicContent(content) {
+  if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    return 'Content is required';
+  }
+  if (content.length > 1000) {
+    return 'Content must be 1000 characters or less';
+  }
+  return null;
+}
+
+function parseLang(value) {
+  return LANGS.includes(value) ? value : 'fi';
+}
+
+/** Finding types and counts only, for decision reasons. */
+function countByType(findings) {
+  const counts = {};
+  for (const f of Array.isArray(findings) ? findings : []) {
+    counts[f.type] = (counts[f.type] || 0) + 1;
+  }
+  return counts;
+}
+
+/** Content shown for a prayer in API responses. Public requests expose only their redacted text. */
+function responseContent(prayer) {
+  if (prayer.type === 'public') return prayer.redacted_content ?? null;
+  return prayer.original_content;
+}
+
+/** Load a prayer by id, or send 404 and return null. Non-UUID ids are treated as not found. */
+async function loadPrayerOr404(req, res) {
+  const { id } = req.params;
+  if (!UUID_RE.test(id)) {
+    res.status(404).json({ error: { message: 'Prayer request not found' } });
+    return null;
+  }
+  const prayer = await getPrayerById(id);
+  if (!prayer) {
+    res.status(404).json({ error: { message: 'Prayer request not found' } });
+    return null;
+  }
+  return prayer;
+}
+
+// POST /api/prayers/check - Check a draft public prayer for personal data. Stores nothing.
+router.post('/check', rateLimit({ windowMs: 60_000, max: 30 }), optionalAuth, (req, res) => {
+  const { content, lang } = req.body || {};
+
+  const validationError = validatePublicContent(content);
+  if (validationError) {
+    return res.status(400).json({ error: { message: validationError } });
+  }
+
+  const verdict = decide(content.trim(), parseLang(lang));
+  return res.json({
+    decision: verdict.decision,
+    findings: verdict.findings
+  });
+});
 
 // GET /api/prayers - Get current week's prayers
 router.get('/', optionalAuth, async (req, res, next) => {
@@ -75,20 +141,18 @@ router.get('/week/:week', optionalAuth, async (req, res, next) => {
 });
 
 // POST /api/prayers - Submit a new public prayer request
+//
+// Gate 1: any finding with confidence >= REJECT_CONFIDENCE -> 422, nothing stored.
+// Gate 2: other findings -> stored as needs_review with an automatic redacted suggestion.
+// No findings -> stored as clean (redacted text equals the submitted text).
 router.post('/', optionalAuth, async (req, res, next) => {
   try {
-    const { content, startDate, endDate } = req.body;
+    const { content, startDate, endDate, lang } = req.body;
 
-    // Validate content
-    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    const validationError = validatePublicContent(content);
+    if (validationError) {
       return res.status(400).json({
-        error: { message: 'Content is required' }
-      });
-    }
-
-    if (content.length > 1000) {
-      return res.status(400).json({
-        error: { message: 'Content must be 1000 characters or less' }
+        error: { message: validationError }
       });
     }
 
@@ -105,26 +169,44 @@ router.post('/', optionalAuth, async (req, res, next) => {
       prayerEndDate = formatDate(currentWeek.endDate);
     }
 
-    // Run AI sanitization
-    const aiResult = await sanitizePrayerContent(content.trim());
+    const text = content.trim();
+    const verdict = decide(text, parseLang(lang));
 
-    // Create the prayer with AI results (public prayers are always anonymous)
+    if (verdict.decision === 'reject') {
+      return res.status(422).json({
+        error: {
+          message: 'Prayer request contains personal data',
+          code: 'PERSONAL_DATA',
+          findings: verdict.findings
+        }
+      });
+    }
+
+    const flagged = verdict.decision === 'review';
+    const flagTypes = [...new Set(verdict.findings.map((f) => f.type))];
+
+    // Public prayers are always anonymous and need staff approval
     const prayer = await createPrayer({
       userId: null,
       type: 'public',
-      originalContent: content.trim(),
-      sanitizedContent: aiResult.sanitizedContent,
-      aiFlagged: aiResult.flagged,
-      aiFlagReason: aiResult.flagReason,
+      originalContent: text,
+      sanitizedContent: null,
+      aiFlagged: flagged,
+      aiFlagReason: flagged ? flagTypes.join(', ') : null,
       startDate: prayerStartDate,
       endDate: prayerEndDate,
-      isApproved: false // Public prayers need approval
+      isApproved: false,
+      redactedContent: flagged ? verdict.redactedSuggestion : text,
+      redactionStatus: flagged ? 'needs_review' : 'clean',
+      redactionSource: 'auto',
+      moderationFindings: verdict.findings
     });
 
-    // Prepare response message
+    await recordDecision(prayer.id, 'system', flagged ? 'auto_review' : 'auto_clean', verdict.reasons);
+
     let message = 'Prayer request submitted successfully. It will be reviewed before publication.';
-    if (aiResult.flagged) {
-      message = 'Prayer request submitted. It has been flagged for additional review.';
+    if (flagged) {
+      message = 'Prayer request submitted. It has been flagged for additional review; flagged prayers will have personal details removed before publication.';
     }
 
     res.status(201).json({
@@ -132,12 +214,11 @@ router.post('/', optionalAuth, async (req, res, next) => {
       prayer: {
         id: prayer.id,
         type: prayer.type,
-        content: aiResult.sanitizedContent || prayer.original_content,
         startDate: prayer.start_date,
         endDate: prayer.end_date,
         isApproved: prayer.is_approved,
         createdAt: prayer.created_at,
-        flagged: aiResult.flagged
+        flagged
       }
     });
   } catch (error) {
@@ -176,7 +257,7 @@ router.post('/staff', requireAuth, requireWorker, async (req, res, next) => {
       prayerEndDate = formatDate(currentWeek.endDate);
     }
 
-    // Ministry/Staff prayers don't need AI sanitization or approval
+    // Ministry/Staff prayers don't need moderation or approval
     const prayer = await createPrayer({
       userId: req.user.id,
       type: 'staff',
@@ -399,6 +480,12 @@ router.put('/:id', requireAuth, async (req, res, next) => {
           error: { message: 'Content cannot be empty' }
         });
       }
+      if (existingPrayer.type === 'public') {
+        // Public text must go through moderation: edit the redacted version instead.
+        return res.status(400).json({
+          error: { message: 'Public prayer text is changed through the redaction endpoint', code: 'USE_REDACTION_ENDPOINT' }
+        });
+      }
       updates.originalContent = content.trim();
       updates.sanitizedContent = content.trim();
     }
@@ -419,7 +506,7 @@ router.put('/:id', requireAuth, async (req, res, next) => {
       prayer: {
         id: updatedPrayer.id,
         type: updatedPrayer.type,
-        content: updatedPrayer.original_content,
+        content: responseContent(updatedPrayer),
         startDate: updatedPrayer.start_date,
         endDate: updatedPrayer.end_date,
         isApproved: updatedPrayer.is_approved,
@@ -427,6 +514,139 @@ router.put('/:id', requireAuth, async (req, res, next) => {
         portalOrder: updatedPrayer.portal_order || 0,
         updatedAt: updatedPrayer.updated_at
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PUT /api/prayers/:id/redaction - Set the human redacted version of a public prayer (worker+)
+// Body: { redactedContent }. Refused with 422 while any finding has confidence >= REJECT_CONFIDENCE.
+router.put('/:id/redaction', requireAuth, requireWorker, async (req, res, next) => {
+  try {
+    const existingPrayer = await loadPrayerOr404(req, res);
+    if (!existingPrayer) return;
+
+    if (existingPrayer.type !== 'public') {
+      return res.status(400).json({
+        error: { message: 'Only public prayer requests have a redacted version' }
+      });
+    }
+
+    const { redactedContent } = req.body || {};
+    if (!redactedContent || typeof redactedContent !== 'string' || redactedContent.trim().length === 0) {
+      return res.status(400).json({
+        error: { message: 'Redacted content is required' }
+      });
+    }
+    if (redactedContent.length > 1000) {
+      return res.status(400).json({
+        error: { message: 'Redacted content must be 1000 characters or less' }
+      });
+    }
+
+    const text = redactedContent.trim();
+    const { findings } = analyze(text);
+    if (findings.some((f) => f.confidence >= REJECT_CONFIDENCE)) {
+      return res.status(422).json({
+        error: {
+          message: 'Redacted text still contains personal data',
+          code: 'REDACTION_STILL_HAS_DATA',
+          findings: findings.map(({ type, start, end }) => ({ type, start, end }))
+        }
+      });
+    }
+
+    const wasClean = existingPrayer.redaction_status === 'clean';
+    const overturned = wasClean && text !== existingPrayer.redacted_content;
+
+    const updated = await updatePrayer(existingPrayer.id, {
+      redactedContent: text,
+      redactionStatus: 'redacted',
+      redactionSource: 'human'
+    });
+
+    await recordDecision(
+      updated.id,
+      String(req.user.id),
+      overturned ? 'human_overturned' : 'human_redacted',
+      countByType(findings)
+    );
+
+    res.json({
+      message: 'Redacted version saved.',
+      prayer: {
+        id: updated.id,
+        type: updated.type,
+        content: updated.redacted_content,
+        redactionStatus: updated.redaction_status,
+        redactionSource: updated.redaction_source,
+        isApproved: updated.is_approved,
+        updatedAt: updated.updated_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/prayers/:id/redaction/confirm - Accept the automatic redacted suggestion (worker+)
+router.post('/:id/redaction/confirm', requireAuth, requireWorker, async (req, res, next) => {
+  try {
+    const existingPrayer = await loadPrayerOr404(req, res);
+    if (!existingPrayer) return;
+
+    if (existingPrayer.type !== 'public') {
+      return res.status(400).json({
+        error: { message: 'Only public prayer requests have a redacted version' }
+      });
+    }
+
+    if (existingPrayer.redaction_status !== 'needs_review' || !existingPrayer.redacted_content) {
+      return res.status(409).json({
+        error: { message: 'Prayer request is not awaiting redaction review', code: 'NOT_AWAITING_REVIEW' }
+      });
+    }
+
+    // redaction_source stays 'auto': the text is the automatic suggestion, now confirmed by a human.
+    const updated = await updatePrayer(existingPrayer.id, { redactionStatus: 'redacted' });
+
+    const findings = Array.isArray(existingPrayer.moderation_findings) ? existingPrayer.moderation_findings : [];
+    await recordDecision(updated.id, String(req.user.id), 'human_confirmed_auto', countByType(findings));
+
+    res.json({
+      message: 'Automatic redaction confirmed.',
+      prayer: {
+        id: updated.id,
+        type: updated.type,
+        content: updated.redacted_content,
+        redactionStatus: updated.redaction_status,
+        redactionSource: updated.redaction_source,
+        isApproved: updated.is_approved,
+        updatedAt: updated.updated_at
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/prayers/:id/decisions - Moderation decision history (worker+)
+router.get('/:id/decisions', requireAuth, requireWorker, async (req, res, next) => {
+  try {
+    const existingPrayer = await loadPrayerOr404(req, res);
+    if (!existingPrayer) return;
+
+    const decisions = await listDecisions(existingPrayer.id);
+    res.json({
+      prayerId: existingPrayer.id,
+      decisions: decisions.map((d) => ({
+        id: d.id,
+        actor: d.actor,
+        decision: d.decision,
+        reasons: d.reasons || {},
+        createdAt: d.created_at
+      }))
     });
   } catch (error) {
     next(error);
@@ -474,7 +694,7 @@ router.all('/:id/portal', requireAuth, async (req, res, next) => {
       prayer: {
         id: updatedPrayer.id,
         type: updatedPrayer.type,
-        content: updatedPrayer.sanitized_content || updatedPrayer.original_content,
+        content: displayContent(updatedPrayer),
         isApproved: updatedPrayer.is_approved,
         portalPosition: updatedPrayer.portal_position || null,
         portalOrder: updatedPrayer.portal_order || 0,
@@ -554,6 +774,16 @@ router.post('/:id/approve', requireAuth, requireWorker, async (req, res, next) =
       });
     }
 
+    // Approving requires a redacted version that a human has accepted. Un-approving is always allowed.
+    if (approved && !['clean', 'redacted'].includes(existingPrayer.redaction_status)) {
+      return res.status(409).json({
+        error: {
+          message: 'Prayer request needs a redacted version before it can be approved',
+          code: 'REDACTION_REQUIRED'
+        }
+      });
+    }
+
     const updatedPrayer = await approvePrayer(id, approved);
 
     res.json({
@@ -561,7 +791,7 @@ router.post('/:id/approve', requireAuth, requireWorker, async (req, res, next) =
       prayer: {
         id: updatedPrayer.id,
         type: updatedPrayer.type,
-        content: updatedPrayer.sanitized_content || updatedPrayer.original_content,
+        content: displayContent(updatedPrayer),
         isApproved: updatedPrayer.is_approved,
         highlightPriority: updatedPrayer.highlight_priority,
         updatedAt: updatedPrayer.updated_at
@@ -624,7 +854,7 @@ router.put(['/:id/highlight', '/:id/priority'], requireAuth, requireCoordinator,
         highlightPriority: updatedPrayer.highlight_priority,
         highlightStartDate: updatedPrayer.highlight_start_date ? formatDate(new Date(updatedPrayer.highlight_start_date)) : null,
         highlightEndDate: updatedPrayer.highlight_end_date ? formatDate(new Date(updatedPrayer.highlight_end_date)) : null,
-        content: updatedPrayer.sanitized_content || updatedPrayer.original_content,
+        content: displayContent(updatedPrayer),
         updatedAt: updatedPrayer.updated_at
       }
     });

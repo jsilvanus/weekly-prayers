@@ -21,7 +21,7 @@ Sovellus seurakuntien ja seurakuntayhtymien viikottaisten rukousaiheiden hallint
 | Backend | Node.js + Express (ESM) |
 | Tietokanta | PostgreSQL 16 |
 | Autentikointi | OIDC / Tunnus (PKCE) & Microsoft Entra ID |
-| AI-moderointi | OpenAI API / Anthropic Claude API (valinnainen) |
+| Moderointi | Säännöpohjainen henkilötietojen tunnistus (itse isännöity, ei ulkoisia AI-palveluja) |
 | I18n | react-i18next |
 | Kontitus | Docker (multi-stage build) |
 

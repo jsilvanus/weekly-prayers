@@ -81,6 +81,23 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ content, startDate, endDate, tenantId, portalPosition }),
     }),
+  checkPrayer: (content, lang, signal) =>
+    request('/prayers/check', {
+      method: 'POST',
+      body: JSON.stringify({ content, lang }),
+      signal,
+    }),
+  saveRedaction: (id, redactedContent) =>
+    request(`/prayers/${encodeURIComponent(id)}/redaction`, {
+      method: 'PUT',
+      body: JSON.stringify({ redactedContent }),
+    }),
+  confirmRedaction: (id) =>
+    request(`/prayers/${encodeURIComponent(id)}/redaction/confirm`, {
+      method: 'POST',
+    }),
+  getPrayerDecisions: (id) =>
+    request(`/prayers/${encodeURIComponent(id)}/decisions`),
   submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId, portalPosition = null) =>
     request('/prayers/staff', {
       method: 'POST',

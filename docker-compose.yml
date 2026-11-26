@@ -26,9 +26,6 @@ services:
       OIDC_GROUP_ROLE_MAP: ${OIDC_GROUP_ROLE_MAP:-{}}
       DEFAULT_TENANT_SLUG: ${DEFAULT_TENANT_SLUG:-riihimaki}
       ADMIN_EMAILS: ${ADMIN_EMAILS:-}
-      AI_PROVIDER: ${AI_PROVIDER:-openai}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     labels:
       - "traefik.enable=true"
       # If DOMAIN_PATH is set (e.g. /rukous), route both Host and PathPrefix, else route Host

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePrayers } from '../../hooks/usePrayers';
 import { api } from '../../services/api';
@@ -14,14 +14,28 @@ function PrayerManager() {
   const { prayers, refetch, loading } = usePrayers();
   const [actionLoading, setActionLoading] = useState(null);
   const [typeFilter, setTypeFilter] = useState('all');
+  const [rowErrors, setRowErrors] = useState({});
+
+  const setRowError = (id, text) =>
+    setRowErrors((prev) => {
+      const next = { ...prev };
+      if (text) next[id] = text;
+      else delete next[id];
+      return next;
+    });
 
   const handleApprove = async (id, approved) => {
     setActionLoading(id);
+    setRowError(id, null);
     try {
       await api.approvePrayer(id, approved);
       refetch();
     } catch (error) {
-      alert(error.message);
+      if (error.data?.error?.code === 'REDACTION_REQUIRED') {
+        setRowError(id, t('admin.prayers.moderation.redactionRequired'));
+      } else {
+        alert(error.message);
+      }
     } finally {
       setActionLoading(null);
     }
@@ -73,7 +87,9 @@ function PrayerManager() {
       return p.typeLabel === typeFilter;
     });
 
-  if (loading) {
+  // Only block on the first load; background refetches must not unmount
+  // rows, which would drop unsaved edits and open panels.
+  if (loading && allPrayers.length === 0) {
     return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
@@ -129,6 +145,8 @@ function PrayerManager() {
                 onReject={() => handleApprove(prayer.id, false)}
                 onDelete={() => handleDelete(prayer.id)}
                 onPortalChange={(pos) => handlePortalPlacement(prayer.id, pos)}
+                onChanged={refetch}
+                error={rowErrors[prayer.id]}
                 loading={actionLoading === prayer.id}
                 showApproval
               />
@@ -149,6 +167,8 @@ function PrayerManager() {
               prayer={prayer}
               onDelete={() => handleDelete(prayer.id)}
               onPortalChange={(pos) => handlePortalPlacement(prayer.id, pos)}
+              onChanged={refetch}
+              error={rowErrors[prayer.id]}
               loading={actionLoading === prayer.id}
             />
           ))}
@@ -158,8 +178,10 @@ function PrayerManager() {
   );
 }
 
-function PrayerItem({ prayer, onApprove, onReject, onDelete, onPortalChange, loading, showApproval }) {
+function PrayerItem({ prayer, onApprove, onReject, onDelete, onPortalChange, onChanged, error, loading, showApproval }) {
   const { t } = useTranslation();
+  const isPublic = prayer.typeLabel === 'public';
+  const needsRedactionReview = isPublic && prayer.redactionStatus === 'needs_review';
 
   const typeColors = {
     bishop: 'bg-purple-100 text-purple-900 border border-purple-200',
@@ -216,9 +238,13 @@ function PrayerItem({ prayer, onApprove, onReject, onDelete, onPortalChange, loa
         )}
       </div>
 
-      <p className="text-gray-800 mb-4 whitespace-pre-wrap text-sm leading-relaxed">
-        {prayer.originalContent || prayer.content}
-      </p>
+      {isPublic ? (
+        <RedactionPanel prayer={prayer} onChanged={onChanged} />
+      ) : (
+        <p className="text-gray-800 mb-4 whitespace-pre-wrap text-sm leading-relaxed">
+          {prayer.content}
+        </p>
+      )}
 
       {prayer.aiFlagReason && (
         <p className="text-sm text-red-600 mb-4">
@@ -256,13 +282,20 @@ function PrayerItem({ prayer, onApprove, onReject, onDelete, onPortalChange, loa
         </div>
       </div>
 
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+      {error && (
+        <p role="alert" className="mb-3 rounded-lg bg-red-50 border border-red-200 p-2 text-sm text-red-800">
+          {error}
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100">
         {showApproval && (
           <>
             <button
               onClick={onApprove}
-              disabled={loading}
-              className="btn bg-green-600 text-white hover:bg-green-700 text-sm"
+              disabled={loading || needsRedactionReview}
+              title={needsRedactionReview ? t('admin.prayers.moderation.redactionRequired') : undefined}
+              className="btn bg-green-600 text-white hover:bg-green-700 text-sm disabled:bg-gray-300 disabled:text-gray-600 disabled:hover:bg-gray-300"
             >
               {t('admin.prayers.approve')}
             </button>
@@ -282,6 +315,215 @@ function PrayerItem({ prayer, onApprove, onReject, onDelete, onPortalChange, loa
         >
           {t('admin.prayers.delete')}
         </button>
+      </div>
+    </div>
+  );
+}
+
+const BADGE_CLASSES = {
+  clean: 'bg-green-100 text-green-800 border-green-200',
+  needsReview: 'bg-amber-100 text-amber-900 border-amber-300',
+  redactedHuman: 'bg-indigo-100 text-indigo-900 border-indigo-200',
+  redactedAuto: 'bg-sky-100 text-sky-900 border-sky-200',
+  redactedOther: 'bg-slate-100 text-slate-800 border-slate-200',
+};
+
+function redactionBadgeKey(prayer) {
+  if (prayer.redactionStatus === 'clean') return 'clean';
+  if (prayer.redactionStatus === 'needs_review') return 'needsReview';
+  if (prayer.redactionStatus === 'redacted') {
+    if (prayer.redactionSource === 'human') return 'redactedHuman';
+    if (prayer.redactionSource === 'auto') return 'redactedAuto';
+    return 'redactedOther';
+  }
+  return null;
+}
+
+/**
+ * Formats a decision's `reasons`: an array of strings, or an object mapping
+ * finding type to count (e.g. {"phone":1,"url":2}). Returns null when empty.
+ */
+function formatDecisionReasons(reasons, t) {
+  if (Array.isArray(reasons)) return reasons.length > 0 ? reasons.join(', ') : null;
+  if (reasons && typeof reasons === 'object') {
+    const parts = Object.entries(reasons).map(
+      ([type, count]) =>
+        `${t(`prayers.submit.findingTypes.${type}`, { defaultValue: type })} ×${count}`
+    );
+    return parts.length > 0 ? parts.join(', ') : null;
+  }
+  return null;
+}
+
+/**
+ * Staff-only moderation view for a public prayer: original text, the
+ * publishable (redacted) version, and the decision history.
+ * Rendered only in the admin view; public components never see originalContent.
+ */
+function RedactionPanel({ prayer, onChanged }) {
+  const { t } = useTranslation();
+  const [draft, setDraft] = useState(prayer.redactedContent ?? '');
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState({ status: 'idle', items: [] });
+
+  // Reset the editor only when the stored redacted text actually changes.
+  useEffect(() => {
+    setDraft(prayer.redactedContent ?? '');
+  }, [prayer.id, prayer.redactedContent]);
+
+  const badgeKey = redactionBadgeKey(prayer);
+  const needsReview = prayer.redactionStatus === 'needs_review';
+  const findingTypes = [...new Set((prayer.moderationFindings || []).map((f) => f.type).filter(Boolean))];
+
+  const loadHistory = async () => {
+    setHistory({ status: 'loading', items: [] });
+    try {
+      const res = await api.getPrayerDecisions(prayer.id);
+      setHistory({ status: 'loaded', items: res?.decisions || [] });
+    } catch {
+      setHistory({ status: 'error', items: [] });
+    }
+  };
+
+  const toggleHistory = () => {
+    const next = !historyOpen;
+    setHistoryOpen(next);
+    if (next) loadHistory();
+  };
+
+  const runAction = async (action, successText) => {
+    setSaving(true);
+    setNotice(null);
+    try {
+      await action();
+      setNotice({ type: 'success', text: successText });
+      if (historyOpen) loadHistory();
+      onChanged?.();
+    } catch (error) {
+      const code = error.data?.error?.code;
+      const text =
+        code === 'REDACTION_STILL_HAS_DATA'
+          ? t('admin.prayers.moderation.stillHasData')
+          : error.message || t('admin.prayers.moderation.actionError');
+      setNotice({ type: 'error', text });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSave = () =>
+    runAction(() => api.saveRedaction(prayer.id, draft), t('admin.prayers.moderation.saved'));
+
+  const handleConfirm = () =>
+    runAction(() => api.confirmRedaction(prayer.id), t('admin.prayers.moderation.confirmed'));
+
+  return (
+    <div className="space-y-3 mb-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {badgeKey && (
+          <span className={`px-2 py-0.5 rounded-full border text-xs font-semibold ${BADGE_CLASSES[badgeKey]}`}>
+            {t(`admin.prayers.moderation.status.${badgeKey}`)}
+          </span>
+        )}
+        {findingTypes.length > 0 && (
+          <span className="text-xs text-gray-700">
+            <span className="font-semibold">{t('admin.prayers.moderation.findingsLabel')}:</span>{' '}
+            {findingTypes.map((type) => t(`prayers.submit.findingTypes.${type}`, { defaultValue: type })).join(', ')}
+          </span>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-red-100 bg-red-50/40 p-3">
+        <p className="text-xs font-semibold text-red-900 mb-1">
+          {t('admin.prayers.moderation.originalLabel')}
+        </p>
+        <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">
+          {prayer.originalContent ?? prayer.content}
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor={`redacted-${prayer.id}`} className="block text-xs font-semibold text-gray-700 mb-1">
+          {t('admin.prayers.moderation.redactedLabel')}
+        </label>
+        <textarea
+          id={`redacted-${prayer.id}`}
+          className="textarea w-full h-24 text-sm"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          disabled={saving}
+        />
+        {needsReview && (
+          <p className="mt-1 text-xs font-medium text-amber-800">
+            {t('admin.prayers.moderation.redactionRequired')}
+          </p>
+        )}
+        {notice && (
+          <p
+            role={notice.type === 'error' ? 'alert' : 'status'}
+            className={`mt-2 rounded-lg p-2 text-sm ${
+              notice.type === 'error'
+                ? 'bg-red-50 border border-red-200 text-red-800'
+                : 'bg-green-50 border border-green-200 text-green-800'
+            }`}
+          >
+            {notice.text}
+          </p>
+        )}
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" onClick={handleSave} disabled={saving} className="btn-secondary text-sm">
+            {t('admin.prayers.moderation.saveRedaction')}
+          </button>
+          {needsReview && (
+            <button type="button" onClick={handleConfirm} disabled={saving} className="btn-secondary text-sm">
+              {t('admin.prayers.moderation.confirmRedaction')}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <button
+          type="button"
+          onClick={toggleHistory}
+          aria-expanded={historyOpen}
+          className="text-xs font-semibold text-primary-700 hover:text-primary-800"
+        >
+          {historyOpen ? '▲' : '▼'} {t('admin.prayers.moderation.history')}
+        </button>
+        {historyOpen && (
+          <div className="mt-2 text-xs text-gray-700">
+            {history.status === 'loading' && <p>{t('common.loading')}</p>}
+            {history.status === 'error' && (
+              <p className="text-red-700">{t('admin.prayers.moderation.historyError')}</p>
+            )}
+            {history.status === 'loaded' && history.items.length === 0 && (
+              <p>{t('admin.prayers.moderation.historyEmpty')}</p>
+            )}
+            {history.status === 'loaded' && history.items.length > 0 && (
+              <ul className="space-y-1.5">
+                {history.items.map((d, i) => (
+                  <li key={i} className="rounded border border-gray-200 bg-white p-2">
+                    <span className="font-semibold">{d.decision}</span>
+                    {' · '}
+                    <span>{d.actor}</span>
+                    {' · '}
+                    <span className="text-gray-500">
+                      {d.createdAt ? new Date(d.createdAt).toLocaleString() : ''}
+                    </span>
+                    {formatDecisionReasons(d.reasons, t) && (
+                      <div className="mt-0.5 text-gray-600">
+                        {t('admin.prayers.moderation.reasons')}: {formatDecisionReasons(d.reasons, t)}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

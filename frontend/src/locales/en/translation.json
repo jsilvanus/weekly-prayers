@@ -50,7 +50,34 @@
       "button": "Submit Prayer Request",
       "success": "Prayer request submitted! It will be reviewed before publication.",
       "error": "Failed to submit prayer request",
-      "close": "Close"
+      "close": "Close",
+      "guidance": {
+        "toggle": "How to write a prayer request",
+        "title": "How to write a prayer request",
+        "points": [
+          "Write the topic in general terms, for example “please pray for my sick friend”.",
+          "Do not write names, addresses, phone numbers, email addresses or personal identity numbers.",
+          "Do not describe anyone so closely that they can be recognised (for example their workplace, street address or a specific situation).",
+          "You can pray for yourself or a loved one without a name: “my friend”, “my family”, “my neighbour”.",
+          "Requests are checked before publication. Personal data is removed, and only the checked version is shown publicly."
+        ]
+      },
+      "findingTypes": {
+        "hetu": "personal identity number",
+        "iban": "IBAN account number",
+        "card": "payment card number",
+        "phone": "phone number",
+        "email": "email address",
+        "address": "address",
+        "url": "web address",
+        "plate": "vehicle registration number",
+        "dob": "date of birth",
+        "person_name": "name",
+        "unknown": "personal data"
+      },
+      "foundLabel": "Detected items",
+      "rejectMessage": "The text contains personal data that cannot be published: {{types}}. Remove it and try again.",
+      "reviewMessage": "The text will be checked before publication and personal data will be removed."
     },
     "seeAll": "See all ({{count}})",
     "showLess": "Collapse",
@@ -100,7 +127,30 @@
       "reject": "Reject",
       "edit": "Edit",
       "delete": "Delete",
-      "confirmDelete": "Are you sure you want to delete this prayer request?"
+      "confirmDelete": "Are you sure you want to delete this prayer request?",
+      "moderation": {
+        "originalLabel": "Original text (staff only)",
+        "redactedLabel": "Version to publish",
+        "findingsLabel": "Detected types",
+        "status": {
+          "clean": "Clean",
+          "needsReview": "Needs review",
+          "redactedHuman": "Redacted by staff",
+          "redactedAuto": "Automatically redacted",
+          "redactedOther": "Redacted"
+        },
+        "saveRedaction": "Save edited version",
+        "confirmRedaction": "Accept automatic suggestion",
+        "saved": "Edited version saved.",
+        "confirmed": "Automatic suggestion accepted.",
+        "stillHasData": "The edited version still contains personal data. Remove it and save again.",
+        "redactionRequired": "Confirm or edit the redacted version first",
+        "history": "Decision history",
+        "historyEmpty": "No decisions.",
+        "historyError": "Could not load decision history.",
+        "reasons": "Reasons",
+        "actionError": "The action failed."
+      }
     },
     "highlights": {
       "title": "Prayer Highlights",

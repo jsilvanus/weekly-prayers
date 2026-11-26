@@ -33,8 +33,11 @@ export async function getPrayersForWeek(week, year, options = {}) {
     SELECT
       pr.id,
       pr.type,
-      ${includeOriginal ? 'pr.original_content,' : ''}
-      COALESCE(pr.sanitized_content, pr.original_content) as content,
+      ${includeOriginal ? 'pr.original_content, pr.redacted_content, pr.redaction_status, pr.redaction_source, pr.moderation_findings,' : ''}
+      CASE
+        WHEN pr.type = 'public' THEN pr.redacted_content
+        ELSE COALESCE(pr.sanitized_content, pr.original_content)
+      END as content,
       pr.ai_flagged,
       ${includeOriginal ? 'pr.ai_flag_reason,' : ''}
       pr.start_date,
@@ -87,6 +90,8 @@ export async function getPrayersForWeek(week, year, options = {}) {
 
   if (!includeUnapproved) {
     sql += ` AND (pr.is_approved = true OR pr.type != 'public')`;
+    // Public requests are shown only in their redacted form; never without one.
+    sql += ` AND (pr.type != 'public' OR pr.redacted_content IS NOT NULL)`;
   }
 
   sql += ` ORDER BY pr.type, pr.highlight_priority DESC, pr.created_at DESC`;
@@ -138,9 +143,14 @@ export async function getPrayersForWeek(week, year, options = {}) {
     };
 
     if (includeOriginal) {
+      // Staff-only fields. originalContent of public requests is never shown publicly.
       prayer.originalContent = row.original_content;
       prayer.aiFlagged = row.ai_flagged;
       prayer.aiFlagReason = row.ai_flag_reason;
+      prayer.redactedContent = row.type === 'public' ? (row.redacted_content ?? null) : null;
+      prayer.redactionStatus = row.type === 'public' ? (row.redaction_status ?? null) : null;
+      prayer.redactionSource = row.type === 'public' ? (row.redaction_source ?? null) : null;
+      prayer.moderationFindings = row.type === 'public' ? (row.moderation_findings ?? null) : null;
     }
 
     if (grouped[row.type]) {
@@ -167,13 +177,27 @@ export async function getPrayerById(id) {
 }
 
 /**
- * Create a new prayer request
+ * Text that may be shown for a prayer row. Public requests expose only redacted_content.
+ * Other types keep the existing sanitised-or-original behaviour.
+ * @param {{ type: string, redacted_content?: string|null, sanitized_content?: string|null, original_content?: string|null }} row
+ * @returns {string|null}
+ */
+export function displayContent(row) {
+  if (!row) return null;
+  if (row.type === 'public') return row.redacted_content ?? null;
+  return row.sanitized_content || row.original_content || null;
+}
+
+/**
+ * Create a new prayer request.
+ * Public requests pass redactedContent / redactionStatus / redactionSource / moderationFindings
+ * and leave sanitizedContent empty. Other types are unchanged.
  */
 export async function createPrayer({
   userId,
   type,
   originalContent,
-  sanitizedContent,
+  sanitizedContent = null,
   aiFlagged,
   aiFlagReason,
   startDate,
@@ -186,29 +210,35 @@ export async function createPrayer({
   isYhtymaWide = false,
   tenantId = null,
   portalPosition = null,
-  portalOrder = 0
+  portalOrder = 0,
+  redactedContent = null,
+  redactionStatus = null,
+  redactionSource = null,
+  moderationFindings = null
 }) {
   const normalizedPortalPos = ['above', 'below'].includes(portalPosition) ? portalPosition : null;
   const normalizedPortalOrder = parseInt(portalOrder, 10) || 0;
+  const findingsJson = moderationFindings ? JSON.stringify(moderationFindings) : null;
 
   try {
     const result = await query(
       `INSERT INTO prayer_requests
-       (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url, is_yhtyma_wide, tenant_id, portal_position, portal_order)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url, is_yhtyma_wide, tenant_id, portal_position, portal_order, redacted_content, redaction_status, redaction_source, moderation_findings)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
        RETURNING *`,
-      [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl, isYhtymaWide, tenantId, normalizedPortalPos, normalizedPortalOrder]
+      [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl, isYhtymaWide, tenantId, normalizedPortalPos, normalizedPortalOrder, redactedContent, redactionStatus, redactionSource, findingsJson]
     );
     return result.rows[0];
   } catch (err) {
-    // Fallback if migration 022 hasn't been executed yet
+    // Fallback if migration 022 hasn't been executed yet (portal columns only).
+    // Moderation columns (024) are not dropped here: a missing 024 fails closed.
     if (err.message && err.message.includes('portal_position')) {
       const result = await query(
         `INSERT INTO prayer_requests
-         (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url, is_yhtyma_wide, tenant_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+         (user_id, type, original_content, sanitized_content, ai_flagged, ai_flag_reason, start_date, end_date, is_approved, highlight_priority, ministry_group, ministry_tag, logo_url, is_yhtyma_wide, tenant_id, redacted_content, redaction_status, redaction_source, moderation_findings)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
          RETURNING *`,
-        [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl, isYhtymaWide, tenantId]
+        [userId, type, originalContent, sanitizedContent, aiFlagged, aiFlagReason, startDate, endDate, isApproved, highlightPriority, ministryGroup, ministryTag, logoUrl, isYhtymaWide, tenantId, redactedContent, redactionStatus, redactionSource, findingsJson]
       );
       return result.rows[0];
     }
@@ -236,7 +266,10 @@ export async function updatePrayer(id, {
   isYhtymaWide,
   tenantId,
   portalPosition,
-  portalOrder
+  portalOrder,
+  redactedContent,
+  redactionStatus,
+  redactionSource
 }) {
   const updates = [];
   const values = [];
@@ -310,6 +343,18 @@ export async function updatePrayer(id, {
   if (portalOrder !== undefined) {
     updates.push(`portal_order = $${paramIndex++}`);
     values.push(parseInt(portalOrder, 10) || 0);
+  }
+  if (redactedContent !== undefined) {
+    updates.push(`redacted_content = $${paramIndex++}`);
+    values.push(redactedContent);
+  }
+  if (redactionStatus !== undefined) {
+    updates.push(`redaction_status = $${paramIndex++}`);
+    values.push(redactionStatus);
+  }
+  if (redactionSource !== undefined) {
+    updates.push(`redaction_source = $${paramIndex++}`);
+    values.push(redactionSource);
   }
 
   if (updates.length === 0) {
