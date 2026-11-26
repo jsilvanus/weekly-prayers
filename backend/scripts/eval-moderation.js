@@ -13,8 +13,11 @@
  *   --min-recall-hard <n>     exit 1 if recall of any hard type (or overall / checksum-valid hetu+iban) < n
  *   --min-precision-hard <n>  exit 1 if precision of any hard type with findings < n
  *   --max-false-rejects <n>   exit 1 if more than n expected-clean items are rejected
+ *   --min-recall-name <n>     exit 1 if person_name span recall < n
+ *   --max-name-false-positive <n>  exit 1 if more than n expected-clean items get a person_name finding
  *
- * person_name is reported in its own section and is never gated.
+ * person_name has its own gates (above) and is otherwise reported separately. A name
+ * finding never causes a reject, so it is not counted as a false reject.
  * Exit codes: 0 ok, 1 gate failed, 2 usage or load error.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -51,6 +54,8 @@ function parseArgs(argv) {
     minRecallHard: null,
     minPrecisionHard: null,
     maxFalseRejects: null,
+    minRecallName: null,
+    maxNameFalsePositive: null,
   };
   const numeric = (name, raw) => {
     const n = Number(raw);
@@ -82,6 +87,12 @@ function parseArgs(argv) {
         break;
       case '--max-false-rejects':
         opts.maxFalseRejects = numeric(name, valueOf());
+        break;
+      case '--min-recall-name':
+        opts.minRecallName = numeric(name, valueOf());
+        break;
+      case '--max-name-false-positive':
+        opts.maxNameFalsePositive = numeric(name, valueOf());
         break;
       default:
         throw new UsageError(`unknown flag ${name}`);
@@ -190,6 +201,7 @@ async function evaluate(items, analyzer) {
   for (const r of ROWS) confusion[r] = { reject: 0, 'no-hard-finding': 0 };
 
   const falseRejects = [];
+  const nameFalsePositives = [];
   const checksum = { hetu: { total: 0, matched: 0 }, iban: { total: 0, matched: 0 } };
   const analyzerErrors = [];
   const outcomeCounts = {};
@@ -244,6 +256,7 @@ async function evaluate(items, analyzer) {
       confusion[row][predictedReject ? 'reject' : 'no-hard-finding']++;
     }
     if (item.expected === 'clean' && predictedReject) falseRejects.push(item.id);
+    if (item.expected === 'clean' && findings.some((f) => f.type === 'person_name')) nameFalsePositives.push(item.id);
   }
 
   // Aggregate hard-type numbers.
@@ -266,6 +279,7 @@ async function evaluate(items, analyzer) {
     perLang,
     confusion,
     falseRejects,
+    nameFalsePositives,
     checksum,
     analyzerErrors,
   };
@@ -297,6 +311,14 @@ function gate(result, opts) {
   if (opts.maxFalseRejects !== null && result.falseRejects.length > opts.maxFalseRejects) {
     failures.push(`false rejects ${result.falseRejects.length} > ${opts.maxFalseRejects}`);
   }
+  if (opts.minRecallName !== null) {
+    const c = result.perType.person_name;
+    const r = ratio(c.matched, c.expected);
+    if (r !== null && r < opts.minRecallName - 1e-9) failures.push(`recall person_name ${fmt(r)} < ${opts.minRecallName}`);
+  }
+  if (opts.maxNameFalsePositive !== null && result.nameFalsePositives.length > opts.maxNameFalsePositive) {
+    failures.push(`name false positives ${result.nameFalsePositives.length} > ${opts.maxNameFalsePositive}`);
+  }
   return { passed: failures.length === 0, failures };
 }
 
@@ -312,7 +334,7 @@ function renderText(report) {
   if (report.note) lines.push(`NOTE: ${report.note}`);
   lines.push(`Outcomes (expected): ${ROWS.map((r) => `${r}=${report.outcomeCounts[r]}`).join(' ')}`);
   lines.push('');
-  lines.push('Per span type (hard types are gated; person_name is reported only)');
+  lines.push('Per span type (hard types and person_name are gated by their own flags)');
   lines.push(`${pad('type', 12)}${rpad('expected', 9)}${rpad('matched', 9)}${rpad('recall', 9)}${rpad('findings', 10)}${rpad('precision', 11)}`);
   for (const t of [...HARD_TYPES, ...SOFT_TYPES]) {
     const c = report.perType[t];
@@ -323,7 +345,7 @@ function renderText(report) {
   }
   const h = report.hardTotals;
   lines.push(`${pad('hard-all', 12)}${rpad(h.expected, 9)}${rpad(h.matched, 9)}${rpad(fmt(ratio(h.matched, h.expected)), 9)}${rpad(h.findings, 10)}${rpad(fmt(ratio(h.matchedFindings, h.findings)), 11)}`);
-  lines.push('* person_name is not gated: the rule-only analyzer is expected to miss most of these.');
+  lines.push('* person_name: gated by --min-recall-name / --max-name-false-positive. Dataset names may be in the matcher lists, so recall here is optimistic.');
   lines.push('');
   lines.push('Per language (hard types)');
   lines.push(`${pad('lang', 6)}${rpad('items', 7)}${rpad('hard exp', 10)}${rpad('matched', 9)}${rpad('recall', 9)}${rpad('findings', 10)}${rpad('precision', 11)}`);
@@ -342,6 +364,8 @@ function renderText(report) {
   lines.push('');
   lines.push(`False rejects among expected-clean items: ${report.falseRejects.length}`);
   if (report.falseRejects.length) lines.push(`  ids: ${report.falseRejects.join(', ')}`);
+  lines.push(`Name false positives among expected-clean items: ${report.nameFalsePositives.length} of ${report.outcomeCounts.clean ?? 0}`);
+  if (report.nameFalsePositives.length) lines.push(`  ids: ${report.nameFalsePositives.join(', ')}`);
   lines.push('');
   lines.push('Checksum-valid recall');
   for (const t of ['hetu', 'iban']) {
@@ -369,7 +393,7 @@ async function main() {
     opts = parseArgs(process.argv.slice(2));
   } catch (err) {
     console.error(`usage error: ${err.message}`);
-    console.error('flags: --json --dataset <path> --min-recall-hard <n> --min-precision-hard <n> --max-false-rejects <n>');
+    console.error('flags: --json --dataset <path> --min-recall-hard <n> --min-precision-hard <n> --max-false-rejects <n> --min-recall-name <n> --max-name-false-positive <n>');
     return 2;
   }
 
@@ -384,7 +408,8 @@ async function main() {
   }
 
   const result = await evaluate(items, analyzer);
-  const gateEnabled = opts.minRecallHard !== null || opts.minPrecisionHard !== null || opts.maxFalseRejects !== null;
+  const gateEnabled = [opts.minRecallHard, opts.minPrecisionHard, opts.maxFalseRejects, opts.minRecallName, opts.maxNameFalsePositive]
+    .some((v) => v !== null);
   const g = gate(result, opts);
   const report = {
     dataset: opts.dataset.replace(BACKEND + '/', ''),

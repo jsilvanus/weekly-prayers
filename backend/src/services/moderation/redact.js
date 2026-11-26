@@ -13,6 +13,7 @@ export const LABELS = Object.freeze({
   url: { fi: '[linkki]', sv: '[länk]', en: '[link]' },
   plate: { fi: '[rekisterinumero]', sv: '[registreringsnummer]', en: '[registration plate]' },
   dob: { fi: '[syntymäaika]', sv: '[födelsedatum]', en: '[date of birth]' },
+  person_name: { fi: '[nimi]', sv: '[namn]', en: '[name]' },
 });
 
 /**
