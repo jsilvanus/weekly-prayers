@@ -6,6 +6,7 @@ import { isWorkerOrAbove, requireWorker, requireAdmin, requireCoordinator, requi
 import { rateLimit } from '../middleware/rateLimit.js';
 import { analyze, decide, REJECT_CONFIDENCE } from '../services/moderation/index.js';
 import { recordDecision, listDecisions } from '../services/moderation/decisions.js';
+import { recordReject } from '../services/moderationDigest.js';
 
 const router = Router();
 
@@ -173,6 +174,8 @@ router.post('/', optionalAuth, async (req, res, next) => {
     const verdict = decide(text, parseLang(lang));
 
     if (verdict.decision === 'reject') {
+      // Counts only (type + number), never the text. A counter failure must not change the response.
+      await recordReject(null, verdict.reasons).catch((err) => console.error(`Moderation reject counter failed: ${err.message}`));
       return res.status(422).json({
         error: {
           message: 'Prayer request contains personal data',

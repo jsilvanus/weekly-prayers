@@ -22,6 +22,7 @@ import pyhapaivaRouter from './routes/pyhapaiva.js';
 import docsRouter from './routes/docs.js';
 import mcpRouter from './mcp/routes.js';
 import mailingsRouter from './routes/mailings.js';
+import moderationDigestRouter from './routes/moderationDigest.js';
 import { startMailingScheduler } from './services/mailingScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -89,6 +90,7 @@ router.use('/api/meditations', meditationsRouter);
 router.use('/api/pyhapaiva', pyhapaivaRouter);
 router.use('/api/tenants', tenantRouter);
 router.use('/api/mailings', mailingsRouter);
+router.use('/api/moderation/digest', moderationDigestRouter);
 router.use('/api', docsRouter);
 router.use('/', docsRouter);
 router.use('/', mcpRouter);

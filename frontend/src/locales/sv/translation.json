@@ -149,8 +149,36 @@
         "historyEmpty": "Inga beslut.",
         "historyError": "Det gick inte att läsa beslutshistoriken.",
         "reasons": "Motivering",
-        "actionError": "Åtgärden misslyckades."
-      }
+        "actionError": "Åtgärden misslyckades.",
+        "digest": {
+          "title": "Sammanfattning av beslut",
+          "desc": "Sammanfattning av automatiska modereringsbeslut. Prenumerationen skickar sammanfattningen till dig via e-post.",
+          "day": "Senaste 24 h",
+          "week": "Senaste 7 dagar",
+          "autoClean": "Rensad automatiskt",
+          "autoReview": "Markerad för granskning",
+          "rejected": "Avvisad (inte sparad)",
+          "humanRedacted": "Redigerad manuellt",
+          "humanConfirmedAuto": "Förslag bekräftat",
+          "humanOverturned": "Beslut underkänt",
+          "awaiting": "Väntar på granskning",
+          "reasons": "Identifierade typer",
+          "noReasons": "inga händelser",
+          "frequency": "Prenumeration",
+          "off": "Ingen prenumeration",
+          "daily": "Dagligen",
+          "weekly": "Veckovis",
+          "channel": "Kanal",
+          "channelEmail": "E-post",
+          "channelInapp": "I appen",
+          "inappNote": "Aviseringar i appen är ännu inte i bruk; sammanfattningen visas i den här panelen.",
+          "save": "Spara prenumeration",
+          "saved": "Prenumerationen sparad.",
+          "loadError": "Det gick inte att läsa in sammanfattningen.",
+          "saveError": "Det gick inte att spara prenumerationen.",
+          "loading": "Laddar…"
+          }
+        }
     },
     "highlights": {
       "title": "Bönelyft",

@@ -149,8 +149,36 @@
         "historyEmpty": "No decisions.",
         "historyError": "Could not load decision history.",
         "reasons": "Reasons",
-        "actionError": "The action failed."
-      }
+        "actionError": "The action failed.",
+        "digest": {
+          "title": "Decision summary",
+          "desc": "Summary of automatic moderation decisions. The subscription emails the summary to you.",
+          "day": "Last 24 h",
+          "week": "Last 7 days",
+          "autoClean": "Cleaned automatically",
+          "autoReview": "Flagged for review",
+          "rejected": "Rejected (not stored)",
+          "humanRedacted": "Redacted by a person",
+          "humanConfirmedAuto": "Suggestion confirmed",
+          "humanOverturned": "Decision overturned",
+          "awaiting": "Awaiting review",
+          "reasons": "Finding types",
+          "noReasons": "no activity",
+          "frequency": "Subscription",
+          "off": "No subscription",
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "channel": "Channel",
+          "channelEmail": "Email",
+          "channelInapp": "In app",
+          "inappNote": "In-app notifications are not available yet; the summary is shown in this panel.",
+          "save": "Save subscription",
+          "saved": "Subscription saved.",
+          "loadError": "Could not load the summary.",
+          "saveError": "Could not save the subscription.",
+          "loading": "Loading…"
+          }
+        }
     },
     "highlights": {
       "title": "Prayer Highlights",
