@@ -84,6 +84,24 @@ kerran tietylle viikolle tai joka viikko toistuvasti. Lähetyspäivät ovat pako
 Käyttöönotto: aja migraatio `023_weekly_prayer_email.sql` (`npm run migrate` backendissä) ja aseta
 `.env`-tiedostoon `TUNNUS_MAIL_URL`, `TUNNUS_MAIL_RELAY_TOKEN` ja `MAIL_FROM` (katso `.env.example`).
 
+## Julkisten rukouspyyntöjen moderointi
+
+Julkiset rukouspyynnöt tarkistetaan sääntöpohjaisesti (henkilötunnukset, IBAN, kortit, puhelinnumerot,
+sähköpostit, osoitteet, linkit, rekisterinumerot, syntymäajat ja nimet). Tunnistus jakaa pyynnöt kahteen vaiheeseen:
+varma henkilötieto hylätään eikä pyyntöä tallenneta, epävarma tapaus tallennetaan ja työntekijä muokkaa
+ehdotettua julkista tekstiä ennen hyväksyntää.
+
+- **Valinnainen toinen tarkistus:** paikallinen [Ollama](https://ollama.com) (`OLLAMA_URL`, `OLLAMA_MODEL`,
+  `OLLAMA_TIMEOUT_MS`). Tuetaan vain itse ylläpidettyä Ollamaa; tekstiä ei lähetetä muille palveluille
+  eikä mihinkään muualle kuin `OLLAMA_URL`-osoitteeseen. Malli ei kirjoita tekstiä uudelleen, vaan palauttaa vain
+  luokitelun. Virhe, aikakatkaisu tai epäkelpo vastaus ohittaa tarkistuksen. Tarkistus ei ole käytössä,
+  ellei `OLLAMA_URL` ja `OLLAMA_MODEL` ole asetettu.
+- **Säilytys:** julkiset rukouspyynnöt poistetaan 30 päivän kuluttua luomisesta, jos niitä ei ole julkaistu,
+  ja 14 päivän kuluttua julkaisujakson päättymisestä (`RETENTION_UNPUBLISHED_DAYS`, `RETENTION_PUBLISHED_DAYS`,
+  `RETENTION_ENABLED=false` kytkee poiston pois). Ajo on kerran vuorokaudessa Helsingin ajan klo 03 jälkeen.
+  Poistettaessa tallennetaan vain lukumäärät (`prayer_retention_stats`), ei tekstiä. Tilastot näkee
+  pääkäyttäjä: `GET /api/moderation/stats?days=N`. Työntekijöiden, kirkkoherran ja piispan rukouspyyntöjä ei poisteta.
+
 ## Upotus ulkoisille sivuille
 
 ### JavaScript-widget

@@ -23,7 +23,9 @@ import docsRouter from './routes/docs.js';
 import mcpRouter from './mcp/routes.js';
 import mailingsRouter from './routes/mailings.js';
 import moderationDigestRouter from './routes/moderationDigest.js';
+import moderationStatsRouter from './routes/moderationStats.js';
 import { startMailingScheduler } from './services/mailingScheduler.js';
+import { startRetentionScheduler } from './services/prayerRetention.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -91,6 +93,7 @@ router.use('/api/pyhapaiva', pyhapaivaRouter);
 router.use('/api/tenants', tenantRouter);
 router.use('/api/mailings', mailingsRouter);
 router.use('/api/moderation/digest', moderationDigestRouter);
+router.use('/api/moderation/stats', moderationStatsRouter);
 router.use('/api', docsRouter);
 router.use('/', docsRouter);
 router.use('/', mcpRouter);
@@ -174,6 +177,7 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} (basePath: "${basePath}")`);
   startMailingScheduler();
+  startRetentionScheduler();
 });
 
 export default app;
