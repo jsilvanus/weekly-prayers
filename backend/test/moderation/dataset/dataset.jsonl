@@ -1,0 +1,400 @@
+{"id":"mod-0001","lang":"fi","text":"Luemme 1. Kor. 13:4 ja rukoilemme sen sanan mukaan.","spans":[],"expected":"clean"}
+{"id":"mod-0002","lang":"fi","text":"Hetuni on 260751-490C, ja pyydän rukousta henkilöllisyyteni turvaamiseksi.","spans":[{"type":"hetu","start":10,"end":21}],"expected":"reject"}
+{"id":"mod-0003","lang":"fi","text":"Kirkossa Pyhän Ristin kirkko soi urut klo 12.30.","spans":[],"expected":"clean"}
+{"id":"mod-0004","lang":"fi","text":"Pyydämme Tuijan parempaa oloa, sillä hänen tilanteensa on vaikea.","spans":[{"type":"person_name","start":9,"end":15}],"expected":"reject"}
+{"id":"mod-0005","lang":"en","text":"Please pray that the transfer to FI1670496064177645 goes through.","spans":[{"type":"iban","start":33,"end":51}],"expected":"reject"}
+{"id":"mod-0006","lang":"sv","text":"Skicka gärna ett mejl till erik.sjoberg (at) example (dot) se så svarar jag.","spans":[{"type":"email","start":27,"end":61}],"expected":"reject"}
+{"id":"mod-0007","lang":"sv","text":"Född 11.12.1983, och jag ber för min hälsa.","spans":[{"type":"dob","start":5,"end":15}],"expected":"reject"}
+{"id":"mod-0008","lang":"fi","text":"Ajoneuvo BAX-152 on rikkoutunut ja tarvitsemme turvallisuutta matkoille.","spans":[{"type":"plate","start":9,"end":16}],"expected":"reject"}
+{"id":"mod-0009","lang":"sv","text":"Tack för Erik och hennes familj som hjälper till i caféet.","spans":[{"type":"person_name","start":9,"end":13}],"expected":"mask"}
+{"id":"mod-0010","lang":"fi","text":"Pyydämme rauhaa perheeseemme ja sovintoa.","spans":[],"expected":"clean"}
+{"id":"mod-0011","lang":"sv","text":"Tack för Gustav som sjunger i kören varje söndag.","spans":[{"type":"person_name","start":9,"end":15}],"expected":"mask"}
+{"id":"mod-0012","lang":"sv","text":"Rättegången gäller Karin och vi ber om rättvisa.","spans":[{"type":"person_name","start":19,"end":24}],"expected":"reject"}
+{"id":"mod-0013","lang":"en","text":"Pray for Helen, who is struggling with depression.","spans":[{"type":"person_name","start":9,"end":14}],"expected":"reject"}
+{"id":"mod-0014","lang":"en","text":"Hymn 558 will be sung at 6 pm on Sunday.","spans":[],"expected":"clean"}
+{"id":"mod-0015","lang":"en","text":"Please pray for Oliver, who was diagnosed with cancer last month.","spans":[{"type":"person_name","start":16,"end":22}],"expected":"reject"}
+{"id":"mod-0016","lang":"fi","text":"Maria siunatkoon meitä kaikkia tänä viikonloppuna.","spans":[],"expected":"clean"}
+{"id":"mod-0017","lang":"fi","text":"Autoni rekisterinumero on OFB-730 ja se varastettiin eilen illalla.","spans":[{"type":"plate","start":26,"end":33}],"expected":"reject"}
+{"id":"mod-0018","lang":"fi","text":"Kiitämme vuotta 1960, jolloin Keskuskirkko remontoitiin.","spans":[],"expected":"clean"}
+{"id":"mod-0019","lang":"fi","text":"Luemme Ps. 23 ja rukoilemme sen sanan mukaan.","spans":[],"expected":"clean"}
+{"id":"mod-0020","lang":"sv","text":"Be för Lena, hon mår dåligt efter operationen.","spans":[{"type":"person_name","start":7,"end":11}],"expected":"reject"}
+{"id":"mod-0021","lang":"en","text":"We pray for peace in the Middle East and for everyone affected.","spans":[],"expected":"clean"}
+{"id":"mod-0022","lang":"fi","text":"Kiitos, Pekka kävi tänään keittiössä auttamassa meitä.","spans":[{"type":"person_name","start":8,"end":13}],"expected":"mask"}
+{"id":"mod-0023","lang":"sv","text":"Vi ber att Maria ska ge oss hopp i vardagen.","spans":[],"expected":"clean"}
+{"id":"mod-0024","lang":"fi","text":"Pyydämme rauhaa perheeseemme ja sovintoa.","spans":[],"expected":"clean"}
+{"id":"mod-0025","lang":"sv","text":"Psalm 150 sjungs kl. 12.30 på söndag.","spans":[],"expected":"clean"}
+{"id":"mod-0026","lang":"sv","text":"Gudstjänsten är 21.7. och alla är välkomna.","spans":[],"expected":"clean"}
+{"id":"mod-0027","lang":"fi","text":"Piispa Kaisa Mäkinen vierailee ensi viikolla, ja toivomme siunausta hänen työlleen.","spans":[{"type":"person_name","start":7,"end":20}],"expected":"queue"}
+{"id":"mod-0028","lang":"sv","text":"Född 19.1.1955, och jag ber för min hälsa.","spans":[{"type":"dob","start":5,"end":14}],"expected":"reject"}
+{"id":"mod-0029","lang":"sv","text":"Ring mig på 050-435 9087 om du vill be tillsammans med mig.","spans":[{"type":"phone","start":12,"end":24}],"expected":"reject"}
+{"id":"mod-0030","lang":"sv","text":"Biskopen Lena Berglund besöker vår församling i höst.","spans":[{"type":"person_name","start":9,"end":22}],"expected":"queue"}
+{"id":"mod-0031","lang":"fi","text":"Rukoilemme Kaisalle ja hänen perheensä parasta.","spans":[{"type":"person_name","start":11,"end":19}],"expected":"reject"}
+{"id":"mod-0032","lang":"fi","text":"Lapseni Pekka aloittaa koulun syksyllä, siunatkaa häntä.","spans":[{"type":"person_name","start":8,"end":13}],"expected":"reject"}
+{"id":"mod-0033","lang":"fi","text":"Osoitteeni on Kivikatu 25, 33100 Tampere, ja kotona tarvitsemme rauhaa.","spans":[{"type":"address","start":14,"end":40}],"expected":"reject"}
+{"id":"mod-0034","lang":"sv","text":"Idag ledde kantorn bönestunden och välsignade alla.","spans":[],"expected":"clean"}
+{"id":"mod-0035","lang":"en","text":"We ask for prayer for the family of Robert Hale after the incident.","spans":[{"type":"person_name","start":36,"end":47}],"expected":"reject"}
+{"id":"mod-0036","lang":"fi","text":"Tänään diakoni johti rukoushetken ja siunasi kaikki läsnäolijat.","spans":[],"expected":"clean"}
+{"id":"mod-0037","lang":"en","text":"The offering reached 350 pounds, and we are grateful.","spans":[],"expected":"clean"}
+{"id":"mod-0038","lang":"sv","text":"Kollekten blev 1 200 kronor och vi tackar för gåvorna.","spans":[],"expected":"clean"}
+{"id":"mod-0039","lang":"sv","text":"Be för Gustavs hälsa, hon har cancer.","spans":[{"type":"person_name","start":7,"end":14}],"expected":"reject"}
+{"id":"mod-0040","lang":"sv","text":"Vi ber om fred i världen och om vishet för ledarna.","spans":[],"expected":"clean"}
+{"id":"mod-0041","lang":"en","text":"Pray for Richard, our new church warden.","spans":[{"type":"person_name","start":9,"end":16}],"expected":"queue"}
+{"id":"mod-0042","lang":"en","text":"Born 10.5.1974, I am asking for strength in my illness.","spans":[{"type":"dob","start":5,"end":14}],"expected":"reject"}
+{"id":"mod-0043","lang":"fi","text":"Pyydämme, että toivo ja rauha löytyisivät jokaisen sydämestä.","spans":[],"expected":"clean"}
+{"id":"mod-0044","lang":"sv","text":"Vi tackar Gud för sommaren och för skörden.","spans":[],"expected":"clean"}
+{"id":"mod-0045","lang":"sv","text":"Gudstjänsten är 6.6. och alla är välkomna.","spans":[],"expected":"clean"}
+{"id":"mod-0046","lang":"fi","text":"Rukoilemme, että Pekka paranisi sairaudestaan nopeasti.","spans":[{"type":"person_name","start":17,"end":22}],"expected":"reject"}
+{"id":"mod-0047","lang":"en","text":"I am alone with my children and I need strength.","spans":[],"expected":"clean"}
+{"id":"mod-0048","lang":"en","text":"Please pray that the transfer to FI18 1945 7068 0032 85 goes through.","spans":[{"type":"iban","start":33,"end":55}],"expected":"reject"}
+{"id":"mod-0049","lang":"sv","text":"Mitt personnummer 090393+3417 kom bort i posten.","spans":[{"type":"hetu","start":18,"end":29}],"expected":"reject"}
+{"id":"mod-0050","lang":"fi","text":"Kirkossa Keskuskirkko soi urut klo 18.00.","spans":[],"expected":"clean"}
+{"id":"mod-0051","lang":"fi","text":"Tilinumeroni FI4309348976967948 on lahjoitusta varten, rukoilkaa sen puolesta.","spans":[{"type":"iban","start":13,"end":31}],"expected":"reject"}
+{"id":"mod-0052","lang":"fi","text":"Kortin numero 4758309031859904 katosi eilen, rukoilkaa että löydän sen.","spans":[{"type":"card","start":14,"end":30}],"expected":"reject"}
+{"id":"mod-0053","lang":"fi","text":"Kirkkoherra Hannu Salo pyytää rukousta seurakunnan puolesta.","spans":[{"type":"person_name","start":12,"end":22}],"expected":"queue"}
+{"id":"mod-0054","lang":"sv","text":"Vi ber för fred i Mellanöstern och för de drabbade.","spans":[],"expected":"clean"}
+{"id":"mod-0055","lang":"fi","text":"Tilinumeroni FI98 8242 4573 7303 66 on lahjoitusta varten, rukoilkaa sen puolesta.","spans":[{"type":"iban","start":13,"end":35}],"expected":"reject"}
+{"id":"mod-0056","lang":"fi","text":"Pyydämme siunausta perheelleni ja lapsilleni tänä talvena.","spans":[],"expected":"clean"}
+{"id":"mod-0057","lang":"en","text":"Thank you for Oliver who sings in the choir every Sunday.","spans":[{"type":"person_name","start":14,"end":20}],"expected":"mask"}
+{"id":"mod-0058","lang":"fi","text":"Rukoilemme Kaisan puolesta, joka odottaa tulosta lääkärin tutkimuksessa.","spans":[{"type":"person_name","start":11,"end":17}],"expected":"reject"}
+{"id":"mod-0059","lang":"fi","text":"Rukoilemme Juhan puolesta, joka odottaa tulosta lääkärin tutkimuksessa.","spans":[{"type":"person_name","start":11,"end":16}],"expected":"reject"}
+{"id":"mod-0060","lang":"en","text":"Thank you for Helen, who helped with the food drive.","spans":[{"type":"person_name","start":14,"end":19}],"expected":"mask"}
+{"id":"mod-0061","lang":"sv","text":"Jesus välsigne oss alla i helgen.","spans":[],"expected":"clean"}
+{"id":"mod-0062","lang":"sv","text":"Vi tackar för 1914, då Sankt Olofs kyrka renoverades.","spans":[],"expected":"clean"}
+{"id":"mod-0063","lang":"en","text":"Hymn 837 will be sung at 12:30 on Sunday.","spans":[],"expected":"clean"}
+{"id":"mod-0064","lang":"fi","text":"Rukoilemme sen puolesta, joka asuu naapurissa toisessa kerroksessa.","spans":[],"expected":"queue"}
+{"id":"mod-0065","lang":"en","text":"We thank God for 1986, when St. Peter's church was restored.","spans":[],"expected":"clean"}
+{"id":"mod-0066","lang":"fi","text":"Kiitos, Liisa kävi tänään keittiössä auttamassa meitä.","spans":[{"type":"person_name","start":8,"end":13}],"expected":"mask"}
+{"id":"mod-0067","lang":"en","text":"My national ID is 211139-5186, please pray that it gets replaced.","spans":[{"type":"hetu","start":18,"end":29}],"expected":"reject"}
+{"id":"mod-0068","lang":"fi","text":"Kirkossa Pyhän Ristin kirkko soi urut klo 18.00.","spans":[],"expected":"clean"}
+{"id":"mod-0069","lang":"fi","text":"Pyydämme lohtua Hannulle, joka suree äitiään.","spans":[{"type":"person_name","start":16,"end":24}],"expected":"reject"}
+{"id":"mod-0070","lang":"en","text":"We ask for guidance in our decision about the future.","spans":[],"expected":"clean"}
+{"id":"mod-0071","lang":"sv","text":"Vi ber för vår familj under den här svåra tiden.","spans":[],"expected":"clean"}
+{"id":"mod-0072","lang":"sv","text":"Min adress är Ljunggatan 55, 01300 Vanda och jag behöver förbön för vårt hem.","spans":[{"type":"address","start":14,"end":40}],"expected":"reject"}
+{"id":"mod-0073","lang":"fi","text":"Tänään luemme kertomuksen, jossa Jumala rukoilee kansansa puolesta.","spans":[],"expected":"clean"}
+{"id":"mod-0074","lang":"en","text":"Peace and hope are gifts we receive every day.","spans":[],"expected":"clean"}
+{"id":"mod-0075","lang":"fi","text":"Kiitämme Jumalaa uudesta vauvasta perheessämme.","spans":[],"expected":"clean"}
+{"id":"mod-0076","lang":"en","text":"Our neighbour on the third floor needs support after a fall.","spans":[],"expected":"queue"}
+{"id":"mod-0077","lang":"fi","text":"Kiitämme Jumalaa uudesta vauvasta perheessämme.","spans":[],"expected":"clean"}
+{"id":"mod-0078","lang":"en","text":"Peace and peace are gifts we receive every day.","spans":[],"expected":"clean"}
+{"id":"mod-0079","lang":"sv","text":"Vi läser Joh. 3:16 och ber efter texten.","spans":[],"expected":"clean"}
+{"id":"mod-0080","lang":"fi","text":"Pyydämme lohtua Pekalle, joka suree äitiään.","spans":[{"type":"person_name","start":16,"end":23}],"expected":"reject"}
+{"id":"mod-0081","lang":"sv","text":"Min mamma Johan Lindqvist har gått bort och jag sörjer.","spans":[{"type":"person_name","start":10,"end":25}],"expected":"reject"}
+{"id":"mod-0082","lang":"en","text":"Thank you for Richard who sings in the choir every Sunday.","spans":[{"type":"person_name","start":14,"end":21}],"expected":"mask"}
+{"id":"mod-0083","lang":"sv","text":"Tack för att Gustav hjälpte oss med flytten.","spans":[{"type":"person_name","start":13,"end":19}],"expected":"mask"}
+{"id":"mod-0084","lang":"sv","text":"Be för barnet som föddes 1955-06-15 på sjukhuset.","spans":[{"type":"dob","start":25,"end":35}],"expected":"reject"}
+{"id":"mod-0085","lang":"fi","text":"Ajoneuvo OTE-397 on rikkoutunut ja tarvitsemme turvallisuutta matkoille.","spans":[{"type":"plate","start":9,"end":16}],"expected":"reject"}
+{"id":"mod-0086","lang":"fi","text":"Hetuni on 161079-6303, ja pyydän rukousta henkilöllisyyteni turvaamiseksi.","spans":[{"type":"hetu","start":10,"end":21}],"expected":"reject"}
+{"id":"mod-0087","lang":"sv","text":"Bankkontot FI27 4197 2021 5333 47 används för kollekten.","spans":[{"type":"iban","start":11,"end":33}],"expected":"reject"}
+{"id":"mod-0088","lang":"fi","text":"Rukoilemme Pekalle rohkeutta uuteen työhön ja uusiin haasteisiin.","spans":[{"type":"person_name","start":11,"end":18}],"expected":"mask"}
+{"id":"mod-0089","lang":"en","text":"Pray for Emily, our new church warden.","spans":[{"type":"person_name","start":9,"end":14}],"expected":"queue"}
+{"id":"mod-0090","lang":"fi","text":"Rukousaiheemme on tehdä työpaikkamme rauhallisemmaksi.","spans":[],"expected":"clean"}
+{"id":"mod-0091","lang":"fi","text":"Kiitämme Jumalaa uudesta vauvasta perheessämme.","spans":[],"expected":"clean"}
+{"id":"mod-0092","lang":"en","text":"Pastor Helen Carter asks for prayer for the parish this autumn.","spans":[{"type":"person_name","start":7,"end":19}],"expected":"queue"}
+{"id":"mod-0093","lang":"sv","text":"Vi ber för Gustav som flyttar till en ny stad.","spans":[{"type":"person_name","start":11,"end":17}],"expected":"mask"}
+{"id":"mod-0094","lang":"fi","text":"Kirkkoherra Juha Lahtinen pyytää rukousta seurakunnan puolesta.","spans":[{"type":"person_name","start":12,"end":25}],"expected":"queue"}
+{"id":"mod-0095","lang":"fi","text":"Rukoilemme sen puolesta, joka asuu naapurissa toisessa kerroksessa.","spans":[],"expected":"queue"}
+{"id":"mod-0096","lang":"sv","text":"Kyrkvärden bor i huset bredvid den gula dörren.","spans":[],"expected":"queue"}
+{"id":"mod-0097","lang":"sv","text":"Bilen med registreringsnummer GKS-761 blev stulen i går.","spans":[{"type":"plate","start":30,"end":37}],"expected":"reject"}
+{"id":"mod-0098","lang":"sv","text":"Vårt hem ligger på Ljungvägen 73, 00100 Helsingfors och där bor vi med fyra barn.","spans":[{"type":"address","start":19,"end":51}],"expected":"reject"}
+{"id":"mod-0099","lang":"sv","text":"Kyrkvärden bor i huset bredvid den gula dörren.","spans":[],"expected":"queue"}
+{"id":"mod-0100","lang":"fi","text":"Soitin numeroon 044-111 0910 ja pyydän rukousta perheemme puolesta.","spans":[{"type":"phone","start":16,"end":28}],"expected":"reject"}
+{"id":"mod-0101","lang":"sv","text":"Min granne på tredje våningen behöver stöd efter en olycka.","spans":[],"expected":"queue"}
+{"id":"mod-0102","lang":"en","text":"Please pray for Richard, who was diagnosed with cancer last month.","spans":[{"type":"person_name","start":16,"end":23}],"expected":"reject"}
+{"id":"mod-0103","lang":"en","text":"Pray for Victoria's children, who are having a hard time at school.","spans":[{"type":"person_name","start":9,"end":17}],"expected":"reject"}
+{"id":"mod-0104","lang":"fi","text":"Rukoilemme Pekan puolesta, joka on menettänyt puolisonsa.","spans":[{"type":"person_name","start":11,"end":16}],"expected":"reject"}
+{"id":"mod-0105","lang":"en","text":"Today the deacon led the prayer and blessed everyone.","spans":[],"expected":"clean"}
+{"id":"mod-0106","lang":"sv","text":"Påsk 10.7. firas i domkyrkan.","spans":[],"expected":"clean"}
+{"id":"mod-0107","lang":"sv","text":"Vi läser Ps. 23 och ber efter texten.","spans":[],"expected":"clean"}
+{"id":"mod-0108","lang":"sv","text":"Vi ber om vägledning i vårt beslut om framtiden.","spans":[],"expected":"clean"}
+{"id":"mod-0109","lang":"en","text":"Ring +358 41 957 1348 if you need someone to talk to.","spans":[{"type":"phone","start":5,"end":21}],"expected":"reject"}
+{"id":"mod-0110","lang":"fi","text":"Naapurimme toisessa kerroksessa on yksin ja tarvitsee lohtua.","spans":[],"expected":"queue"}
+{"id":"mod-0111","lang":"fi","text":"Rukousaiheemme on tehdä työpaikkamme rauhallisemmaksi.","spans":[],"expected":"clean"}
+{"id":"mod-0112","lang":"fi","text":"Luemme Room. 8:28 ja rukoilemme sen sanan mukaan.","spans":[],"expected":"clean"}
+{"id":"mod-0113","lang":"sv","text":"Hjälp Gustav att hitta arbete och hopp.","spans":[{"type":"person_name","start":6,"end":12}],"expected":"mask"}
+{"id":"mod-0114","lang":"sv","text":"Psalm 143 sjungs kl. 12.30 på söndag.","spans":[],"expected":"clean"}
+{"id":"mod-0115","lang":"fi","text":"Keräys tuotti 1 200 euroa, ja kiitämme siitä.","spans":[],"expected":"clean"}
+{"id":"mod-0116","lang":"sv","text":"Ta hand om Gustav som har förlorat sitt jobb.","spans":[{"type":"person_name","start":11,"end":17}],"expected":"mask"}
+{"id":"mod-0117","lang":"fi","text":"Virsi 545 lauletaan klo 12.30 sunnuntaina.","spans":[],"expected":"clean"}
+{"id":"mod-0118","lang":"en","text":"Thank you to Helen and her family for helping at the cafe.","spans":[{"type":"person_name","start":13,"end":18}],"expected":"mask"}
+{"id":"mod-0119","lang":"en","text":"Thank you to Richard and her family for helping at the cafe.","spans":[{"type":"person_name","start":13,"end":20}],"expected":"mask"}
+{"id":"mod-0120","lang":"en","text":"We pray that God will give us hope this week.","spans":[],"expected":"clean"}
+{"id":"mod-0121","lang":"fi","text":"Seurakunnan kokous on 2.1. ja kaikki ovat tervetulleita.","spans":[],"expected":"clean"}
+{"id":"mod-0122","lang":"fi","text":"Äitini Pekka Heikkilä on sairaalassa leikkauksen jälkeen, rukoilkaa hänen puolestaan.","spans":[{"type":"person_name","start":7,"end":21}],"expected":"reject"}
+{"id":"mod-0123","lang":"fi","text":"Rukoilemme toivo ja armoa kaikille perheille.","spans":[],"expected":"clean"}
+{"id":"mod-0124","lang":"fi","text":"Rukoilkaa seurakuntamme työntekijöiden puolesta.","spans":[],"expected":"clean"}
+{"id":"mod-0125","lang":"fi","text":"Jeesus siunatkoon meitä kaikkia tänä viikonloppuna.","spans":[],"expected":"clean"}
+{"id":"mod-0126","lang":"sv","text":"Ärendet gäller Gustav, be om ett gott utfall.","spans":[{"type":"person_name","start":15,"end":21}],"expected":"reject"}
+{"id":"mod-0127","lang":"en","text":"The man in the blue house by the river needs comfort.","spans":[],"expected":"queue"}
+{"id":"mod-0128","lang":"fi","text":"Seurakunnan kokous on 25.10. ja kaikki ovat tervetulleita.","spans":[],"expected":"clean"}
+{"id":"mod-0129","lang":"fi","text":"Pyydämme, että rauha ja rauha löytyisivät jokaisen sydämestä.","spans":[],"expected":"clean"}
+{"id":"mod-0130","lang":"en","text":"Service on 3.3. at the central church is open to all.","spans":[],"expected":"clean"}
+{"id":"mod-0131","lang":"fi","text":"Hän on syntynyt 24.8.1984 ja tarvitsee rukousta terveytensä vuoksi.","spans":[{"type":"dob","start":16,"end":25}],"expected":"reject"}
+{"id":"mod-0132","lang":"en","text":"Our reading is Ps. 23 this week.","spans":[],"expected":"clean"}
+{"id":"mod-0133","lang":"fi","text":"Tilinumeroni FI57 4280 6054 5469 19 on lahjoitusta varten, rukoilkaa sen puolesta.","spans":[{"type":"iban","start":13,"end":35}],"expected":"reject"}
+{"id":"mod-0134","lang":"en","text":"Service on 5.11. at the central church is open to all.","spans":[],"expected":"clean"}
+{"id":"mod-0135","lang":"fi","text":"Kiitos, että Anna sai uuden työpaikan syksyllä.","spans":[{"type":"person_name","start":13,"end":17}],"expected":"mask"}
+{"id":"mod-0136","lang":"en","text":"Please pray for Oliver's recovery after the accident.","spans":[{"type":"person_name","start":16,"end":22}],"expected":"reject"}
+{"id":"mod-0137","lang":"fi","text":"Rukoilemme rauha ja armoa kaikille perheille.","spans":[],"expected":"clean"}
+{"id":"mod-0138","lang":"fi","text":"Autoni rekisterinumero on ODF-699 ja se varastettiin eilen illalla.","spans":[{"type":"plate","start":26,"end":33}],"expected":"reject"}
+{"id":"mod-0139","lang":"en","text":"More details are at www.example.se/cz9npd?ref=yafm.","spans":[{"type":"url","start":20,"end":50}],"expected":"reject"}
+{"id":"mod-0140","lang":"en","text":"Easter falls on 16.3. this year.","spans":[],"expected":"clean"}
+{"id":"mod-0141","lang":"en","text":"Pray for a good meeting with the council on Sunday.","spans":[],"expected":"clean"}
+{"id":"mod-0142","lang":"fi","text":"Rukoilkaa rukouksissanne Juha, joka tulee kirkkoon ensi sunnuntaina.","spans":[{"type":"person_name","start":25,"end":29}],"expected":"mask"}
+{"id":"mod-0143","lang":"en","text":"The offering reached 350 pounds, and we are grateful.","spans":[],"expected":"clean"}
+{"id":"mod-0144","lang":"en","text":"We pray for peace in the world and wisdom for our leaders.","spans":[],"expected":"clean"}
+{"id":"mod-0145","lang":"en","text":"We are facing a court case and ask for justice.","spans":[],"expected":"clean"}
+{"id":"mod-0146","lang":"fi","text":"Pyydämme Hannun puolesta, joka on vankilassa.","spans":[{"type":"person_name","start":9,"end":15}],"expected":"reject"}
+{"id":"mod-0147","lang":"fi","text":"Kiitos, että Tuija sai uuden työpaikan syksyllä.","spans":[{"type":"person_name","start":13,"end":18}],"expected":"mask"}
+{"id":"mod-0148","lang":"fi","text":"Tänään luemme kertomuksen, jossa Jeesus rukoilee kansansa puolesta.","spans":[],"expected":"clean"}
+{"id":"mod-0149","lang":"fi","text":"Rukoilemme Matille ja hänen perheensä parasta.","spans":[{"type":"person_name","start":11,"end":18}],"expected":"reject"}
+{"id":"mod-0150","lang":"fi","text":"Pyydän rukousta työttömyyteeni ja taloudelliseen tilanteeseeni.","spans":[],"expected":"clean"}
+{"id":"mod-0151","lang":"fi","text":"Pyydämme Juhan puolesta, joka on vankilassa.","spans":[{"type":"person_name","start":9,"end":14}],"expected":"reject"}
+{"id":"mod-0152","lang":"en","text":"Today the cantor led the prayer and blessed everyone.","spans":[],"expected":"clean"}
+{"id":"mod-0153","lang":"fi","text":"Pyydämme Annan puolesta, joka on vankilassa.","spans":[{"type":"person_name","start":9,"end":14}],"expected":"reject"}
+{"id":"mod-0154","lang":"fi","text":"Virsi 646 lauletaan klo 18.00 sunnuntaina.","spans":[],"expected":"clean"}
+{"id":"mod-0155","lang":"sv","text":"Vårt hem ligger på Ekgatan 31, 00100 Helsingfors och där bor vi med fyra barn.","spans":[{"type":"address","start":19,"end":48}],"expected":"reject"}
+{"id":"mod-0156","lang":"sv","text":"Kollekten blev 1 200 kronor och vi tackar för gåvorna.","spans":[],"expected":"clean"}
+{"id":"mod-0157","lang":"fi","text":"Tänään luemme kertomuksen, jossa Daavid rukoilee kansansa puolesta.","spans":[],"expected":"clean"}
+{"id":"mod-0158","lang":"fi","text":"Rukoilkaa rukouksissanne Kaisa, joka tulee kirkkoon ensi sunnuntaina.","spans":[{"type":"person_name","start":25,"end":30}],"expected":"mask"}
+{"id":"mod-0159","lang":"sv","text":"Min adress är Ängsvägen 42, 01300 Vanda och jag behöver förbön för vårt hem.","spans":[{"type":"address","start":14,"end":39}],"expected":"reject"}
+{"id":"mod-0160","lang":"en","text":"Our home is at 110 Maple Street, and we would like prayer for the house.","spans":[{"type":"address","start":15,"end":31}],"expected":"reject"}
+{"id":"mod-0161","lang":"sv","text":"Maria välsigne oss alla i helgen.","spans":[],"expected":"clean"}
+{"id":"mod-0162","lang":"fi","text":"Rukoilkaa puolestamme, kun muutamme uuteen kotiin.","spans":[],"expected":"clean"}
+{"id":"mod-0163","lang":"sv","text":"Jag har en rättegång på gång och behöver visdom inför den.","spans":[],"expected":"clean"}
+{"id":"mod-0164","lang":"en","text":"Pray for a good meeting with the council on Sunday.","spans":[],"expected":"clean"}
+{"id":"mod-0165","lang":"en","text":"We ask that Paul blesses our congregation.","spans":[],"expected":"clean"}
+{"id":"mod-0166","lang":"fi","text":"Rukoilemme Pekalle ja hänen perheensä parasta.","spans":[{"type":"person_name","start":11,"end":18}],"expected":"reject"}
+{"id":"mod-0167","lang":"en","text":"Pray for Robert to find housing before winter.","spans":[{"type":"person_name","start":9,"end":15}],"expected":"mask"}
+{"id":"mod-0168","lang":"fi","text":"Rukousaiheemme on tehdä työpaikkamme rauhallisemmaksi.","spans":[],"expected":"clean"}
+{"id":"mod-0169","lang":"sv","text":"Min mamma Erik Sjöberg har gått bort och jag sörjer.","spans":[{"type":"person_name","start":10,"end":22}],"expected":"reject"}
+{"id":"mod-0170","lang":"fi","text":"Kirkkoherra Kaisa Mäkinen pyytää rukousta seurakunnan puolesta.","spans":[{"type":"person_name","start":12,"end":25}],"expected":"queue"}
+{"id":"mod-0171","lang":"en","text":"Email oliver.brooks (at) example (dot) org for details about the prayer group.","spans":[{"type":"email","start":6,"end":42}],"expected":"reject"}
+{"id":"mod-0172","lang":"en","text":"Bishop Emily Ward will visit our congregation in November.","spans":[{"type":"person_name","start":7,"end":17}],"expected":"queue"}
+{"id":"mod-0173","lang":"fi","text":"Pyydän rukousta, koska Tuija on lähdössä ulkomaille ja pelkään.","spans":[{"type":"person_name","start":23,"end":28}],"expected":"mask"}
+{"id":"mod-0174","lang":"fi","text":"Rukoilemme Kaisalle rohkeutta uuteen työhön ja uusiin haasteisiin.","spans":[{"type":"person_name","start":11,"end":19}],"expected":"mask"}
+{"id":"mod-0175","lang":"en","text":"My card 4378 4263 4317 6502 was stolen last night, please pray for the situation.","spans":[{"type":"card","start":8,"end":27}],"expected":"reject"}
+{"id":"mod-0176","lang":"sv","text":"Vi läser Rom. 8:28 och ber efter texten.","spans":[],"expected":"clean"}
+{"id":"mod-0177","lang":"fi","text":"Seurakunnan kokous on 23.3. ja kaikki ovat tervetulleita.","spans":[],"expected":"clean"}
+{"id":"mod-0178","lang":"sv","text":"Vi ber för familjen Lena Berglund efter händelsen.","spans":[{"type":"person_name","start":20,"end":33}],"expected":"reject"}
+{"id":"mod-0179","lang":"fi","text":"Rukoilkaa rauhaa maailmaan ja viisautta päättäjille.","spans":[],"expected":"clean"}
+{"id":"mod-0180","lang":"sv","text":"Vi ber om förbön för ett lyckat möte i söndags.","spans":[],"expected":"clean"}
+{"id":"mod-0181","lang":"fi","text":"Keräys tuotti 12 500 euroa, ja kiitämme siitä.","spans":[],"expected":"clean"}
+{"id":"mod-0182","lang":"sv","text":"Vi tackar för 1957, då domkyrkan renoverades.","spans":[],"expected":"clean"}
+{"id":"mod-0183","lang":"sv","text":"Mitt personnummer 250305-144F kom bort i posten.","spans":[{"type":"hetu","start":18,"end":29}],"expected":"reject"}
+{"id":"mod-0184","lang":"fi","text":"Hän on syntynyt 1992-05-16 ja tarvitsee rukousta terveytensä vuoksi.","spans":[{"type":"dob","start":16,"end":26}],"expected":"reject"}
+{"id":"mod-0185","lang":"en","text":"Pastor Robert Hale asks for prayer for the parish this autumn.","spans":[{"type":"person_name","start":7,"end":18}],"expected":"queue"}
+{"id":"mod-0186","lang":"fi","text":"Pääsiäinen 12.11. on kiitoksen aika seurakunnassa.","spans":[],"expected":"clean"}
+{"id":"mod-0187","lang":"sv","text":"Biskopen Gustav Nyström besöker vår församling i höst.","spans":[{"type":"person_name","start":9,"end":23}],"expected":"queue"}
+{"id":"mod-0188","lang":"en","text":"The legal matter concerns Robert; we pray for a good outcome.","spans":[{"type":"person_name","start":26,"end":32}],"expected":"reject"}
+{"id":"mod-0189","lang":"fi","text":"Pyydämme rauhaa perheeseemme ja sovintoa.","spans":[],"expected":"clean"}
+{"id":"mod-0190","lang":"fi","text":"Ajoneuvo RPJ-643 on rikkoutunut ja tarvitsemme turvallisuutta matkoille.","spans":[{"type":"plate","start":9,"end":16}],"expected":"reject"}
+{"id":"mod-0191","lang":"fi","text":"Tänään kirkkoherra johti rukoushetken ja siunasi kaikki läsnäolijat.","spans":[],"expected":"clean"}
+{"id":"mod-0192","lang":"sv","text":"Kollekten blev 350 kronor och vi tackar för gåvorna.","spans":[],"expected":"clean"}
+{"id":"mod-0193","lang":"fi","text":"Rukoilkaa puolestani, sillä minulla on vaikea viikko töissä.","spans":[],"expected":"clean"}
+{"id":"mod-0194","lang":"sv","text":"Psalm 440 sjungs kl. 12.30 på söndag.","spans":[],"expected":"clean"}
+{"id":"mod-0195","lang":"en","text":"Today the bishop led the prayer and blessed everyone.","spans":[],"expected":"clean"}
+{"id":"mod-0196","lang":"en","text":"The offering reached $1,200, and we are grateful.","spans":[],"expected":"clean"}
+{"id":"mod-0197","lang":"en","text":"Our neighbour on the second floor has been lonely since the move.","spans":[],"expected":"queue"}
+{"id":"mod-0198","lang":"fi","text":"Lisätietoja löydät osoitteesta https://example.fi/rukous/8h6rsd.","spans":[{"type":"url","start":31,"end":63}],"expected":"reject"}
+{"id":"mod-0199","lang":"fi","text":"Rukoilkaa seurakuntamme työntekijöiden puolesta.","spans":[],"expected":"clean"}
+{"id":"mod-0200","lang":"fi","text":"Rukoilkaa seurakuntamme työntekijöiden puolesta.","spans":[],"expected":"clean"}
+{"id":"mod-0201","lang":"sv","text":"Skicka gärna ett mejl till lena.berglund@example.fi så svarar jag.","spans":[{"type":"email","start":27,"end":51}],"expected":"reject"}
+{"id":"mod-0202","lang":"en","text":"My car with plate XCJ-520 broke down on the highway.","spans":[{"type":"plate","start":18,"end":25}],"expected":"reject"}
+{"id":"mod-0203","lang":"sv","text":"Be för Lenas barn som mår dåligt i skolan.","spans":[{"type":"person_name","start":7,"end":12}],"expected":"reject"}
+{"id":"mod-0204","lang":"fi","text":"Hän on syntynyt 21.03.1967 ja tarvitsee rukousta terveytensä vuoksi.","spans":[{"type":"dob","start":16,"end":26}],"expected":"reject"}
+{"id":"mod-0205","lang":"fi","text":"Lisätietoja löydät osoitteesta https://example.se/rukous/r2emc7.","spans":[{"type":"url","start":31,"end":63}],"expected":"reject"}
+{"id":"mod-0206","lang":"fi","text":"Soitin numeroon 09 692 7353 ja pyydän rukousta perheemme puolesta.","spans":[{"type":"phone","start":16,"end":27}],"expected":"reject"}
+{"id":"mod-0207","lang":"en","text":"Robert was born 16.9.1976 and is now recovering in hospital.","spans":[{"type":"person_name","start":0,"end":6},{"type":"dob","start":16,"end":25}],"expected":"reject"}
+{"id":"mod-0208","lang":"sv","text":"Påsk 14.7. firas i Sankt Olofs kyrka.","spans":[],"expected":"clean"}
+{"id":"mod-0209","lang":"en","text":"My father Victoria Mitchell passed away on Tuesday, and we are grieving.","spans":[{"type":"person_name","start":10,"end":27}],"expected":"reject"}
+{"id":"mod-0210","lang":"fi","text":"Kiitämme siitä, että Liisa tuli mukaan kerhoon.","spans":[{"type":"person_name","start":21,"end":26}],"expected":"mask"}
+{"id":"mod-0211","lang":"en","text":"Thank you for Victoria, who helped with the food drive.","spans":[{"type":"person_name","start":14,"end":22}],"expected":"mask"}
+{"id":"mod-0212","lang":"sv","text":"nåd och glädje är gåvor från Gud.","spans":[],"expected":"clean"}
+{"id":"mod-0213","lang":"fi","text":"Kiitämme vuotta 2021, jolloin Lähteen seurakuntakoti remontoitiin.","spans":[],"expected":"clean"}
+{"id":"mod-0214","lang":"fi","text":"Kiitämme vuotta 1932, jolloin Pyhän Ristin kirkko remontoitiin.","spans":[],"expected":"clean"}
+{"id":"mod-0215","lang":"en","text":"We thank God for 1907, when St. Peter's church was restored.","spans":[],"expected":"clean"}
+{"id":"mod-0216","lang":"fi","text":"Pyydän rukousta työttömyyteeni ja taloudelliseen tilanteeseeni.","spans":[],"expected":"clean"}
+{"id":"mod-0217","lang":"sv","text":"Vi ber om förbön för ett lyckat möte i söndags.","spans":[],"expected":"clean"}
+{"id":"mod-0218","lang":"fi","text":"Rukoilemme Annan puolesta, hän menee leikkaukseen huomenna.","spans":[{"type":"person_name","start":11,"end":16}],"expected":"reject"}
+{"id":"mod-0219","lang":"sv","text":"Be för min pappa Lena, han är inlagd på sjukhuset.","spans":[{"type":"person_name","start":17,"end":21}],"expected":"reject"}
+{"id":"mod-0220","lang":"en","text":"We pray that John will give us hope this week.","spans":[],"expected":"clean"}
+{"id":"mod-0221","lang":"en","text":"Please pray for the unemployed people in our town.","spans":[],"expected":"clean"}
+{"id":"mod-0222","lang":"sv","text":"Jag är ensam hemma med barnen och behöver styrka.","spans":[],"expected":"clean"}
+{"id":"mod-0223","lang":"fi","text":"Rukoilkaa puolestani, sillä minulla on vaikea viikko töissä.","spans":[],"expected":"clean"}
+{"id":"mod-0224","lang":"fi","text":"Rukoilkaa rauhaa maailmaan ja viisautta päättäjille.","spans":[],"expected":"clean"}
+{"id":"mod-0225","lang":"fi","text":"Oikeusjuttu koskee Anna, ja rukoilemme oikeudenmukaisuutta.","spans":[{"type":"person_name","start":19,"end":23}],"expected":"reject"}
+{"id":"mod-0226","lang":"fi","text":"Osoitteeni on Koivutie 42 A, 33100 Tampere, ja kotona tarvitsemme rauhaa.","spans":[{"type":"address","start":14,"end":42}],"expected":"reject"}
+{"id":"mod-0227","lang":"sv","text":"Tack för Karin och hennes familj som hjälper till i caféet.","spans":[{"type":"person_name","start":9,"end":14}],"expected":"mask"}
+{"id":"mod-0228","lang":"en","text":"Please pray for my mother's surgery next week.","spans":[],"expected":"clean"}
+{"id":"mod-0229","lang":"fi","text":"Jumala siunatkoon meitä kaikkia tänä viikonloppuna.","spans":[],"expected":"clean"}
+{"id":"mod-0230","lang":"sv","text":"Bankkontot FI60 0806 0755 1503 18 används för kollekten.","spans":[{"type":"iban","start":11,"end":33}],"expected":"reject"}
+{"id":"mod-0231","lang":"fi","text":"Rukoilemme, että Kaisa paranisi sairaudestaan nopeasti.","spans":[{"type":"person_name","start":17,"end":22}],"expected":"reject"}
+{"id":"mod-0232","lang":"fi","text":"Kortin numero 4556984061212242 katosi eilen, rukoilkaa että löydän sen.","spans":[{"type":"card","start":14,"end":30}],"expected":"reject"}
+{"id":"mod-0233","lang":"fi","text":"Kiitämme vuotta 1929, jolloin Lähteen seurakuntakoti remontoitiin.","spans":[],"expected":"clean"}
+{"id":"mod-0234","lang":"sv","text":"Be för Erik som är sjuk och väntar på operation.","spans":[{"type":"person_name","start":7,"end":11}],"expected":"reject"}
+{"id":"mod-0235","lang":"fi","text":"Rukoilemme Kaisan puolesta, joka on menettänyt puolisonsa.","spans":[{"type":"person_name","start":11,"end":17}],"expected":"reject"}
+{"id":"mod-0236","lang":"sv","text":"Be för Johans hälsa, hon har cancer.","spans":[{"type":"person_name","start":7,"end":13}],"expected":"reject"}
+{"id":"mod-0237","lang":"sv","text":"Ring 09 451 3486 om du behöver någon att prata med.","spans":[{"type":"phone","start":5,"end":16}],"expected":"reject"}
+{"id":"mod-0238","lang":"fi","text":"Pyydämme siunausta perheelleni ja lapsilleni tänä talvena.","spans":[],"expected":"clean"}
+{"id":"mod-0239","lang":"fi","text":"Pääsiäinen 17.5. on kiitoksen aika seurakunnassa.","spans":[],"expected":"clean"}
+{"id":"mod-0240","lang":"fi","text":"Naapurimme toisessa kerroksessa on yksin ja tarvitsee lohtua.","spans":[],"expected":"queue"}
+{"id":"mod-0241","lang":"en","text":"The man in the blue house by the river needs comfort.","spans":[],"expected":"queue"}
+{"id":"mod-0242","lang":"fi","text":"Rukoilemme Annalle rohkeutta uuteen työhön ja uusiin haasteisiin.","spans":[{"type":"person_name","start":11,"end":18}],"expected":"mask"}
+{"id":"mod-0243","lang":"sv","text":"Jag har en rättegång på gång och behöver visdom inför den.","spans":[],"expected":"clean"}
+{"id":"mod-0244","lang":"en","text":"My car with plate VTA-669 broke down on the highway.","spans":[{"type":"plate","start":18,"end":25}],"expected":"reject"}
+{"id":"mod-0245","lang":"fi","text":"Pyydämme, että ilona ja rauha löytyisivät jokaisen sydämestä.","spans":[],"expected":"clean"}
+{"id":"mod-0246","lang":"fi","text":"Pääsiäinen 5.1. on kiitoksen aika seurakunnassa.","spans":[],"expected":"clean"}
+{"id":"mod-0247","lang":"en","text":"Pray for Victoria to find housing before winter.","spans":[{"type":"person_name","start":9,"end":17}],"expected":"mask"}
+{"id":"mod-0248","lang":"sv","text":"Idag ledde biskopen bönestunden och välsignade alla.","spans":[],"expected":"clean"}
+{"id":"mod-0249","lang":"fi","text":"Pyydän rukousta, koska Matti on lähdössä ulkomaille ja pelkään.","spans":[{"type":"person_name","start":23,"end":28}],"expected":"mask"}
+{"id":"mod-0250","lang":"fi","text":"Rukoilkaa puolestamme, kun muutamme uuteen kotiin.","spans":[],"expected":"clean"}
+{"id":"mod-0251","lang":"en","text":"Please keep Richard in your prayers, they lost their job.","spans":[{"type":"person_name","start":12,"end":19}],"expected":"mask"}
+{"id":"mod-0252","lang":"fi","text":"Rukoilemme Liisan puolesta, hän menee leikkaukseen huomenna.","spans":[{"type":"person_name","start":11,"end":17}],"expected":"reject"}
+{"id":"mod-0253","lang":"fi","text":"Kirkossa Lähteen seurakuntakoti soi urut klo 9.15.","spans":[],"expected":"clean"}
+{"id":"mod-0254","lang":"en","text":"Please pray for my brother Helen, who is in hospital.","spans":[{"type":"person_name","start":27,"end":32}],"expected":"reject"}
+{"id":"mod-0255","lang":"fi","text":"Rukoilkaa rukouksissanne Anna, joka tulee kirkkoon ensi sunnuntaina.","spans":[{"type":"person_name","start":25,"end":29}],"expected":"mask"}
+{"id":"mod-0256","lang":"en","text":"Thanks be to God for the harvest and the summer.","spans":[],"expected":"clean"}
+{"id":"mod-0257","lang":"en","text":"We ask that Mary blesses our congregation.","spans":[],"expected":"clean"}
+{"id":"mod-0258","lang":"sv","text":"Mer information finns på www.example.org/68c5vg?ref=c3u3.","spans":[{"type":"url","start":25,"end":56}],"expected":"reject"}
+{"id":"mod-0259","lang":"en","text":"Easter falls on 28.4. this year.","spans":[],"expected":"clean"}
+{"id":"mod-0260","lang":"fi","text":"Piispa Juha Lahtinen vierailee ensi viikolla, ja toivomme siunausta hänen työlleen.","spans":[{"type":"person_name","start":7,"end":20}],"expected":"queue"}
+{"id":"mod-0261","lang":"sv","text":"Be för min pappa Gustav, han är inlagd på sjukhuset.","spans":[{"type":"person_name","start":17,"end":23}],"expected":"reject"}
+{"id":"mod-0262","lang":"fi","text":"Virsi 927 lauletaan klo 9.15 sunnuntaina.","spans":[],"expected":"clean"}
+{"id":"mod-0263","lang":"sv","text":"Rättegången gäller Lena och vi ber om rättvisa.","spans":[{"type":"person_name","start":19,"end":23}],"expected":"reject"}
+{"id":"mod-0264","lang":"sv","text":"Vi ber för familjen Karin Ekholm efter händelsen.","spans":[{"type":"person_name","start":20,"end":32}],"expected":"reject"}
+{"id":"mod-0265","lang":"fi","text":"Autoni rekisterinumero on HBB-379 ja se varastettiin eilen illalla.","spans":[{"type":"plate","start":26,"end":33}],"expected":"reject"}
+{"id":"mod-0266","lang":"en","text":"Bishop Oliver Brooks will visit our congregation in November.","spans":[{"type":"person_name","start":7,"end":20}],"expected":"queue"}
+{"id":"mod-0267","lang":"sv","text":"Petrus välsigne oss alla i helgen.","spans":[],"expected":"clean"}
+{"id":"mod-0268","lang":"en","text":"The legal matter concerns Oliver; we pray for a good outcome.","spans":[{"type":"person_name","start":26,"end":32}],"expected":"reject"}
+{"id":"mod-0269","lang":"en","text":"Our neighbour on the second floor has been lonely since the move.","spans":[],"expected":"queue"}
+{"id":"mod-0270","lang":"fi","text":"Kortin numero 4886617107066997 katosi eilen, rukoilkaa että löydän sen.","spans":[{"type":"card","start":14,"end":30}],"expected":"reject"}
+{"id":"mod-0271","lang":"sv","text":"Be för dem som saknar arbete i vår stad.","spans":[],"expected":"clean"}
+{"id":"mod-0272","lang":"en","text":"We pray that God will give us joy this week.","spans":[],"expected":"clean"}
+{"id":"mod-0273","lang":"fi","text":"Pyydämme siunausta perheelleni ja lapsilleni tänä talvena.","spans":[],"expected":"clean"}
+{"id":"mod-0274","lang":"fi","text":"Voit ottaa yhteyttä osoitteeseen kaisa.makinen@example.org, jos haluat rukoilla kanssamme.","spans":[{"type":"email","start":33,"end":58}],"expected":"reject"}
+{"id":"mod-0275","lang":"sv","text":"Idag ledde kyrkoherden bönestunden och välsignade alla.","spans":[],"expected":"clean"}
+{"id":"mod-0276","lang":"en","text":"Please pray for the unemployed people in our town.","spans":[],"expected":"clean"}
+{"id":"mod-0277","lang":"en","text":"Please keep Victoria in your prayers, they lost their job.","spans":[{"type":"person_name","start":12,"end":20}],"expected":"mask"}
+{"id":"mod-0278","lang":"en","text":"Peace and grace are gifts we receive every day.","spans":[],"expected":"clean"}
+{"id":"mod-0279","lang":"sv","text":"Be för Eriks barn som mår dåligt i skolan.","spans":[{"type":"person_name","start":7,"end":12}],"expected":"reject"}
+{"id":"mod-0280","lang":"en","text":"Peace and joy are gifts we receive every day.","spans":[],"expected":"clean"}
+{"id":"mod-0281","lang":"fi","text":"Lisätietoja löydät osoitteesta www.example.org/cq2ghq?ref=ytxb.","spans":[{"type":"url","start":31,"end":62}],"expected":"reject"}
+{"id":"mod-0282","lang":"fi","text":"Pyydämme lohtua Kaisalle, joka suree äitiään.","spans":[{"type":"person_name","start":16,"end":24}],"expected":"reject"}
+{"id":"mod-0283","lang":"sv","text":"Gudstjänsten är 5.10. och alla är välkomna.","spans":[],"expected":"clean"}
+{"id":"mod-0284","lang":"en","text":"Pray for Oliver's children, who are having a hard time at school.","spans":[{"type":"person_name","start":9,"end":15}],"expected":"reject"}
+{"id":"mod-0285","lang":"sv","text":"Ring mig på 0413837290 om du vill be tillsammans med mig.","spans":[{"type":"phone","start":12,"end":22}],"expected":"reject"}
+{"id":"mod-0286","lang":"en","text":"I am alone with my children and I need strength.","spans":[],"expected":"clean"}
+{"id":"mod-0287","lang":"fi","text":"Rukoilemme Matin puolesta, joka odottaa tulosta lääkärin tutkimuksessa.","spans":[{"type":"person_name","start":11,"end":16}],"expected":"reject"}
+{"id":"mod-0288","lang":"fi","text":"Lapseni Anna aloittaa koulun syksyllä, siunatkaa häntä.","spans":[{"type":"person_name","start":8,"end":12}],"expected":"reject"}
+{"id":"mod-0289","lang":"fi","text":"Rukoilkaa rauhaa maailmaan ja viisautta päättäjille.","spans":[],"expected":"clean"}
+{"id":"mod-0290","lang":"fi","text":"Tänään piispa johti rukoushetken ja siunasi kaikki läsnäolijat.","spans":[],"expected":"clean"}
+{"id":"mod-0291","lang":"en","text":"We ask that Peter blesses our congregation.","spans":[],"expected":"clean"}
+{"id":"mod-0292","lang":"fi","text":"Yksi ystävistäni on sairas, rukoilkaa hänen puolestaan.","spans":[],"expected":"clean"}
+{"id":"mod-0293","lang":"fi","text":"Rukoilkaa puolestamme, kun muutamme uuteen kotiin.","spans":[],"expected":"clean"}
+{"id":"mod-0294","lang":"fi","text":"Ajoneuvo OVO-494 on rikkoutunut ja tarvitsemme turvallisuutta matkoille.","spans":[{"type":"plate","start":9,"end":16}],"expected":"reject"}
+{"id":"mod-0295","lang":"fi","text":"Oikeusjuttu koskee Liisa, ja rukoilemme oikeudenmukaisuutta.","spans":[{"type":"person_name","start":19,"end":24}],"expected":"reject"}
+{"id":"mod-0296","lang":"sv","text":"Vi ber att Johannes ska ge oss frid i vardagen.","spans":[],"expected":"clean"}
+{"id":"mod-0297","lang":"fi","text":"Rukoilemme Matin puolesta, joka on menettänyt puolisonsa.","spans":[{"type":"person_name","start":11,"end":16}],"expected":"reject"}
+{"id":"mod-0298","lang":"fi","text":"Rukoilemme ilona ja armoa kaikille perheille.","spans":[],"expected":"clean"}
+{"id":"mod-0299","lang":"en","text":"Our reading is John 3:16 this week.","spans":[],"expected":"clean"}
+{"id":"mod-0300","lang":"en","text":"Email oliver.brooks@example.fi for details about the prayer group.","spans":[{"type":"email","start":6,"end":30}],"expected":"reject"}
+{"id":"mod-0301","lang":"en","text":"Call me at 09 666 4073 if you would like to pray together.","spans":[{"type":"phone","start":11,"end":22}],"expected":"reject"}
+{"id":"mod-0302","lang":"fi","text":"Pietari siunatkoon meitä kaikkia tänä viikonloppuna.","spans":[],"expected":"clean"}
+{"id":"mod-0303","lang":"fi","text":"Yksi ystävistäni on sairas, rukoilkaa hänen puolestaan.","spans":[],"expected":"clean"}
+{"id":"mod-0304","lang":"en","text":"We thank God for 1997, when the central church was restored.","spans":[],"expected":"clean"}
+{"id":"mod-0305","lang":"en","text":"Today the vicar led the prayer and blessed everyone.","spans":[],"expected":"clean"}
+{"id":"mod-0306","lang":"en","text":"Please pray for Robert's recovery after the accident.","spans":[{"type":"person_name","start":16,"end":22}],"expected":"reject"}
+{"id":"mod-0307","lang":"fi","text":"Äitini Anna Koskinen on sairaalassa leikkauksen jälkeen, rukoilkaa hänen puolestaan.","spans":[{"type":"person_name","start":7,"end":20}],"expected":"reject"}
+{"id":"mod-0308","lang":"en","text":"Please pray for my brother Richard, who is in hospital.","spans":[{"type":"person_name","start":27,"end":34}],"expected":"reject"}
+{"id":"mod-0309","lang":"en","text":"The court hearing involves Robert, and we ask for a fair outcome.","spans":[{"type":"person_name","start":27,"end":33}],"expected":"reject"}
+{"id":"mod-0310","lang":"fi","text":"Äitini Matti Virtanen on sairaalassa leikkauksen jälkeen, rukoilkaa hänen puolestaan.","spans":[{"type":"person_name","start":7,"end":21}],"expected":"reject"}
+{"id":"mod-0311","lang":"sv","text":"Ring 09 832 9410 om du behöver någon att prata med.","spans":[{"type":"phone","start":5,"end":16}],"expected":"reject"}
+{"id":"mod-0312","lang":"en","text":"Hymn 678 will be sung at 6 pm on Sunday.","spans":[],"expected":"clean"}
+{"id":"mod-0313","lang":"sv","text":"Kortnumret 4476 7402 5331 9592 har spärrats efter ett bedrägeri.","spans":[{"type":"card","start":11,"end":30}],"expected":"reject"}
+{"id":"mod-0314","lang":"en","text":"We live at 22 Maple Street and we would like prayer for our family.","spans":[{"type":"address","start":11,"end":26}],"expected":"reject"}
+{"id":"mod-0315","lang":"fi","text":"Pyydämme rauhaa perheeseemme ja sovintoa.","spans":[],"expected":"clean"}
+{"id":"mod-0316","lang":"fi","text":"Naapurimme toisessa kerroksessa on yksin ja tarvitsee lohtua.","spans":[],"expected":"queue"}
+{"id":"mod-0317","lang":"fi","text":"Hetuni on 240316-607L, ja pyydän rukousta henkilöllisyyteni turvaamiseksi.","spans":[{"type":"hetu","start":10,"end":21}],"expected":"reject"}
+{"id":"mod-0318","lang":"fi","text":"Pyydän rukousta, koska Hannu on lähdössä ulkomaille ja pelkään.","spans":[{"type":"person_name","start":23,"end":28}],"expected":"mask"}
+{"id":"mod-0319","lang":"fi","text":"Keräys tuotti 1 200 euroa, ja kiitämme siitä.","spans":[],"expected":"clean"}
+{"id":"mod-0320","lang":"fi","text":"Pyydän rukousta työttömyyteeni ja taloudelliseen tilanteeseeni.","spans":[],"expected":"clean"}
+{"id":"mod-0321","lang":"sv","text":"Kyrkoherden Johan Lindqvist ber om förbön för församlingen.","spans":[{"type":"person_name","start":12,"end":27}],"expected":"queue"}
+{"id":"mod-0322","lang":"en","text":"Thanks be to God for the harvest and the summer.","spans":[],"expected":"clean"}
+{"id":"mod-0323","lang":"fi","text":"Tänään kanttori johti rukoushetken ja siunasi kaikki läsnäolijat.","spans":[],"expected":"clean"}
+{"id":"mod-0324","lang":"fi","text":"Tänään luemme kertomuksen, jossa Maria rukoilee kansansa puolesta.","spans":[],"expected":"clean"}
+{"id":"mod-0325","lang":"en","text":"More details are at https://example.se/prayer/mk2625.","spans":[{"type":"url","start":20,"end":52}],"expected":"reject"}
+{"id":"mod-0326","lang":"sv","text":"hopp och glädje är gåvor från Gud.","spans":[],"expected":"clean"}
+{"id":"mod-0327","lang":"fi","text":"Rukoilemme Kaisan puolesta, hän menee leikkaukseen huomenna.","spans":[{"type":"person_name","start":11,"end":17}],"expected":"reject"}
+{"id":"mod-0328","lang":"sv","text":"Grannen på andra våningen är ensam och behöver tröst.","spans":[],"expected":"queue"}
+{"id":"mod-0329","lang":"en","text":"We thank God for 1987, when the central church was restored.","spans":[],"expected":"clean"}
+{"id":"mod-0330","lang":"en","text":"Our home is at 174 Hill Street, and we would like prayer for the house.","spans":[{"type":"address","start":15,"end":30}],"expected":"reject"}
+{"id":"mod-0331","lang":"fi","text":"Tänään luemme kertomuksen, jossa Pietari rukoilee kansansa puolesta.","spans":[],"expected":"clean"}
+{"id":"mod-0332","lang":"en","text":"Please pray for my mother's surgery next week.","spans":[],"expected":"clean"}
+{"id":"mod-0333","lang":"en","text":"We pray for peace in the world and wisdom for our leaders.","spans":[],"expected":"clean"}
+{"id":"mod-0334","lang":"fi","text":"Keräys tuotti 350 euroa, ja kiitämme siitä.","spans":[],"expected":"clean"}
+{"id":"mod-0335","lang":"sv","text":"Kortnumret 4235 5379 5182 4325 har spärrats efter ett bedrägeri.","spans":[{"type":"card","start":11,"end":30}],"expected":"reject"}
+{"id":"mod-0336","lang":"fi","text":"Osoitteeni on Mäntytie 15, 33100 Tampere, ja kotona tarvitsemme rauhaa.","spans":[{"type":"address","start":14,"end":40}],"expected":"reject"}
+{"id":"mod-0337","lang":"sv","text":"Be för dem som saknar arbete i vår stad.","spans":[],"expected":"clean"}
+{"id":"mod-0338","lang":"fi","text":"Yksi ystävistäni on sairas, rukoilkaa hänen puolestaan.","spans":[],"expected":"clean"}
+{"id":"mod-0339","lang":"en","text":"The offering reached 350 pounds, and we are grateful.","spans":[],"expected":"clean"}
+{"id":"mod-0340","lang":"en","text":"Our neighbour on the third floor needs support after a fall.","spans":[],"expected":"queue"}
+{"id":"mod-0341","lang":"fi","text":"Lapseni Juha aloittaa koulun syksyllä, siunatkaa häntä.","spans":[{"type":"person_name","start":8,"end":12}],"expected":"reject"}
+{"id":"mod-0342","lang":"fi","text":"Kiitämme vuotta 1979, jolloin Keskuskirkko remontoitiin.","spans":[],"expected":"clean"}
+{"id":"mod-0343","lang":"sv","text":"glädje och glädje är gåvor från Gud.","spans":[],"expected":"clean"}
+{"id":"mod-0344","lang":"fi","text":"Pyydämme Annan parempaa oloa, sillä hänen tilanteensa on vaikea.","spans":[{"type":"person_name","start":9,"end":14}],"expected":"reject"}
+{"id":"mod-0345","lang":"en","text":"Service on 22.6. at the central church is open to all.","spans":[],"expected":"clean"}
+{"id":"mod-0346","lang":"en","text":"Born 19.05.1935, I am asking for strength in my illness.","spans":[{"type":"dob","start":5,"end":15}],"expected":"reject"}
+{"id":"mod-0347","lang":"fi","text":"Rukoilemme, että Juha paranisi sairaudestaan nopeasti.","spans":[{"type":"person_name","start":17,"end":21}],"expected":"reject"}
+{"id":"mod-0348","lang":"en","text":"Easter falls on 13.9. this year.","spans":[],"expected":"clean"}
+{"id":"mod-0349","lang":"en","text":"Please pray for Oliver as they start a new job.","spans":[{"type":"person_name","start":16,"end":22}],"expected":"mask"}
+{"id":"mod-0350","lang":"en","text":"Easter falls on 14.9. this year.","spans":[],"expected":"clean"}
+{"id":"mod-0351","lang":"fi","text":"Kiitämme siitä, että Pekka tuli mukaan kerhoon.","spans":[{"type":"person_name","start":21,"end":26}],"expected":"mask"}
+{"id":"mod-0352","lang":"fi","text":"Kirkossa Pyhän Ristin kirkko soi urut klo 9.15.","spans":[],"expected":"clean"}
+{"id":"mod-0353","lang":"en","text":"My national ID is 220576-6250, please pray that it gets replaced.","spans":[{"type":"hetu","start":18,"end":29}],"expected":"reject"}
+{"id":"mod-0354","lang":"en","text":"Please pray for wisdom as we plan the autumn retreat.","spans":[],"expected":"clean"}
+{"id":"mod-0355","lang":"en","text":"Our reading is Matt. 6:9–13 this week.","spans":[],"expected":"clean"}
+{"id":"mod-0356","lang":"fi","text":"Oikeusjuttu koskee Juha, ja rukoilemme oikeudenmukaisuutta.","spans":[{"type":"person_name","start":19,"end":23}],"expected":"reject"}
+{"id":"mod-0357","lang":"fi","text":"Voit ottaa yhteyttä osoitteeseen anna.koskinen (at) example (dot) com, jos haluat rukoilla kanssamme.","spans":[{"type":"email","start":33,"end":69}],"expected":"reject"}
+{"id":"mod-0358","lang":"fi","text":"Rukoilemme armas ja armoa kaikille perheille.","spans":[],"expected":"clean"}
+{"id":"mod-0359","lang":"en","text":"We pray for peace in the Middle East and for everyone affected.","spans":[],"expected":"clean"}
+{"id":"mod-0360","lang":"fi","text":"Rukoilkaa rukouksissanne Liisa, joka tulee kirkkoon ensi sunnuntaina.","spans":[{"type":"person_name","start":25,"end":30}],"expected":"mask"}
+{"id":"mod-0361","lang":"sv","text":"Vi ber för vår familj under den här svåra tiden.","spans":[],"expected":"clean"}
+{"id":"mod-0362","lang":"fi","text":"Paavali siunatkoon meitä kaikkia tänä viikonloppuna.","spans":[],"expected":"clean"}
+{"id":"mod-0363","lang":"sv","text":"Vi ber att Maria ska ge oss frid i vardagen.","spans":[],"expected":"clean"}
+{"id":"mod-0364","lang":"en","text":"Service on 4.12. at St. Peter's church is open to all.","spans":[],"expected":"clean"}
+{"id":"mod-0365","lang":"fi","text":"Piispa Matti Virtanen vierailee ensi viikolla, ja toivomme siunausta hänen työlleen.","spans":[{"type":"person_name","start":7,"end":21}],"expected":"queue"}
+{"id":"mod-0366","lang":"sv","text":"Tack för att Erik hjälpte oss med flytten.","spans":[{"type":"person_name","start":13,"end":17}],"expected":"mask"}
+{"id":"mod-0367","lang":"sv","text":"Vi ber om fred i världen och om vishet för ledarna.","spans":[],"expected":"clean"}
+{"id":"mod-0368","lang":"sv","text":"Be för barnet som föddes 2006-09-15 på sjukhuset.","spans":[{"type":"dob","start":25,"end":35}],"expected":"reject"}
+{"id":"mod-0369","lang":"en","text":"Please pray for wisdom as we plan the autumn retreat.","spans":[],"expected":"clean"}
+{"id":"mod-0370","lang":"en","text":"My card 4133 6952 1660 1491 was stolen last night, please pray for the situation.","spans":[{"type":"card","start":8,"end":27}],"expected":"reject"}
+{"id":"mod-0371","lang":"en","text":"Call me at 0403962666 if you would like to pray together.","spans":[{"type":"phone","start":11,"end":21}],"expected":"reject"}
+{"id":"mod-0372","lang":"en","text":"We are facing a court case and ask for justice.","spans":[],"expected":"clean"}
+{"id":"mod-0373","lang":"en","text":"The court hearing involves Helen, and we ask for a fair outcome.","spans":[{"type":"person_name","start":27,"end":32}],"expected":"reject"}
+{"id":"mod-0374","lang":"en","text":"Ring 044-296 8114 if you need someone to talk to.","spans":[{"type":"phone","start":5,"end":17}],"expected":"reject"}
+{"id":"mod-0375","lang":"en","text":"My father Helen Carter passed away on Tuesday, and we are grieving.","spans":[{"type":"person_name","start":10,"end":22}],"expected":"reject"}
+{"id":"mod-0376","lang":"sv","text":"Vi tackar för 1928, då domkyrkan renoverades.","spans":[],"expected":"clean"}
+{"id":"mod-0377","lang":"sv","text":"Vi ber för fred i Mellanöstern och för de drabbade.","spans":[],"expected":"clean"}
+{"id":"mod-0378","lang":"fi","text":"Rukoilemme sen puolesta, joka asuu naapurissa toisessa kerroksessa.","spans":[],"expected":"queue"}
+{"id":"mod-0379","lang":"fi","text":"Kiitämme siitä, että Tuija tuli mukaan kerhoon.","spans":[{"type":"person_name","start":21,"end":26}],"expected":"mask"}
+{"id":"mod-0380","lang":"fi","text":"Kiitos, että Hannu sai uuden työpaikan syksyllä.","spans":[{"type":"person_name","start":13,"end":18}],"expected":"mask"}
+{"id":"mod-0381","lang":"en","text":"We ask for prayer for the family of Emily Ward after the incident.","spans":[{"type":"person_name","start":36,"end":46}],"expected":"reject"}
+{"id":"mod-0382","lang":"fi","text":"Pyydämme, että armas ja rauha löytyisivät jokaisen sydämestä.","spans":[],"expected":"clean"}
+{"id":"mod-0383","lang":"fi","text":"Rukoilkaa puolestani, sillä minulla on vaikea viikko töissä.","spans":[],"expected":"clean"}
+{"id":"mod-0384","lang":"fi","text":"Soitin numeroon 0407213093 ja pyydän rukousta perheemme puolesta.","spans":[{"type":"phone","start":16,"end":26}],"expected":"reject"}
+{"id":"mod-0385","lang":"fi","text":"Kiitos, Matti kävi tänään keittiössä auttamassa meitä.","spans":[{"type":"person_name","start":8,"end":13}],"expected":"mask"}
+{"id":"mod-0386","lang":"en","text":"We live at 84 River Road and we would like prayer for our family.","spans":[{"type":"address","start":11,"end":24}],"expected":"reject"}
+{"id":"mod-0387","lang":"sv","text":"Be för Karin, hon mår dåligt efter operationen.","spans":[{"type":"person_name","start":7,"end":12}],"expected":"reject"}
+{"id":"mod-0388","lang":"fi","text":"Seurakunnan kokous on 1.7. ja kaikki ovat tervetulleita.","spans":[],"expected":"clean"}
+{"id":"mod-0389","lang":"fi","text":"Luemme Matt. 6:9–13 ja rukoilemme sen sanan mukaan.","spans":[],"expected":"clean"}
+{"id":"mod-0390","lang":"fi","text":"Pyydämme, että onni ja rauha löytyisivät jokaisen sydämestä.","spans":[],"expected":"clean"}
+{"id":"mod-0391","lang":"sv","text":"Vi ber för Johan som flyttar till en ny stad.","spans":[{"type":"person_name","start":11,"end":16}],"expected":"mask"}
+{"id":"mod-0392","lang":"en","text":"Pray for Robert, who is struggling with depression.","spans":[{"type":"person_name","start":9,"end":15}],"expected":"reject"}
+{"id":"mod-0393","lang":"fi","text":"Pääsiäinen 4.7. on kiitoksen aika seurakunnassa.","spans":[],"expected":"clean"}
+{"id":"mod-0394","lang":"fi","text":"Virsi 747 lauletaan klo 9.15 sunnuntaina.","spans":[],"expected":"clean"}
+{"id":"mod-0395","lang":"en","text":"Robert was born 1958-01-19 and is now recovering in hospital.","spans":[{"type":"person_name","start":0,"end":6},{"type":"dob","start":16,"end":26}],"expected":"reject"}
+{"id":"mod-0396","lang":"fi","text":"Virsi 358 lauletaan klo 9.15 sunnuntaina.","spans":[],"expected":"clean"}
+{"id":"mod-0397","lang":"fi","text":"Voit ottaa yhteyttä osoitteeseen hannu.salo (at) example (dot) com, jos haluat rukoilla kanssamme.","spans":[{"type":"email","start":33,"end":66}],"expected":"reject"}
+{"id":"mod-0398","lang":"sv","text":"Tack för vår nya kyrkvärd Gustav Nyström.","spans":[{"type":"person_name","start":26,"end":40}],"expected":"mask"}
+{"id":"mod-0399","lang":"fi","text":"Pyydämme Matin parempaa oloa, sillä hänen tilanteensa on vaikea.","spans":[{"type":"person_name","start":9,"end":14}],"expected":"reject"}
+{"id":"mod-0400","lang":"sv","text":"Påsk 11.12. firas i domkyrkan.","spans":[],"expected":"clean"}
