@@ -407,17 +407,6 @@ export function isMailingConfigured(env = process.env) {
 }
 
 /**
- * Workaround for @tunnus/notify@0.1.0, which does not send `from` (the relay returns 400 without it).
- * Remove once the package sends it.
- */
-function withFromField(fetchImpl, from) {
-  return (url, init = {}) => {
-    const body = JSON.parse(init.body || '{}');
-    return fetchImpl(url, { ...init, body: JSON.stringify({ ...body, from }) });
-  };
-}
-
-/**
  * Send one mail through the Tunnus relay. One call per recipient.
  * @param {{ to: string, subject: string, text: string, html?: string, fetchImpl?: typeof fetch }} args
  */
@@ -431,7 +420,8 @@ export async function deliverViaTunnus({ to, subject, text, html, fetchImpl = gl
     subject,
     text,
     html,
-    fetchImpl: withFromField(fetchImpl, config.from),
+    from: config.from,
+    fetchImpl,
   });
 }
 
