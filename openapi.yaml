@@ -30,6 +30,28 @@ components:
       description: Authentication cookie set upon login
 
   schemas:
+    ModerationFinding:
+      type: object
+      description: Type and character offsets in the submitted text. Never the matched value or a confidence score.
+      required: [type, start, end]
+      properties:
+        type:
+          type: string
+          enum: [hetu, iban, card, phone, email, address, url, plate, dob, person_name]
+        start:
+          type: integer
+        end:
+          type: integer
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            code:
+              type: string
     HealthResponse:
       type: object
       properties:
@@ -375,9 +397,110 @@ paths:
                 endDate:
                   type: string
                   format: date
+                lang:
+                  type: string
+                  enum: [fi, sv, en]
+                  default: fi
       responses:
         '201':
-          description: Prayer request submitted
+          description: Prayer request submitted. Content is not echoed back. A flagged prayer is stored for staff review and is shown only in its redacted form.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  prayer:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                        enum: [public]
+                      startDate:
+                        type: string
+                        format: date
+                      endDate:
+                        type: string
+                        format: date
+                      isApproved:
+                        type: boolean
+                      createdAt:
+                        type: string
+                        format: date-time
+                      flagged:
+                        type: boolean
+        '400':
+          description: Content missing or longer than 1000 characters
+        '422':
+          description: Deterministic personal-data match (confidence 0.9 or higher). Nothing is stored.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Prayer request contains personal data
+                      code:
+                        type: string
+                        enum: [PERSONAL_DATA]
+                      findings:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ModerationFinding'
+
+  /api/prayers/check:
+    post:
+      summary: Check a draft public prayer for personal data (stores nothing)
+      description: Runs the same deterministic rules as submission. Rate limited to 30 requests per minute per client address. Nothing is stored or logged, and the response never includes the text or confidence values.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+                lang:
+                  type: string
+                  enum: [fi, sv, en]
+                  default: fi
+      responses:
+        '200':
+          description: Decision for the draft
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [decision, findings]
+                properties:
+                  decision:
+                    type: string
+                    enum: [reject, review, ok]
+                    description: reject = personal data found, do not submit; review = submit, staff will redact; ok = no personal data found.
+                  findings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationFinding'
+        '400':
+          description: Content missing, empty or longer than 1000 characters
+        '429':
+          description: Too many requests from this address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/prayers/week/{week}:
     get:
@@ -415,6 +538,114 @@ paths:
         '200':
           description: List of pending prayers
 
+  /api/prayers/{id}/redaction:
+    put:
+      summary: Set the redacted (publishable) version of a public prayer (worker+)
+      description: Only the redacted text is ever shown publicly. The original stays visible to staff. Refused with 422 while the text still contains a deterministic personal-data match. Recorded as a moderation decision.
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [redactedContent]
+              properties:
+                redactedContent:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Redacted version saved (redactionSource = human, redactionStatus = redacted)
+        '400':
+          description: Not a public prayer, or content missing or too long
+        '404':
+          description: Prayer not found
+        '422':
+          description: Redacted text still contains personal data (code REDACTION_STILL_HAS_DATA)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/prayers/{id}/redaction/confirm:
+    post:
+      summary: Accept the automatic redacted suggestion (worker+)
+      description: Only for public prayers with redactionStatus needs_review. Sets redactionStatus to redacted and keeps redactionSource auto.
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Automatic redaction confirmed
+        '409':
+          description: Prayer is not awaiting redaction review (code NOT_AWAITING_REVIEW)
+
+  /api/prayers/{id}/decisions:
+    get:
+      summary: Moderation decision history for a prayer (worker+)
+      description: Oldest first. Reasons contain finding types and counts only.
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Decision list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prayerId:
+                    type: string
+                    format: uuid
+                  decisions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        actor:
+                          type: string
+                          description: system or the acting user's id
+                        decision:
+                          type: string
+                          enum: [auto_clean, auto_review, human_redacted, human_confirmed_auto, human_overturned]
+                        reasons:
+                          type: object
+                          additionalProperties:
+                            type: integer
+                        createdAt:
+                          type: string
+                          format: date-time
+        '404':
+          description: Prayer not found
+
   /api/prayers/{id}/approve:
     post:
       summary: Approve or reject a prayer (worker+)
@@ -441,6 +672,8 @@ paths:
       responses:
         '200':
           description: Prayer approval status updated
+        '409':
+          description: Public prayer has no accepted redacted version yet (code REDACTION_REQUIRED). Un-approving is always allowed.
 
   /api/prayers/{id}/highlight:
     put:

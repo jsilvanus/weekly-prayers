@@ -50,7 +50,34 @@
       "button": "Lähetä rukouspyyntö",
       "success": "Rukouspyyntö lähetetty! Se tarkistetaan ennen julkaisua.",
       "error": "Rukouspyynnön lähetys epäonnistui",
-      "close": "Sulje"
+      "close": "Sulje",
+      "guidance": {
+        "toggle": "Ohje rukouspyynnön kirjoittamiseen",
+        "title": "Näin kirjoitat rukouspyynnön",
+        "points": [
+          "Kirjoita aihe yleisellä tasolla, esimerkiksi “rukoilkaa sairaan ystäväni puolesta”.",
+          "Älä kirjoita nimiä, osoitteita, puhelinnumeroita, sähköpostiosoitteita tai henkilötunnuksia.",
+          "Älä kuvaile ketään niin tarkasti, että hänet voi tunnistaa (esimerkiksi työpaikka, katuosoite tai erityinen tilanne).",
+          "Voit rukoilla puolestasi tai läheisesi puolesta ilman nimeä: “ystäväni”, “perheeni”, “naapurini”.",
+          "Pyyntö tarkistetaan ennen julkaisua. Henkilötiedot poistetaan, ja julkisesti näytetään vain tarkistettu versio."
+        ]
+      },
+      "findingTypes": {
+        "hetu": "henkilötunnus",
+        "iban": "IBAN-tilinumero",
+        "card": "maksukortin numero",
+        "phone": "puhelinnumero",
+        "email": "sähköpostiosoite",
+        "address": "osoite",
+        "url": "verkkoosoite",
+        "plate": "rekisterinumero",
+        "dob": "syntymäaika",
+        "person_name": "nimi",
+        "unknown": "henkilötietoja"
+      },
+      "foundLabel": "Tunnistetut kohdat",
+      "rejectMessage": "Tekstissä on henkilötietoja, joita ei voi julkaista: {{types}}. Poista ne ja yritä uudelleen.",
+      "reviewMessage": "Teksti tarkistetaan ennen julkaisua ja henkilötiedot poistetaan."
     },
     "seeAll": "Näytä kaikki ({{count}})",
     "showLess": "Pienennä",
@@ -100,7 +127,30 @@
       "reject": "Hylkää",
       "edit": "Muokkaa",
       "delete": "Poista",
-      "confirmDelete": "Haluatko varmasti poistaa tämän rukouspyynnön?"
+      "confirmDelete": "Haluatko varmasti poistaa tämän rukouspyynnön?",
+      "moderation": {
+        "originalLabel": "Alkuperäinen teksti (vain henkilökunta)",
+        "redactedLabel": "Julkaistava versio",
+        "findingsLabel": "Tunnistetut tyypit",
+        "status": {
+          "clean": "Puhdas",
+          "needsReview": "Tarkistettavana",
+          "redactedHuman": "Poistettu ihmisen toimesta",
+          "redactedAuto": "Automaattisesti poistettu",
+          "redactedOther": "Poistettu"
+        },
+        "saveRedaction": "Tallenna muokattu versio",
+        "confirmRedaction": "Hyväksy automaattinen ehdotus",
+        "saved": "Muokattu versio tallennettu.",
+        "confirmed": "Automaattinen ehdotus hyväksytty.",
+        "stillHasData": "Muokatussa versiossa on vielä henkilötietoja. Poista ne ja tallenna uudelleen.",
+        "redactionRequired": "Vahvista tai muokkaa ensin poistettu versio",
+        "history": "Päätöshistoria",
+        "historyEmpty": "Ei päätöksiä.",
+        "historyError": "Päätöshistorian lataaminen epäonnistui.",
+        "reasons": "Perustelut",
+        "actionError": "Toiminto epäonnistui."
+      }
     },
     "highlights": {
       "title": "Rukousnostot",

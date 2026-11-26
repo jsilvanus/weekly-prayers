@@ -15,7 +15,9 @@ import { getBibleForDate } from '../services/bibleService.js';
 import { getDevotionForDate, saveDevotion } from '../services/devotionService.js';
 import { getActiveMeditationsList, saveMeditation } from '../services/meditationService.js';
 import { getHolyDayForDate, saveHolyDayOverride } from '../services/pyhapaivaService.js';
-import { sanitizePrayerContent } from '../services/aiSanitizer.js';
+import { decide } from '../services/moderation/index.js';
+import { recordDecision } from '../services/moderation/decisions.js';
+import { displayContent } from '../services/prayerService.js';
 import { query } from '../db/index.js';
 
 function result(data) {
@@ -249,22 +251,38 @@ export function createMcpServer({ publicUrl, user }) {
           eDate = eDate || formatDate(current.endDate);
         }
 
-        const aiResult = await sanitizePrayerContent(args.content.trim());
+        // Same two-gate policy as POST /api/prayers. Nothing is stored on reject.
+        const text = args.content.trim();
+        const verdict = decide(text, 'fi');
+        if (verdict.decision === 'reject') {
+          return errorResult('Rukouspyyntö sisältää henkilötietoja eikä sitä tallennettu. Poista henkilötiedot ja yritä uudelleen. / The prayer request contains personal data and was not stored. Remove the personal details and try again.');
+        }
+
+        const flagged = verdict.decision === 'review';
+        const flagTypes = [...new Set(verdict.findings.map((f) => f.type))];
         const prayer = await createPrayer({
           userId: user && !user.isAnonymous ? user.id : null,
           type: 'public',
-          originalContent: args.content.trim(),
-          sanitizedContent: aiResult.sanitizedContent,
-          aiFlagged: aiResult.flagged,
-          aiFlagReason: aiResult.flagReason,
+          originalContent: text,
+          sanitizedContent: null,
+          aiFlagged: flagged,
+          aiFlagReason: flagged ? flagTypes.join(', ') : null,
           startDate: sDate,
           endDate: eDate,
-          isApproved: false
+          isApproved: false,
+          redactedContent: flagged ? verdict.redactedSuggestion : text,
+          redactionStatus: flagged ? 'needs_review' : 'clean',
+          redactionSource: 'auto',
+          moderationFindings: verdict.findings
         });
+        await recordDecision(prayer.id, 'system', flagged ? 'auto_review' : 'auto_clean', verdict.reasons);
 
         return result({
-          message: 'Rukouspyyntö vastaanotettu. Se siirtyy työntekijöiden tarkastukseen ennen julkaisua.',
+          message: flagged
+            ? 'Rukouspyyntö vastaanotettu ja merkitty tarkastettavaksi. Henkilötiedot poistetaan ennen julkaisua.'
+            : 'Rukouspyyntö vastaanotettu. Se siirtyy työntekijöiden tarkastukseen ennen julkaisua.',
           prayerId: prayer.id,
+          flagged,
           startDate: sDate,
           endDate: eDate
         });
@@ -329,8 +347,9 @@ export function createMcpServer({ publicUrl, user }) {
           pendingCount: res.rows.length,
           prayers: res.rows.map(r => ({
             id: r.id,
-            content: r.sanitized_content || r.original_content,
+            content: displayContent(r),
             originalContent: r.original_content,
+            redactionStatus: r.redaction_status,
             aiFlagged: r.ai_flagged,
             aiFlagReason: r.ai_flag_reason,
             startDate: r.start_date,
@@ -357,6 +376,11 @@ export function createMcpServer({ publicUrl, user }) {
     async (args) => {
       if (!isStaff) return authError(publicUrl);
       try {
+        const existing = await getPrayerById(args.id);
+        if (!existing) return errorResult('Rukouspyyntöä ei löytynyt.');
+        if (args.isApproved && existing.type === 'public' && !['clean', 'redacted'].includes(existing.redaction_status)) {
+          return errorResult('Rukouspyyntö tarvitsee hyväksytyn julkaisuversion ennen hyväksyntää (REDACTION_REQUIRED). / The prayer request needs an accepted redacted version before approval (REDACTION_REQUIRED).');
+        }
         const updated = await approvePrayer(args.id, args.isApproved);
         if (!updated) return errorResult('Rukouspyyntöä ei löytynyt.');
         return result({

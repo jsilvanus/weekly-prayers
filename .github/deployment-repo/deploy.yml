@@ -12,8 +12,6 @@
 #   JWT_SECRET          — application JWT signing secret
 #   OIDC_CLIENT_SECRET  — OIDC client secret from Tunnus
 #   GHCR_TOKEN          — classic PAT with read:packages (to pull the private image)
-#   OPENAI_API_KEY      — (optional, if AI moderation enabled)
-#   ANTHROPIC_API_KEY   — (optional, if Claude moderation enabled)
 #
 # Required Environment variables (Settings -> Environments -> production -> Variables):
 #   DEPLOY_PATH         — app deployment directory on the VM (e.g. /opt/apps/rukoukset)
