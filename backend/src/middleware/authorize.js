@@ -1,5 +1,5 @@
 // Role hierarchy: admin > coordinator > worker = bishop = devotion > prayer_group > user
-const roleHierarchy = {
+export const roleHierarchy = {
   admin: 4,
   coordinator: 3,
   worker: 2,

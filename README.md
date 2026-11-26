@@ -65,6 +65,25 @@ Roolit määritellään OIDC-ryhmäjäsenyyksien (`parish/<tenant>/rukous-<role>
 | `user` | Kirjautunut peruskäyttäjä |
 | *(anonyymi)* | Julkiset rukousaiheet, pyynnön jättäminen, rukouslaskuri |
 
+## Viikoittaiset esirukousviestit (sähköposti)
+
+Koordinaattorit (ja ylläpitäjät) voivat luoda esirukousviestejä, jotka lähetetään joko seurakunnan
+tilaajalistalle tai tietyn roolin käyttäjille (`prayer_group`, `worker` jne.). Viesti lähetetään
+kerran tietylle viikolle tai joka viikko toistuvasti. Lähetyspäivät ovat pakollisia.
+
+- **Lähetys:** Tunnus-postirelay (`@tunnus/notify`). Lähettäjä on `MAIL_FROM`. Yksi viesti per vastaanottaja.
+- **Ajastin:** käynnistyy palvelimen mukana ja tarkistaa 10 minuutin välein, onko viesti lähetettävä
+  (Helsingin aika, lähetystunti `send_hour`). Lähetys on idempotentti: sama viesti ja päivä lähtee vain kerran.
+  Ajastin ei käynnisty, jos postirelay-asetukset puuttuvat tai `MAILING_SCHEDULER=false`.
+- **Suostumus:** tilaajat vahvistavat tilauksensa itse (kaksoisvahvistus, julkinen lomake, jos listalle on
+  sallittu julkinen ilmoittautuminen) tai henkilökunta lisää osoitteen ja vahvistaa suostumuksen.
+  Jokaisessa viestissä on lähettäjän tiedot ja peruutuslinkki.
+- **Rajapinnat:** `/api/mailings` (koordinaattori+): listat, tilaajat, mailingit, esikatselu, testiviesti
+  ja lähetyshistoria. Julkiset päätepisteet (`/api/mailings/public/...`) ovat rajoitettuja (10 pyyntöä/min/IP).
+
+Käyttöönotto: aja migraatio `023_weekly_prayer_email.sql` (`npm run migrate` backendissä) ja aseta
+`.env`-tiedostoon `TUNNUS_MAIL_URL`, `TUNNUS_MAIL_RELAY_TOKEN` ja `MAIL_FROM` (katso `.env.example`).
+
 ## Upotus ulkoisille sivuille
 
 ### JavaScript-widget

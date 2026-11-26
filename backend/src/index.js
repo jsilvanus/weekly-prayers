@@ -21,6 +21,8 @@ import meditationsRouter from './routes/meditations.js';
 import pyhapaivaRouter from './routes/pyhapaiva.js';
 import docsRouter from './routes/docs.js';
 import mcpRouter from './mcp/routes.js';
+import mailingsRouter from './routes/mailings.js';
+import { startMailingScheduler } from './services/mailingScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -86,6 +88,7 @@ router.use('/api/devotions', devotionsRouter);
 router.use('/api/meditations', meditationsRouter);
 router.use('/api/pyhapaiva', pyhapaivaRouter);
 router.use('/api/tenants', tenantRouter);
+router.use('/api/mailings', mailingsRouter);
 router.use('/api', docsRouter);
 router.use('/', docsRouter);
 router.use('/', mcpRouter);
@@ -168,6 +171,7 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} (basePath: "${basePath}")`);
+  startMailingScheduler();
 });
 
 export default app;
