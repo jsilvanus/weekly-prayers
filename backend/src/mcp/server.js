@@ -17,6 +17,7 @@ import { getActiveMeditationsList, saveMeditation } from '../services/meditation
 import { getHolyDayForDate, saveHolyDayOverride } from '../services/pyhapaivaService.js';
 import { decide } from '../services/moderation/index.js';
 import { recordDecision } from '../services/moderation/decisions.js';
+import { recordReject } from '../services/moderationDigest.js';
 import { displayContent } from '../services/prayerService.js';
 import { query } from '../db/index.js';
 
@@ -255,6 +256,8 @@ export function createMcpServer({ publicUrl, user }) {
         const text = args.content.trim();
         const verdict = decide(text, 'fi');
         if (verdict.decision === 'reject') {
+          // Counts only, never the text. A counter failure must not change the result.
+          await recordReject(null, verdict.reasons).catch((err) => console.error(`Moderation reject counter failed: ${err.message}`));
           return errorResult('Rukouspyyntö sisältää henkilötietoja eikä sitä tallennettu. Poista henkilötiedot ja yritä uudelleen. / The prayer request contains personal data and was not stored. Remove the personal details and try again.');
         }
 

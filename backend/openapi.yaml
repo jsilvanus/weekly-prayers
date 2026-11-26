@@ -30,6 +30,78 @@ components:
       description: Authentication cookie set upon login
 
   schemas:
+    ModerationDigestSubscriptionInput:
+      type: object
+      required: [frequency]
+      properties:
+        frequency:
+          type: string
+          enum: [daily, weekly]
+        channel:
+          type: string
+          enum: [email, inapp]
+          default: email
+        enabled:
+          type: boolean
+          default: true
+    ModerationDigestSubscription:
+      type: object
+      required: [frequency, channel, enabled]
+      properties:
+        frequency:
+          type: string
+          enum: [daily, weekly]
+        channel:
+          type: string
+          enum: [email, inapp]
+        enabled:
+          type: boolean
+        lastSentAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+    ModerationDigest:
+      type: object
+      description: Counts only. byReason holds finding types (for example hetu, phone) with counts.
+      required: [period, totals, byReason, awaitingReview, links]
+      properties:
+        period:
+          type: object
+          required: [since, until]
+          properties:
+            since:
+              type: string
+              format: date-time
+            until:
+              type: string
+              format: date-time
+        totals:
+          type: object
+          required: [autoClean, autoReview, rejected, humanRedacted, humanConfirmedAuto, humanOverturned]
+          properties:
+            autoClean: { type: integer, minimum: 0 }
+            autoReview: { type: integer, minimum: 0 }
+            rejected: { type: integer, minimum: 0, description: Hard rejects in the window (not stored as prayers) }
+            humanRedacted: { type: integer, minimum: 0 }
+            humanConfirmedAuto: { type: integer, minimum: 0 }
+            humanOverturned: { type: integer, minimum: 0 }
+        byReason:
+          type: object
+          additionalProperties: { type: integer, minimum: 0 }
+        awaitingReview:
+          type: integer
+          minimum: 0
+          description: Public prayers currently in redaction status needs_review
+        links:
+          type: object
+          properties:
+            review:
+              type: string
+              example: /admin
     ModerationFinding:
       type: object
       description: Type and character offsets in the submitted text. Never the matched value or a confidence score.
@@ -456,6 +528,128 @@ paths:
                         items:
                           $ref: '#/components/schemas/ModerationFinding'
 
+  /api/moderation/digest/subscription:
+    get:
+      summary: Get own moderation digest subscription
+      description: Moderators (worker and above). Returns null when no subscription exists.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Subscription or null
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [subscription]
+                properties:
+                  subscription:
+                    nullable: true
+                    $ref: '#/components/schemas/ModerationDigestSubscription'
+        '401':
+          description: Authentication required
+        '403':
+          description: Moderator role required
+    put:
+      summary: Create or update own moderation digest subscription
+      description: Daily or weekly summary of automatic moderation decisions, sent by email through the mail relay. Re-enabling starts a new window now. Channel inapp is stored but not delivered yet.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationDigestSubscriptionInput'
+      responses:
+        '200':
+          description: Saved subscription
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [subscription]
+                properties:
+                  subscription:
+                    $ref: '#/components/schemas/ModerationDigestSubscription'
+        '400':
+          description: Validation error (frequency, channel or enabled)
+        '401':
+          description: Authentication required
+        '403':
+          description: Moderator role required
+  /api/moderation/digest/subscription/{userId}:
+    put:
+      summary: Admin - set the digest subscription of a moderator
+      description: Platform admin only. The target user must be a moderator (worker and above).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationDigestSubscriptionInput'
+      responses:
+        '200':
+          description: Saved subscription
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [subscription]
+                properties:
+                  subscription:
+                    $ref: '#/components/schemas/ModerationDigestSubscription'
+        '400':
+          description: Validation error, or the user is not a moderator
+        '401':
+          description: Authentication required
+        '403':
+          description: Admin role required
+        '404':
+          description: User not found
+  /api/moderation/digest/preview:
+    get:
+      summary: Preview the moderation digest for the caller's tenant
+      description: Computed now from the database. Nothing is sent or stored. Counts and finding types only, never prayer text.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1, 7]
+            default: 1
+      responses:
+        '200':
+          description: Digest for the window ending now
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [days, digest]
+                properties:
+                  days:
+                    type: integer
+                    enum: [1, 7]
+                  digest:
+                    $ref: '#/components/schemas/ModerationDigest'
+        '400':
+          description: days must be 1 or 7
+        '401':
+          description: Authentication required
+        '403':
+          description: Moderator role required
   /api/prayers/check:
     post:
       summary: Check a draft public prayer for personal data (stores nothing)

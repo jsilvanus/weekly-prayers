@@ -98,6 +98,14 @@ export const api = {
     }),
   getPrayerDecisions: (id) =>
     request(`/prayers/${encodeURIComponent(id)}/decisions`),
+  // Moderation digest (automatic decisions summary, moderators)
+  getDigestSubscription: () => request('/moderation/digest/subscription'),
+  setDigestSubscription: (body) =>
+    request('/moderation/digest/subscription', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  getDigestPreview: (days) => request(`/moderation/digest/preview?days=${encodeURIComponent(days)}`),
   submitStaffPrayer: (content, startDate, endDate, ministryGroup, ministryTag, isYhtymaWide, tenantId, portalPosition = null) =>
     request('/prayers/staff', {
       method: 'POST',

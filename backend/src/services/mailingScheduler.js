@@ -1,4 +1,5 @@
 import { query } from '../db/index.js';
+import { runDigestTick } from './moderationDigest.js';
 import {
   collectPrayerSections,
   computeDueMailings,
@@ -14,6 +15,12 @@ import {
 
 export const MAILING_TICK_MS = 10 * 60 * 1000;
 export const MAILING_CONCURRENCY = 5;
+
+/** Helsinki date and hour, used to run the moderation digest once per hour. */
+export function digestHourKey(now = new Date()) {
+  const parts = helsinkiParts(now);
+  return `${parts.date}T${String(parts.hour).padStart(2, '0')}`;
+}
 
 /** Runs `fn` over `items` with at most `limit` calls in flight. */
 export async function mapWithConcurrency(items, limit, fn) {
@@ -134,8 +141,16 @@ export function startMailingScheduler(env = process.env) {
     return null;
   }
 
+  let lastDigestHour = null;
   const tick = () => {
     runMailingTick().catch(err => console.error(`Mailing scheduler tick failed: ${err.message}`));
+    // Same scheduler and mail path: the moderation digest runs at most once per Helsinki hour.
+    const now = new Date();
+    const hour = digestHourKey(now);
+    if (hour !== lastDigestHour) {
+      lastDigestHour = hour;
+      runDigestTick(now).catch(err => console.error(`Moderation digest tick failed: ${err.message}`));
+    }
   };
   const timer = setInterval(tick, MAILING_TICK_MS);
   tick();

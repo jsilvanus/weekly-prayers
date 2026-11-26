@@ -130,6 +130,8 @@ function PrayerManager() {
         </div>
       </div>
 
+      <DigestPanel />
+
       {/* Pending prayers */}
       {pendingPrayers.length > 0 && (
         <div className="mb-8">
@@ -317,6 +319,167 @@ function PrayerItem({ prayer, onApprove, onReject, onDelete, onPortalChange, onC
         </button>
       </div>
     </div>
+  );
+}
+
+const DIGEST_TOTAL_KEYS = ['autoClean', 'autoReview', 'rejected', 'humanRedacted', 'humanConfirmedAuto', 'humanOverturned'];
+
+/**
+ * Summary of the automatic moderation decisions plus the caller's digest subscription.
+ * Preview counts only; the subscription emails the same summary on a daily or weekly schedule.
+ */
+function DigestPanel() {
+  const { t } = useTranslation();
+  const [days, setDays] = useState(1);
+  const [preview, setPreview] = useState({ status: 'loading', digest: null });
+  const [mode, setMode] = useState('off');
+  const [lastOn, setLastOn] = useState('weekly');
+  const [channel, setChannel] = useState('email');
+  const [subStatus, setSubStatus] = useState('loading');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getDigestSubscription()
+      .then((res) => {
+        if (cancelled) return;
+        const sub = res.subscription;
+        if (sub) {
+          setMode(sub.enabled ? sub.frequency : 'off');
+          setLastOn(sub.frequency);
+          setChannel(sub.channel);
+        }
+        setSubStatus('loaded');
+      })
+      .catch(() => {
+        if (!cancelled) setSubStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getDigestPreview(days)
+      .then((res) => {
+        if (!cancelled) setPreview({ status: 'loaded', digest: res.digest });
+      })
+      .catch(() => {
+        if (!cancelled) setPreview({ status: 'error', digest: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [days]);
+
+  const handleModeChange = (next) => {
+    setMode(next);
+    if (next !== 'off') setLastOn(next);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      await api.setDigestSubscription({
+        frequency: mode === 'off' ? lastOn : mode,
+        channel,
+        enabled: mode !== 'off',
+      });
+      setMessage({ ok: true, text: t('admin.prayers.moderation.digest.saved') });
+    } catch (error) {
+      setMessage({ ok: false, text: t('admin.prayers.moderation.digest.saveError') });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const digest = preview.digest;
+  const selectClass = 'rounded border border-gray-300 bg-white px-2 py-1 text-sm';
+
+  return (
+    <section className="rounded-lg border border-gray-200 bg-white p-4 shadow-2xs space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h3 className="text-base font-semibold text-primary-800">{t('admin.prayers.moderation.digest.title')}</h3>
+          <p className="text-xs text-gray-500 mt-0.5">{t('admin.prayers.moderation.digest.desc')}</p>
+        </div>
+        <div className="flex gap-1 text-xs">
+          {[1, 7].map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setDays(d)}
+              className={`px-2.5 py-1 rounded-full font-medium ${
+                days === d ? 'bg-primary-700 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {d === 1 ? t('admin.prayers.moderation.digest.day') : t('admin.prayers.moderation.digest.week')}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {preview.status === 'loading' && <p className="text-sm text-gray-500">{t('admin.prayers.moderation.digest.loading')}</p>}
+      {preview.status === 'error' && <p className="text-sm text-red-700">{t('admin.prayers.moderation.digest.loadError')}</p>}
+      {preview.status === 'loaded' && digest && (
+        <div className="space-y-2">
+          <dl className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+            {DIGEST_TOTAL_KEYS.map((key) => (
+              <div key={key} className="rounded border border-gray-200 bg-gray-50 p-2">
+                <dt className="text-xs text-gray-600">{t(`admin.prayers.moderation.digest.${key}`)}</dt>
+                <dd className="text-lg font-semibold text-gray-900">{digest.totals[key]}</dd>
+              </div>
+            ))}
+            <div className="rounded border border-amber-200 bg-amber-50 p-2">
+              <dt className="text-xs text-amber-900">{t('admin.prayers.moderation.digest.awaiting')}</dt>
+              <dd className="text-lg font-semibold text-amber-900">{digest.awaitingReview}</dd>
+            </div>
+          </dl>
+          <p className="text-xs text-gray-600">
+            <span className="font-semibold">{t('admin.prayers.moderation.digest.reasons')}:</span>{' '}
+            {Object.keys(digest.byReason).length
+              ? Object.entries(digest.byReason).map(([type, n]) => `${type} ${n}`).join(', ')
+              : t('admin.prayers.moderation.digest.noReasons')}
+          </p>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-end gap-2 border-t border-gray-100 pt-3 text-sm">
+        <label className="flex flex-col text-xs text-gray-600">
+          {t('admin.prayers.moderation.digest.frequency')}
+          <select className={selectClass} value={mode} onChange={(e) => handleModeChange(e.target.value)} disabled={subStatus !== 'loaded'}>
+            <option value="off">{t('admin.prayers.moderation.digest.off')}</option>
+            <option value="daily">{t('admin.prayers.moderation.digest.daily')}</option>
+            <option value="weekly">{t('admin.prayers.moderation.digest.weekly')}</option>
+          </select>
+        </label>
+        <label className="flex flex-col text-xs text-gray-600">
+          {t('admin.prayers.moderation.digest.channel')}
+          <select className={selectClass} value={channel} onChange={(e) => setChannel(e.target.value)} disabled={subStatus !== 'loaded'}>
+            <option value="email">{t('admin.prayers.moderation.digest.channelEmail')}</option>
+            <option value="inapp">{t('admin.prayers.moderation.digest.channelInapp')}</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || subStatus !== 'loaded'}
+          className="px-3 py-1.5 rounded bg-primary-700 text-white text-sm font-medium hover:bg-primary-800 disabled:opacity-50"
+        >
+          {t('admin.prayers.moderation.digest.save')}
+        </button>
+        {message && (
+          <span className={`text-xs ${message.ok ? 'text-green-700' : 'text-red-700'}`}>{message.text}</span>
+        )}
+      </div>
+      {channel === 'inapp' && (
+        <p className="text-xs text-gray-500">{t('admin.prayers.moderation.digest.inappNote')}</p>
+      )}
+      {subStatus === 'error' && <p className="text-xs text-red-700">{t('admin.prayers.moderation.digest.loadError')}</p>}
+    </section>
   );
 }
 

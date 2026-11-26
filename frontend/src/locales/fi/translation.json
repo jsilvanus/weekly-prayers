@@ -149,8 +149,36 @@
         "historyEmpty": "Ei päätöksiä.",
         "historyError": "Päätöshistorian lataaminen epäonnistui.",
         "reasons": "Perustelut",
-        "actionError": "Toiminto epäonnistui."
-      }
+        "actionError": "Toiminto epäonnistui.",
+        "digest": {
+          "title": "Päätösyhteenveto",
+          "desc": "Automaattisten moderointipäätösten yhteenveto. Tilaus lähettää yhteenvedon sähköpostilla sinulle.",
+          "day": "Viimeiset 24 h",
+          "week": "Viimeiset 7 pv",
+          "autoClean": "Puhdistettu automaattisesti",
+          "autoReview": "Merkitty tarkistettavaksi",
+          "rejected": "Hylätty (ei tallennettu)",
+          "humanRedacted": "Redaktoitu käsin",
+          "humanConfirmedAuto": "Ehdotus vahvistettu",
+          "humanOverturned": "Päätös kumottu",
+          "awaiting": "Odottaa tarkistusta",
+          "reasons": "Tunnistetyypit",
+          "noReasons": "ei tapahtumia",
+          "frequency": "Tilaus",
+          "off": "Ei tilausta",
+          "daily": "Päivittäin",
+          "weekly": "Viikoittain",
+          "channel": "Kanava",
+          "channelEmail": "Sähköposti",
+          "channelInapp": "Sovelluksessa",
+          "inappNote": "Sovelluksen sisäinen ilmoitus ei ole vielä käytössä; yhteenveto näkyy tässä paneelissa.",
+          "save": "Tallenna tilaus",
+          "saved": "Tilaus tallennettu.",
+          "loadError": "Yhteenvedon lataaminen epäonnistui.",
+          "saveError": "Tilauksen tallentaminen epäonnistui.",
+          "loading": "Ladataan…"
+          }
+        }
     },
     "highlights": {
       "title": "Rukousnostot",
